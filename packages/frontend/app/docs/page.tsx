@@ -41,7 +41,7 @@ const playerNotes = [
   {
     icon: <Radio size={20} />,
     title: "Fast activity views",
-    body: "Live feed, stats, and leaderboard data are cached briefly and refreshed in the background, so moving between pages stays responsive."
+    body: "Live feed, stats, and leaderboard data are cached briefly, refreshed in the background, and monitored from the admin health tools."
   }
 ];
 

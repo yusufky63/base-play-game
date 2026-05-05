@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Activity, AlertTriangle, CheckCircle2, Server } from "lucide-react";
-import { frontendEnvStatus } from "@/lib/env";
 
 type IndexerHealth = {
   chainId: number;
@@ -17,22 +16,25 @@ type IndexerHealth = {
 export function AdminHealthPanel() {
   const [indexers, setIndexers] = useState<IndexerHealth[]>([]);
   const [status, setStatus] = useState<"idle" | "ready" | "error">("idle");
+  const [message, setMessage] = useState("Loading backend health");
 
   useEffect(() => {
-    if (!frontendEnvStatus.backendUrl) return;
-
     let cancelled = false;
     async function load() {
       try {
-        const response = await fetch(`${frontendEnvStatus.backendUrl}/api/indexer/health`, { cache: "no-store" });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = (await response.json()) as { indexers?: IndexerHealth[] };
+        const response = await fetch("/api/indexer/health", { cache: "no-store" });
+        const data = (await response.json()) as { indexers?: IndexerHealth[]; message?: string };
+        if (!response.ok) throw new Error(data.message ?? `HTTP ${response.status}`);
         if (!cancelled) {
           setIndexers(data.indexers ?? []);
+          setMessage(data.message ?? "Backend health is online");
           setStatus("ready");
         }
-      } catch {
-        if (!cancelled) setStatus("error");
+      } catch (error) {
+        if (!cancelled) {
+          setMessage(error instanceof Error ? error.message : "Backend health endpoint is unreachable");
+          setStatus("error");
+        }
       }
     }
 
@@ -43,20 +45,6 @@ export function AdminHealthPanel() {
       window.clearInterval(interval);
     };
   }, []);
-
-  if (!frontendEnvStatus.backendUrl) {
-    return (
-      <section className="admin-note mt-4">
-        <div className="flex items-center gap-2 font-semibold text-[var(--text-1)]">
-          <Server size={16} />
-          Backend health
-        </div>
-        <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">
-          Set `NEXT_PUBLIC_BACKEND_URL` to show live indexer and RPC watcher health here.
-        </p>
-      </section>
-    );
-  }
 
   const errored = indexers.filter((item) => item.status === "error").length;
   const watching = indexers.filter((item) => item.status === "watching").length;
@@ -70,7 +58,7 @@ export function AdminHealthPanel() {
             RPC and indexer health
           </div>
           <p className="mt-1 text-sm text-[var(--text-2)]">
-            {status === "ready" ? `${watching} watching, ${errored} error` : status === "error" ? "Backend health endpoint is unreachable" : "Loading backend health"}
+            {status === "ready" ? `${watching} watching, ${errored} error` : status === "error" ? message : "Loading backend health"}
           </p>
         </div>
         {errored > 0 ? <AlertTriangle size={18} className="text-[var(--pending)]" /> : <CheckCircle2 size={18} className="text-[var(--win)]" />}
@@ -89,6 +77,15 @@ export function AdminHealthPanel() {
             {item.lastError && <div className="mt-2 text-xs text-[var(--lose)]">{item.lastError}</div>}
           </div>
         ))}
+        {indexers.length === 0 && (
+          <div className="rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3 text-sm leading-6 text-[var(--text-2)]">
+            <div className="flex items-center gap-2 font-semibold text-[var(--text-1)]">
+              <Server size={15} />
+              Backend watcher data
+            </div>
+            <p className="mt-2">{message}</p>
+          </div>
+        )}
       </div>
     </section>
   );
