@@ -1,6 +1,6 @@
 import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
-import { NETWORKS } from "@baseplay/shared/config/networks";
+import { NETWORKS, type NetworkKey } from "@baseplay/shared/config/networks";
 import { netPayoutFromGross } from "@baseplay/shared/utils/payout";
 import { createPublicClient, fallback, formatEther, http, parseAbi, type Address, type Log } from "viem";
 import { base, baseSepolia } from "viem/chains";
@@ -27,8 +27,35 @@ interface EventClient {
   }) => Promise<Log[]>;
 }
 
-const DEFAULT_LOOKBACK_BLOCKS = 100_000n;
+interface WatchClient extends EventClient {
+  watchContractEvent: (args: {
+    address: Address;
+    abi: typeof ROUND_SETTLED_ABI;
+    eventName: "RoundSettled" | "CrashPointGenerated";
+    onLogs: (logs: any[]) => void | Promise<void>;
+    onError: (error: Error) => void;
+  }) => () => void;
+}
+
+const DEFAULT_LOOKBACK_BLOCKS = 20_000n;
 const MAX_LOG_RANGE_BLOCKS = 9_000n;
+const watcherRestarts = new Set<string>();
+const indexerHealth = new Map<
+  string,
+  {
+    chainId: number;
+    gameId: string;
+    status: "starting" | "watching" | "catching_up" | "error";
+    lastIndexedBlock: string | null;
+    lastLogAt: string | null;
+    lastError: string | null;
+    updatedAt: string;
+  }
+>();
+
+export function getIndexerHealth() {
+  return Array.from(indexerHealth.values()).sort((a, b) => a.chainId - b.chainId || a.gameId.localeCompare(b.gameId));
+}
 
 async function listenChain(chainId: 84532 | 8453, options: InitOptions) {
   const networkKey = chainId === 8453 ? "baseMainnet" : "baseSepolia";
@@ -41,41 +68,7 @@ async function listenChain(chainId: 84532 | 8453, options: InitOptions) {
   });
 
   for (const game of GAMES_REGISTRY.filter((entry) => entry.chains.includes(networkKey))) {
-    const address = CONTRACT_ADDRESSES[chainId]?.[game.contractName];
-    if (!address) continue;
-
-    await catchUpSettledRounds(client, chainId, address, game.id);
-
-    client.watchContractEvent({
-      address,
-      abi: ROUND_SETTLED_ABI,
-      eventName: "RoundSettled",
-      onLogs: async (logs) => {
-        await persistSettledLogs(chainId, game.id, logs);
-      },
-      onError: (error) => {
-        console.error(`[Listener][${game.id}][${chainId}]`, error.message);
-        setTimeout(() => void listenChain(chainId, options), 5_000);
-      }
-    });
-
-    if (game.id === "crash") {
-      client.watchContractEvent({
-        address,
-        abi: ROUND_SETTLED_ABI,
-        eventName: "CrashPointGenerated",
-        onLogs: (logs) => {
-          for (const log of logs) {
-            const { requestId, crashPoint } = log.args;
-            if (requestId === undefined || crashPoint === undefined) continue;
-            options.crashEngine.startRound(requestId.toString(), Number(crashPoint) / 100);
-          }
-        },
-        onError: (error) => console.error(`[CrashListener][${chainId}]`, error.message)
-      });
-    }
-
-    console.log(`[Listener] Watching ${game.id} on chainId ${chainId}`);
+    await watchGame(client as WatchClient, chainId, networkKey, game, options);
   }
 }
 
@@ -93,11 +86,20 @@ async function catchUpSettledRounds(
   const latestBlock = await client.getBlockNumber();
   const envName = `INDEX_FROM_BLOCK_${chainId === 8453 ? "MAINNET" : "SEPOLIA"}`;
   const configuredFromBlock = process.env[envName] ? BigInt(process.env[envName]!) : undefined;
-  const fromBlock = configuredFromBlock ?? (latestBlock > DEFAULT_LOOKBACK_BLOCKS ? latestBlock - DEFAULT_LOOKBACK_BLOCKS : 0n);
+  const checkpoint = configuredFromBlock === undefined ? await getIndexedCheckpoint(chainId, gameId) : 0n;
+  const fromBlock =
+    configuredFromBlock ??
+    (checkpoint > 0n
+      ? checkpoint + 1n
+      : latestBlock > DEFAULT_LOOKBACK_BLOCKS
+        ? latestBlock - DEFAULT_LOOKBACK_BLOCKS
+        : 0n);
 
   let indexed = 0;
+  if (fromBlock > latestBlock) return;
 
   for (const { from, to } of blockRanges(fromBlock, latestBlock, MAX_LOG_RANGE_BLOCKS)) {
+    setIndexerHealth(chainId, gameId, { status: "catching_up", lastError: null });
     const logs = await client.getContractEvents({
       address,
       abi: ROUND_SETTLED_ABI,
@@ -110,11 +112,152 @@ async function catchUpSettledRounds(
       await persistSettledLogs(chainId, gameId, logs);
       indexed += logs.length;
     }
+    await saveIndexedCheckpoint(chainId, gameId, to);
+    setIndexerHealth(chainId, gameId, { lastIndexedBlock: to.toString() });
   }
 
   if (indexed > 0) {
     console.log(`[Listener] Indexed ${indexed} historical ${gameId} rounds on chainId ${chainId}`);
   }
+}
+
+async function watchGame(
+  client: WatchClient,
+  chainId: 84532 | 8453,
+  networkKey: NetworkKey,
+  game: (typeof GAMES_REGISTRY)[number],
+  options: InitOptions
+) {
+  const address = CONTRACT_ADDRESSES[chainId]?.[game.contractName];
+  if (!address) return;
+
+  setIndexerHealth(chainId, game.id, { status: "starting", lastError: null });
+  await catchUpSettledRounds(client, chainId, address, game.id);
+
+  const watcherKey = `${chainId}:${game.id}:settled`;
+  const unwatchSettled = client.watchContractEvent({
+    address,
+    abi: ROUND_SETTLED_ABI,
+    eventName: "RoundSettled",
+    onLogs: async (logs) => {
+      const lastBlock = await persistSettledLogs(chainId, game.id, logs);
+      if (lastBlock) await saveIndexedCheckpoint(chainId, game.id, lastBlock);
+      if (lastBlock) {
+        setIndexerHealth(chainId, game.id, {
+          status: "watching",
+          lastIndexedBlock: lastBlock.toString(),
+          lastLogAt: new Date().toISOString(),
+          lastError: null
+        });
+      }
+    },
+    onError: (error) => {
+      console.error(`[Listener][${game.id}][${chainId}]`, error.message);
+      setIndexerHealth(chainId, game.id, { status: "error", lastError: error.message });
+      unwatchSettled();
+      scheduleWatcherRestart(watcherKey, () => void watchGame(client, chainId, networkKey, game, options));
+    }
+  });
+
+  if (game.id === "crash") {
+    watchCrashPoint(client, chainId, address, options);
+  }
+
+  setIndexerHealth(chainId, game.id, { status: "watching", lastError: null });
+  console.log(`[Listener] Watching ${game.id} on ${networkKey}`);
+}
+
+function watchCrashPoint(
+  client: WatchClient,
+  chainId: 84532 | 8453,
+  address: Address,
+  options: InitOptions
+) {
+  const crashWatcherKey = `${chainId}:crash:crash-point`;
+  const unwatchCrash = client.watchContractEvent({
+    address,
+    abi: ROUND_SETTLED_ABI,
+    eventName: "CrashPointGenerated",
+    onLogs: (logs) => {
+      for (const log of logs) {
+        const { requestId, crashPoint } = log.args;
+        if (requestId === undefined || crashPoint === undefined) continue;
+        options.crashEngine.startRound(requestId.toString(), Number(crashPoint) / 100);
+      }
+    },
+    onError: (error) => {
+      console.error(`[CrashListener][${chainId}]`, error.message);
+      setIndexerHealth(chainId, "crash", { status: "error", lastError: error.message });
+      unwatchCrash();
+      scheduleWatcherRestart(crashWatcherKey, () => watchCrashPoint(client, chainId, address, options));
+    }
+  });
+}
+
+function scheduleWatcherRestart(key: string, restart: () => void) {
+  if (watcherRestarts.has(key)) return;
+  watcherRestarts.add(key);
+  setTimeout(() => {
+    watcherRestarts.delete(key);
+    restart();
+  }, 10_000);
+}
+
+async function getIndexedCheckpoint(chainId: 84532 | 8453, gameId: string) {
+  const { data, error } = await supabaseAdmin
+    .from("indexer_state")
+    .select("last_indexed_block")
+    .eq("chain_id", chainId)
+    .eq("game_id", gameId)
+    .maybeSingle();
+
+  if (error) {
+    console.error(`[Listener][${gameId}][${chainId}] Checkpoint read failed`, error.message);
+    return 0n;
+  }
+
+  return data?.last_indexed_block ? BigInt(String(data.last_indexed_block)) : 0n;
+}
+
+async function saveIndexedCheckpoint(chainId: 84532 | 8453, gameId: string, blockNumber: bigint) {
+  const { error } = await supabaseAdmin.from("indexer_state").upsert(
+    {
+      chain_id: chainId,
+      game_id: gameId,
+      last_indexed_block: Number(blockNumber),
+      updated_at: new Date().toISOString()
+    },
+    { onConflict: "chain_id,game_id" }
+  );
+
+  if (error) {
+    console.error(`[Listener][${gameId}][${chainId}] Checkpoint write failed`, error.message);
+  }
+}
+
+function setIndexerHealth(
+  chainId: 84532 | 8453,
+  gameId: string,
+  patch: Partial<ReturnType<typeof getIndexerHealth>[number]>
+) {
+  const key = `${chainId}:${gameId}`;
+  const current =
+    indexerHealth.get(key) ??
+    {
+      chainId,
+      gameId,
+      status: "starting" as const,
+      lastIndexedBlock: null,
+      lastLogAt: null,
+      lastError: null,
+      updatedAt: new Date().toISOString()
+    };
+
+  indexerHealth.set(key, {
+    ...current,
+    ...patch,
+    updatedAt: new Date().toISOString()
+  });
 }
 
 function blockRanges(fromBlock: bigint, toBlock: bigint, maxRange: bigint) {
@@ -131,7 +274,10 @@ function blockRanges(fromBlock: bigint, toBlock: bigint, maxRange: bigint) {
 }
 
 async function persistSettledLogs(chainId: 84532 | 8453, gameId: string, logs: Log[]) {
+  let lastBlock = 0n;
+
   for (const log of logs) {
+    if (log.blockNumber && log.blockNumber > lastBlock) lastBlock = log.blockNumber;
     const parsed = "args" in log ? log : null;
     const args = parsed?.args as
       | {
@@ -166,4 +312,6 @@ async function persistSettledLogs(chainId: 84532 | 8453, gameId: string, logs: L
       console.error(`[Listener][${gameId}][${chainId}] Supabase error`, error.message);
     }
   }
+
+  return lastBlock || null;
 }

@@ -9,7 +9,10 @@ export function useBalance() {
     address,
     query: {
       enabled: Boolean(address),
-      refetchInterval: 10_000
+      staleTime: 30_000,
+      refetchInterval: 60_000,
+      refetchIntervalInBackground: false,
+      refetchOnWindowFocus: false
     }
   });
 

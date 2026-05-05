@@ -39,7 +39,7 @@ export function useVRF() {
       )
       .subscribe();
 
-    const timeout = window.setTimeout(() => setState("error"), 90_000);
+    const timeout = window.setTimeout(() => setState("error"), 120_000);
 
     return () => {
       void supabase.removeChannel(channel);

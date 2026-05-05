@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck --workspace @baseplay/frontend
+      - run: npm run lint --workspace @baseplay/frontend
+      - run: npm run build --workspace @baseplay/frontend
+      - run: npm --workspace @baseplay/backend run typecheck
+      - run: npm --workspace @baseplay/backend run build
+      - run: npm --workspace @baseplay/contracts run compile
+      - run: npm --workspace @baseplay/contracts run test
+      - run: npm audit --omit=dev --audit-level=critical

@@ -142,6 +142,18 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["game_configs"]["Row"]>;
         Relationships: [];
       };
+      indexer_state: {
+        Row: {
+          chain_id: number;
+          game_id: string;
+          last_indexed_block: number;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["indexer_state"]["Row"]> &
+          Pick<Database["public"]["Tables"]["indexer_state"]["Row"], "chain_id" | "game_id">;
+        Update: Partial<Database["public"]["Tables"]["indexer_state"]["Row"]>;
+        Relationships: [];
+      };
     };
     Views: {
       leaderboard_weekly_ranked: {

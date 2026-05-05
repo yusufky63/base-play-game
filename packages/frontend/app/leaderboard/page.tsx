@@ -65,17 +65,22 @@ export default function LeaderboardPage() {
 
       if (error) {
         console.warn("[BasePlay] Supabase leaderboard query failed", error.message);
-        setLeaders(page === 0 ? [] : leaders);
+        setLeaders((current) => {
+          const next = page === 0 ? [] : current;
+          writeSessionCache(cacheKey, { leaders: next, hasMore: false, source: "supabase" });
+          return next;
+        });
         setHasMore(false);
         setSource("supabase");
-        writeSessionCache(cacheKey, { leaders: page === 0 ? [] : leaders, hasMore: false, source: "supabase" });
       } else if (data) {
         const rows = data as Leader[];
-        const next = page === 0 ? rows : [...leaders, ...rows];
-        setLeaders(next);
+        setLeaders((current) => {
+          const next = page === 0 ? rows : [...current, ...rows];
+          writeSessionCache(cacheKey, { leaders: next, hasMore: rows.length === PAGE_SIZE, source: "supabase" });
+          return next;
+        });
         setHasMore(rows.length === PAGE_SIZE);
         setSource("supabase");
-        writeSessionCache(cacheKey, { leaders: next, hasMore: rows.length === PAGE_SIZE, source: "supabase" });
       } else {
         const rows = await loadOnchainLeaders(sort);
         const next = rows.slice(0, (page + 1) * PAGE_SIZE);

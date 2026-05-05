@@ -25,7 +25,7 @@ export function SlotsClient() {
   const [tick, setTick] = useState(0);
   const game = useGame("slots", "SlotsGame", slotsAbi as Abi);
   const event = findEventArgs(game.vrfResult, "SlotsResult");
-  const reels = [toNumber(event?.reelA), toNumber(event?.reelB), toNumber(event?.reelC)];
+  const reels = useMemo(() => [toNumber(event?.reelA), toNumber(event?.reelB), toNumber(event?.reelC)], [event?.reelA, event?.reelB, event?.reelC]);
   const multiplierBps = toNumber(event?.multiplierBps) ?? 0;
   const settled = game.vrfState === "settled" && typeof game.vrfResult?.won === "boolean";
   const won = game.vrfResult?.won === true;

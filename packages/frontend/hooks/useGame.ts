@@ -2,7 +2,7 @@
 
 import type { Abi } from "viem";
 import { formatEther, parseEther, parseEventLogs } from "viem";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAccount, usePublicClient, useSwitchChain, useWriteContract } from "wagmi";
 import { baseSepolia } from "wagmi/chains";
 import { getContractAddress } from "@baseplay/shared/config/addresses";
@@ -22,6 +22,14 @@ export function useGame(gameId: string, contractName: string, abi: Abi | null) {
   const { writeContractAsync, isPending } = useWriteContract();
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
   const activeRoundRef = useRef(0);
+  const pollAbortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    if (vrf.state === "settled") {
+      pollAbortRef.current?.abort();
+      pollAbortRef.current = null;
+    }
+  }, [vrf.state]);
 
   async function placeBet(amountEth: string, params: `0x${string}`) {
     if (!address) {
@@ -72,6 +80,8 @@ export function useGame(gameId: string, contractName: string, abi: Abi | null) {
 
     const roundKey = activeRoundRef.current + 1;
     activeRoundRef.current = roundKey;
+    pollAbortRef.current?.abort();
+    pollAbortRef.current = null;
     vrf.reset();
     setTxHash(null);
     vrf.setState("pending_tx");
@@ -101,14 +111,18 @@ export function useGame(gameId: string, contractName: string, abi: Abi | null) {
       vrf.setState("pending_vrf");
       toast({ tone: "info", title: "Verifying on-chain", description: "Waiting for Chainlink VRF settlement." });
       if (receipt && typeof requestId === "bigint" && publicClient) {
+        const pollAbort = new AbortController();
+        pollAbortRef.current = pollAbort;
         void waitForRoundSettled({
           publicClient,
           contractAddress,
           abi,
           requestId,
           fromBlock: receipt.blockNumber,
+          signal: pollAbort.signal,
           onSettled: (result) => {
             if (activeRoundRef.current !== roundKey) return;
+            pollAbortRef.current = null;
             vrf.settle(result);
             toast({
               tone: result.won ? "success" : "info",
@@ -118,6 +132,7 @@ export function useGame(gameId: string, contractName: string, abi: Abi | null) {
           },
           onTimeout: () => {
             if (activeRoundRef.current !== roundKey) return;
+            pollAbortRef.current = null;
             vrf.setState("error");
             toast({ tone: "error", title: "VRF timeout", description: "Round is still unresolved. You can claim a refund after the timeout block window." });
           }
@@ -165,6 +180,8 @@ export function useGame(gameId: string, contractName: string, abi: Abi | null) {
 
   function reset() {
     activeRoundRef.current += 1;
+    pollAbortRef.current?.abort();
+    pollAbortRef.current = null;
     setTxHash(null);
     vrf.reset();
   }
@@ -196,6 +213,7 @@ async function waitForRoundSettled({
   abi,
   requestId,
   fromBlock,
+  signal,
   onSettled,
   onTimeout
 }: {
@@ -204,12 +222,15 @@ async function waitForRoundSettled({
   abi: Abi;
   requestId: bigint;
   fromBlock: bigint;
+  signal?: AbortSignal;
   onSettled: (result: Record<string, unknown>) => void;
   onTimeout: () => void;
 }) {
   const startedAt = Date.now();
+  const delays = [8_000, 12_000, 18_000, 25_000, 35_000];
 
-  while (Date.now() - startedAt < 120_000) {
+  for (const delay of delays) {
+    if (signal?.aborted) return;
     const logs = await publicClient.getContractEvents({
       address: contractAddress,
       abi,
@@ -242,8 +263,29 @@ async function waitForRoundSettled({
       return;
     }
 
-    await new Promise((resolve) => window.setTimeout(resolve, 4_000));
+    await sleep(delay, signal);
+    if (Date.now() - startedAt > 120_000) break;
   }
 
+  if (signal?.aborted) return;
   onTimeout();
+}
+
+function sleep(ms: number, signal?: AbortSignal) {
+  return new Promise<void>((resolve) => {
+    if (signal?.aborted) {
+      resolve();
+      return;
+    }
+
+    const timer = window.setTimeout(resolve, ms);
+    signal?.addEventListener(
+      "abort",
+      () => {
+        window.clearTimeout(timer);
+        resolve();
+      },
+      { once: true }
+    );
+  });
 }

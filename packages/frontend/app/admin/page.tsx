@@ -1,5 +1,6 @@
 import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
+import { AdminHealthPanel } from "@/components/admin/AdminHealthPanel";
 import { AdminMetric, AdminShell } from "@/components/admin/AdminShell";
 import { frontendEnvStatus } from "@/lib/env";
 
@@ -14,6 +15,7 @@ export default function AdminPage() {
         <AdminMetric label="Network" value="84532" detail="Base Sepolia is the default deploy target" />
         <AdminMetric label="Realtime" value={frontendEnvStatus.supabaseReady ? "Ready" : "Not configured"} detail="Requires Supabase anon key in env" />
       </div>
+      <AdminHealthPanel />
     </AdminShell>
   );
 }

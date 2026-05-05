@@ -207,13 +207,13 @@ export default function AdminVaultPage() {
         <div className="admin-note">
           <h2 className="font-semibold text-[var(--text-1)]">Risk model</h2>
           <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">
-            New contract code reserves each round's maximum net payout before accepting the bet. This prevents multiple active rounds from promising more than the vault can safely pay.
+            New contract code reserves the maximum net payout for every round before accepting the bet. This prevents multiple active rounds from promising more than the vault can safely pay.
           </p>
         </div>
         <div className="admin-note">
           <h2 className="font-semibold text-[var(--text-1)]">Current deployed vault</h2>
           <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">
-            If reserve metrics show legacy mode, redeploy the updated vault and games before increasing max bet or funding mainnet liquidity.
+            If reserve metrics show legacy mode, redeploy the updated vault and games before increasing max bet or adding mainnet liquidity.
           </p>
         </div>
       </div>
