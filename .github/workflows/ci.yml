@@ -15,6 +15,8 @@ jobs:
           node-version: 22.13.0
           cache: npm
       - run: npm ci
+      - run: npm run typecheck --workspace @baseplay/shared
+      - run: npm run build --workspace @baseplay/shared
       - run: npm run typecheck --workspace @baseplay/frontend
       - run: npm run lint --workspace @baseplay/frontend
       - run: npm run build --workspace @baseplay/frontend
