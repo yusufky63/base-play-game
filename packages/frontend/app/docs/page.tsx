@@ -37,6 +37,11 @@ const playerNotes = [
     icon: <Sparkles size={20} />,
     title: "XP and streaks",
     body: "Settled rounds grant XP. Playing on active days builds your daily streak and helps your leaderboard position."
+  },
+  {
+    icon: <Radio size={20} />,
+    title: "Fast activity views",
+    body: "Live feed, stats, and leaderboard data are cached briefly and refreshed in the background, so moving between pages stays responsive."
   }
 ];
 
@@ -62,7 +67,7 @@ export default function DocsPage() {
         </div>
       </div>
 
-      <section className="grid gap-3 md:grid-cols-3">
+      <section className="grid gap-3 md:grid-cols-4">
         {playerNotes.map((item) => (
           <InfoCard key={item.title} icon={item.icon} title={item.title} body={item.body} />
         ))}
