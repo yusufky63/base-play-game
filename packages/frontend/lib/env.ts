@@ -15,7 +15,7 @@ const publicEnvSchema = z.object({
 });
 
 export const env = publicEnvSchema.parse({
-  NEXT_PUBLIC_DEFAULT_CHAIN: process.env.NEXT_PUBLIC_DEFAULT_CHAIN,
+  NEXT_PUBLIC_DEFAULT_CHAIN: cleanEnv(process.env.NEXT_PUBLIC_DEFAULT_CHAIN),
   NEXT_PUBLIC_SUPABASE_URL: cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
   NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: cleanEnv(process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID),
