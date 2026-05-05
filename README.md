@@ -45,6 +45,15 @@ copy .env.example packages\backend\.env
 npm run dev:backend
 ```
 
+Production backend:
+
+```bash
+docker build -f Dockerfile.backend -t baseplay-backend .
+docker run --env-file production.env.example -p 4000:4000 baseplay-backend
+```
+
+Set `BACKEND_URL=https://api.baseplaygame.com` in the Vercel frontend project after the backend is deployed and serving `/health`.
+
 Frontend:
 
 ```bash

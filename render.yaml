@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: baseplay-backend
+    env: docker
+    dockerfilePath: ./Dockerfile.backend
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: FRONTEND_URL
+        value: https://baseplaygame.vercel.app
+      - key: SUPABASE_URL
+        value: https://buubouudfeyhltsqryam.supabase.co
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: VRF_SUB_ID_SEPOLIA
+        value: "47868048607544895142777810269360161101150063225794431371740630182085719903419"
+      - key: VRF_SUB_ID_MAINNET
+        value: "0"
