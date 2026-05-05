@@ -31,7 +31,7 @@ const playerNotes = [
   {
     icon: <CircleDollarSign size={20} />,
     title: "Clear payouts",
-    body: "Wagers are shown in ETH with a lightweight USD reference where it helps. Results show the settled payout after the round is verified."
+    body: "Wagers are shown in ETH with a lightweight USD reference where it helps. Bet presets are quick buttons, while the contract enforces the minimum and maximum bet."
   },
   {
     icon: <Sparkles size={20} />,

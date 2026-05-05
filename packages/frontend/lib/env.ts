@@ -8,7 +8,8 @@ const publicEnvSchema = z.object({
   NEXT_PUBLIC_WALLETCONNECT_ID: z.string().optional().default(""),
   NEXT_PUBLIC_OWNER_ADDRESS: z.string().regex(/^0x[0-9a-fA-F]{40}$/).optional().or(z.literal("")),
   NEXT_PUBLIC_APP_URL: z.string().url().optional().or(z.literal("")),
-  NEXT_PUBLIC_BACKEND_URL: z.string().url().optional().or(z.literal(""))
+  NEXT_PUBLIC_BACKEND_URL: z.string().url().optional().or(z.literal("")),
+  NEXT_PUBLIC_BET_PRESETS_ETH: z.string().optional().default("0.0002,0.0005,0.001")
 });
 
 export const env = publicEnvSchema.parse({
@@ -19,7 +20,8 @@ export const env = publicEnvSchema.parse({
   NEXT_PUBLIC_WALLETCONNECT_ID: process.env.NEXT_PUBLIC_WALLETCONNECT_ID,
   NEXT_PUBLIC_OWNER_ADDRESS: process.env.NEXT_PUBLIC_OWNER_ADDRESS,
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-  NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL
+  NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL,
+  NEXT_PUBLIC_BET_PRESETS_ETH: process.env.NEXT_PUBLIC_BET_PRESETS_ETH
 });
 
 export const walletConnectProjectId =
@@ -31,3 +33,10 @@ export const frontendEnvStatus = {
   appUrl: env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   backendUrl: env.NEXT_PUBLIC_BACKEND_URL || ""
 };
+
+const parsedBetPresetAmounts = env.NEXT_PUBLIC_BET_PRESETS_ETH.split(",")
+  .map((item) => item.trim())
+  .filter((item) => /^\d+(\.\d+)?$/.test(item))
+  .slice(0, 3);
+
+export const betPresetAmounts = parsedBetPresetAmounts.length > 0 ? parsedBetPresetAmounts : ["0.0002", "0.0005", "0.001"];

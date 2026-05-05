@@ -4,8 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useEthUsdPrice } from "@/hooks/useEthUsdPrice";
 import { formatUsd } from "@/lib/formatters";
 import { type VRFState, VRF_MESSAGES } from "@/hooks/useVRF";
-
-const QUICK_AMOUNTS = ["0.0002", "0.0005", "0.001"];
+import { betPresetAmounts } from "@/lib/env";
 
 interface BetPanelProps {
   amount: string;
@@ -31,7 +30,7 @@ export function BetPanel({ amount, disabled = false, loading = false, vrfState =
       </div>
 
       <div className="grid grid-cols-3 gap-2">
-        {QUICK_AMOUNTS.map((quickAmount) => (
+        {betPresetAmounts.map((quickAmount) => (
           <QuickAmountButton
             key={quickAmount}
             amount={amount}

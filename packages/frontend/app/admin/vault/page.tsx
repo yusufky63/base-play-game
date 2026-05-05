@@ -13,6 +13,7 @@ import { fetchRecentOnchainRounds, type OnchainRound } from "@/lib/onchainRounds
 import { formatEth, formatUsd } from "@/lib/formatters";
 import { useEthUsdPrice } from "@/hooks/useEthUsdPrice";
 import { useToast } from "@/components/ui/ToastProvider";
+import { betPresetAmounts } from "@/lib/env";
 
 const vaultAbi = [
   { type: "function", name: "vaultBalance", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
@@ -209,6 +210,28 @@ export default function AdminVaultPage() {
           <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">
             New contract code reserves the maximum net payout for every round before accepting the bet. This prevents multiple active rounds from promising more than the vault can safely pay.
           </p>
+        </div>
+        <div className="admin-note">
+          <h2 className="font-semibold text-[var(--text-1)]">Payout policy</h2>
+          <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">
+            House edge is deducted only from winning gross payouts. Losing bets stay in the vault as vault profit; there is no extra loss-side fee.
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <div className="admin-note">
+          <h2 className="font-semibold text-[var(--text-1)]">UI bet presets</h2>
+          <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">
+            Game pages show three quick bet buttons. They are frontend presets, not separate contract limits. Change them with <code>NEXT_PUBLIC_BET_PRESETS_ETH</code>, for example <code>0.0002,0.0005,0.001</code>.
+          </p>
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            {betPresetAmounts.map((amount) => (
+              <div key={amount} className="rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3 font-mono text-xs font-semibold text-[var(--text-1)]">
+                {amount} ETH
+              </div>
+            ))}
+          </div>
         </div>
         <div className="admin-note">
           <h2 className="font-semibold text-[var(--text-1)]">Current deployed vault</h2>
