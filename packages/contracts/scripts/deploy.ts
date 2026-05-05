@@ -5,7 +5,7 @@ import { ethers, network } from "hardhat";
 
 const KEY_HASHES: Record<number, string> = {
   84532: "0x9e1344a1247c8a1785d0a4681a27152bffdb43666ae5bf7d14d24a5efd44bf71",
-  8453: "0xcc294a196eeeb44da2888d17c0625cc88d70d9760a69d58d853ba6581a9ab0cd"
+  8453: "0xdc2f87677b01473c763cb0aee938ed3341512f6057324a584e5944e786144d70"
 };
 
 const COORDINATORS: Record<number, string> = {
@@ -45,6 +45,7 @@ async function main() {
   const subscriptionEnvName = `VRF_SUB_ID_${chainId === 8453 ? "MAINNET" : "SEPOLIA"}`;
   let subscriptionId = process.env[subscriptionEnvName];
   const coordinator = new ethers.Contract(COORDINATORS[chainId], VRF_SUBSCRIPTION_ABI, deployer);
+  assertProductionDeployReady(chainId, subscriptionId, balance);
 
   if (!subscriptionId || subscriptionId === "0") {
     subscriptionId = await createAndFundSubscription(coordinator, chainId, subscriptionEnvName);
@@ -156,6 +157,27 @@ async function main() {
   console.log("[Deploy] Addresses:");
   console.table(addresses);
   console.log("[Deploy] VRF consumers added.");
+}
+
+function assertProductionDeployReady(chainId: number, subscriptionId: string | undefined, balance: bigint) {
+  if (chainId !== 8453) return;
+
+  if (process.env.ALLOW_MAINNET_DEPLOY !== "true") {
+    throw new Error("Refusing Base mainnet deploy. Set ALLOW_MAINNET_DEPLOY=true after completing the production checklist.");
+  }
+
+  if ((!subscriptionId || subscriptionId === "0") && process.env.ALLOW_CREATE_MAINNET_VRF_SUB !== "true") {
+    throw new Error("VRF_SUB_ID_MAINNET is required for production. To create one from the script, set ALLOW_CREATE_MAINNET_VRF_SUB=true.");
+  }
+
+  const vaultFunding = process.env.VAULT_FUND_ETH_MAINNET ?? DEFAULT_VAULT_FUNDING[8453] ?? "0";
+  if (parseEther(vaultFunding) === 0n && process.env.ALLOW_ZERO_MAINNET_VAULT !== "true") {
+    throw new Error("VAULT_FUND_ETH_MAINNET must be set before production deploy, or explicitly set ALLOW_ZERO_MAINNET_VAULT=true for dry operational deploys.");
+  }
+
+  if (balance < parseEther("0.02")) {
+    throw new Error("Mainnet deployer balance is below 0.02 ETH. Fund the deployer before production deployment.");
+  }
 }
 
 async function createAndFundSubscription(

@@ -41,7 +41,7 @@ export const NETWORKS = {
     blockExplorer: "https://basescan.org",
     vrf: {
       coordinator: "0xd5D517aBE5cF79B7e95eC98dB0f0277788aFF634",
-      keyHash: "0xcc294a196eeeb44da2888d17c0625cc88d70d9760a69d58d853ba6581a9ab0cd",
+      keyHash: "0xdc2f87677b01473c763cb0aee938ed3341512f6057324a584e5944e786144d70",
       subId: env("VRF_SUB_ID_MAINNET"),
       callbackGasLimit: 200_000,
       requestConfirmations: 3

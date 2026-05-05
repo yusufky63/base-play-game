@@ -38,6 +38,8 @@ npm run compile:contracts
 npm run test:contracts
 ```
 
+Production contract deploys are guarded. Before Base mainnet deployment, use a fresh deploy wallet, configure `VRF_SUB_ID_MAINNET`, set `VAULT_FUND_ETH_MAINNET`, and explicitly set `ALLOW_MAINNET_DEPLOY=true`.
+
 Backend:
 
 ```bash
