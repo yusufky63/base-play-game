@@ -55,7 +55,7 @@ docker run --env-file production.env.example -p 4000:4000 baseplay-backend
 ```
 
 Only set `BACKEND_URL` in the Vercel frontend project after a real backend service is deployed and serving `/health`. Until then, leave it empty so the app uses Supabase and on-chain fallback data without showing a broken backend URL.
-The backend Dockerfile uses npm workspace dependencies from the root install, matching Railway's GitHub Dockerfile build flow.
+The backend Dockerfile installs production workspace dependencies again in the runtime stage, which keeps Railway's runtime module resolution reliable for Express dependencies.
 
 Frontend:
 

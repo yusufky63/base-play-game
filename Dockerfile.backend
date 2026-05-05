@@ -20,7 +20,12 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 COPY package.json package-lock.json ./
-COPY --from=build /app/node_modules ./node_modules
+COPY packages/backend/package.json packages/backend/package.json
+COPY packages/contracts/package.json packages/contracts/package.json
+COPY packages/frontend/package.json packages/frontend/package.json
+COPY packages/shared/package.json packages/shared/package.json
+RUN npm ci --omit=dev
+
 COPY --from=build /app/packages/shared/package.json ./packages/shared/package.json
 COPY --from=build /app/packages/shared/dist ./packages/shared/dist
 COPY --from=build /app/packages/shared/abis ./packages/shared/abis
