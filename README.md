@@ -52,7 +52,7 @@ docker build -f Dockerfile.backend -t baseplay-backend .
 docker run --env-file production.env.example -p 4000:4000 baseplay-backend
 ```
 
-Set `BACKEND_URL=https://api.baseplaygame.com` in the Vercel frontend project after the backend is deployed and serving `/health`.
+Only set `BACKEND_URL` in the Vercel frontend project after a real backend service is deployed and serving `/health`. Until then, leave it empty so the app uses Supabase and on-chain fallback data without showing a broken backend URL.
 
 Frontend:
 

@@ -10,9 +10,8 @@ export async function GET() {
       {
         status: "unconfigured",
         indexers: [],
-        message: "Backend URL is not configured. Set BACKEND_URL to the deployed Express backend URL."
-      },
-      { status: 503 }
+        message: "No production backend is configured. BasePlay is using Supabase and on-chain fallback data."
+      }
     );
   }
 
