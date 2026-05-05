@@ -1,7 +1,7 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
-    date: "May 5, 2026",
-    title: "Performance and reliability update",
-    body: "BasePlay now uses lighter background refreshes, improved live activity handling, Supabase/on-chain fallback data, safer production contract deploy checks, and configurable quick bet presets."
+    date: "May 6, 2026",
+    title: "Base mainnet contracts deployed",
+    body: "BasePlay contracts are now deployed on Base mainnet with Chainlink VRF consumers configured, vault reserves enabled, and production default network set to Base."
   }
 ];

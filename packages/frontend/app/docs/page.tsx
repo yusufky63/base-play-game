@@ -26,7 +26,7 @@ const playerNotes = [
   {
     icon: <ShieldCheck size={20} />,
     title: "Fair results",
-    body: "Results are settled by contracts using Chainlink VRF on the selected Base network. The UI does not decide whether a player wins or loses."
+    body: "Results are settled by contracts using Chainlink VRF on Base. The UI does not decide whether a player wins or loses."
   },
   {
     icon: <CircleDollarSign size={20} />,
