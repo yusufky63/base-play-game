@@ -1,6 +1,4 @@
-import { Redis } from "ioredis";
 import type { Server } from "socket.io";
-import { env } from "../config/env.js";
 
 export interface CrashRound {
   roundId: string;
@@ -13,15 +11,11 @@ export interface CrashEngine {
 }
 
 export function startCrashEngine(io: Server): CrashEngine {
-  const redis = env.REDIS_URL ? new Redis(env.REDIS_URL, { lazyConnect: true }) : null;
   let current: CrashRound | null = null;
   let interval: NodeJS.Timeout | null = null;
 
   function startRound(roundId: string, crashPoint: number) {
     current = { roundId, startTime: Date.now(), crashPoint };
-    if (redis) {
-      void redis.set(`crash:round:${roundId}`, JSON.stringify(current), "EX", 300);
-    }
 
     io.emit("crash:round_start", { roundId, startTime: current.startTime });
 

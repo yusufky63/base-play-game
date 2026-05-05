@@ -16,9 +16,7 @@ services:
         value: https://buubouudfeyhltsqryam.supabase.co
       - key: SUPABASE_SERVICE_KEY
         sync: false
-      - key: REDIS_URL
-        sync: false
       - key: VRF_SUB_ID_SEPOLIA
         value: "47868048607544895142777810269360161101150063225794431371740630182085719903419"
       - key: VRF_SUB_ID_MAINNET
-        value: "0"
+        value: "99206800527867153437621897824214889292890569130424926759764033108751536998150"
