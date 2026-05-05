@@ -1,0 +1,96 @@
+"use client";
+
+import { Loader2 } from "lucide-react";
+import { useEthUsdPrice } from "@/hooks/useEthUsdPrice";
+import { formatUsd } from "@/lib/formatters";
+import { type VRFState, VRF_MESSAGES } from "@/hooks/useVRF";
+
+const QUICK_AMOUNTS = ["0.0002", "0.0005", "0.001"];
+
+interface BetPanelProps {
+  amount: string;
+  disabled?: boolean;
+  loading?: boolean;
+  vrfState?: VRFState;
+  actionLabel?: string;
+  hideAction?: boolean;
+  onAmountChange: (value: string) => void;
+  onPlay: () => void;
+  onRefund?: () => void;
+}
+
+export function BetPanel({ amount, disabled = false, loading = false, vrfState = "idle", actionLabel = "Play", hideAction = false, onAmountChange, onPlay, onRefund }: BetPanelProps) {
+  const ethUsd = useEthUsdPrice();
+  const isBusy = loading || vrfState === "pending_tx" || vrfState === "pending_vrf";
+
+  return (
+    <aside className="panel bet-panel p-4">
+      <div className="mb-3 flex justify-between text-xs text-[var(--text-3)]">
+        <span>Bet amount</span>
+        <span className="font-mono text-[var(--text-2)]">Select preset</span>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        {QUICK_AMOUNTS.map((quickAmount) => (
+          <QuickAmountButton
+            key={quickAmount}
+            amount={amount}
+            quickAmount={quickAmount}
+            ethUsd={ethUsd}
+            onAmountChange={onAmountChange}
+          />
+        ))}
+      </div>
+
+      {!hideAction && (
+        <button
+          type="button"
+          onClick={onPlay}
+          disabled={disabled || isBusy}
+          className="primary-action mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-md px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-45"
+        >
+          {isBusy && <Loader2 size={16} className="animate-spin" />}
+          {isBusy ? VRF_MESSAGES[vrfState] : actionLabel}
+        </button>
+      )}
+
+      {vrfState === "error" && onRefund && (
+        <button
+          type="button"
+          onClick={onRefund}
+          className="mt-3 flex h-10 w-full items-center justify-center rounded-md border border-[var(--lose)] px-4 text-sm font-bold text-[var(--lose)] hover:bg-[var(--lose-light)]"
+        >
+          Claim refund
+        </button>
+      )}
+
+    </aside>
+  );
+}
+
+function QuickAmountButton({
+  amount,
+  quickAmount,
+  ethUsd,
+  onAmountChange
+}: {
+  amount: string;
+  quickAmount: string;
+  ethUsd: number | null;
+  onAmountChange: (value: string) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onAmountChange(quickAmount)}
+      className={`bet-quick-button rounded-md border px-2 py-2 transition-colors ${
+        amount === quickAmount
+          ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--text-1)]"
+          : "border-[var(--border)] text-[var(--text-2)] hover:text-[var(--text-1)]"
+      }`}
+    >
+      <span>{ethUsd ? formatUsd(Number(quickAmount) * ethUsd) : quickAmount}</span>
+      <small>{quickAmount} ETH</small>
+    </button>
+  );
+}

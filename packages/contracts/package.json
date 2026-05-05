@@ -1,0 +1,24 @@
+{
+  "name": "@baseplay/contracts",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "compile": "hardhat compile",
+    "deploy:base-sepolia": "hardhat run scripts/deploy.ts --network baseSepolia",
+    "deploy:base": "hardhat run scripts/deploy.ts --network base",
+    "deploy:missing:base-sepolia": "hardhat run scripts/deploy-missing-games.ts --network baseSepolia",
+    "deploy:missing:base": "hardhat run scripts/deploy-missing-games.ts --network base",
+    "test": "hardhat test",
+    "coverage": "hardhat coverage"
+  },
+  "devDependencies": {
+    "@chainlink/contracts": "^1.3.0",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.0.2",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.10",
+    "hardhat-gas-reporter": "^1.0.10",
+    "solidity-coverage": "^0.8.13",
+    "typescript": "^5.5.4"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "@baseplay/shared",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./config/networks": "./dist/config/networks.js",
+    "./config/games.registry": "./dist/config/games.registry.js",
+    "./config/addresses": "./dist/config/addresses.js",
+    "./utils/payout": "./dist/utils/payout.js",
+    "./abis/*.json": "./abis/*.json",
+    "./types/game.types": "./dist/types/game.types.js",
+    "./types/network.types": "./dist/types/network.types.js",
+    "./types/supabase.types": "./dist/types/supabase.types.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.5",
+    "typescript": "^5.5.4"
+  }
+}

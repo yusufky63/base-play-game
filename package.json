@@ -1,0 +1,29 @@
+{
+  "name": "baseplay",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Mini onchain games on Base L2.",
+  "packageManager": "npm@10.9.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "dev:frontend": "npm --workspace @baseplay/frontend run dev",
+    "dev:backend": "npm --workspace @baseplay/backend run dev",
+    "deploy:base-sepolia": "npm --workspace @baseplay/contracts run deploy:base-sepolia",
+    "deploy:base": "npm --workspace @baseplay/contracts run deploy:base",
+    "deploy:missing:base-sepolia": "npm --workspace @baseplay/contracts run deploy:missing:base-sepolia",
+    "deploy:missing:base": "npm --workspace @baseplay/contracts run deploy:missing:base",
+    "test:contracts": "npm --workspace @baseplay/contracts run test",
+    "coverage:contracts": "npm --workspace @baseplay/contracts run coverage",
+    "compile:contracts": "npm --workspace @baseplay/contracts run compile"
+  },
+  "engines": {
+    "node": ">=20.9"
+  },
+  "devDependencies": {
+    "playwright": "^1.59.1"
+  }
+}
