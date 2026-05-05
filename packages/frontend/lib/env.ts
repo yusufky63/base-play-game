@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const cleanEnv = (value: string | undefined) => value?.trim();
+
 const publicEnvSchema = z.object({
   NEXT_PUBLIC_DEFAULT_CHAIN: z.enum(["baseSepolia", "baseMainnet"]).default("baseSepolia"),
   NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional().or(z.literal("")),
@@ -14,14 +16,14 @@ const publicEnvSchema = z.object({
 
 export const env = publicEnvSchema.parse({
   NEXT_PUBLIC_DEFAULT_CHAIN: process.env.NEXT_PUBLIC_DEFAULT_CHAIN,
-  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID,
-  NEXT_PUBLIC_WALLETCONNECT_ID: process.env.NEXT_PUBLIC_WALLETCONNECT_ID,
-  NEXT_PUBLIC_OWNER_ADDRESS: process.env.NEXT_PUBLIC_OWNER_ADDRESS,
-  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-  NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL,
-  NEXT_PUBLIC_BET_PRESETS_ETH: process.env.NEXT_PUBLIC_BET_PRESETS_ETH
+  NEXT_PUBLIC_SUPABASE_URL: cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+  NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: cleanEnv(process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID),
+  NEXT_PUBLIC_WALLETCONNECT_ID: cleanEnv(process.env.NEXT_PUBLIC_WALLETCONNECT_ID),
+  NEXT_PUBLIC_OWNER_ADDRESS: cleanEnv(process.env.NEXT_PUBLIC_OWNER_ADDRESS),
+  NEXT_PUBLIC_APP_URL: cleanEnv(process.env.NEXT_PUBLIC_APP_URL),
+  NEXT_PUBLIC_BACKEND_URL: cleanEnv(process.env.NEXT_PUBLIC_BACKEND_URL),
+  NEXT_PUBLIC_BET_PRESETS_ETH: cleanEnv(process.env.NEXT_PUBLIC_BET_PRESETS_ETH)
 });
 
 export const walletConnectProjectId =
