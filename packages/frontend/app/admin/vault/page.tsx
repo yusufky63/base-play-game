@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AlertTriangle, ExternalLink, ShieldCheck } from "lucide-react";
-import { createPublicClient, fallback, formatEther, http, parseEther } from "viem";
+import { createPublicClient, encodeFunctionData, fallback, formatEther, http, parseEther } from "viem";
 import { useAccount, usePublicClient, useSendTransaction, useSwitchChain, useWriteContract } from "wagmi";
 import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
@@ -29,11 +29,16 @@ const vaultAbi = [
   { type: "function", name: "setHouseEdge", stateMutability: "nonpayable", inputs: [{ type: "uint256", name: "newBps" }], outputs: [] },
   { type: "function", name: "pause", stateMutability: "nonpayable", inputs: [], outputs: [] },
   { type: "function", name: "unpause", stateMutability: "nonpayable", inputs: [], outputs: [] },
-  { type: "function", name: "emergencyWithdraw", stateMutability: "nonpayable", inputs: [], outputs: [] }
+  { type: "function", name: "withdraw", stateMutability: "nonpayable", inputs: [{ type: "uint256", name: "amount" }], outputs: [] },
+  { type: "function", name: "emergencyWithdraw", stateMutability: "nonpayable", inputs: [], outputs: [] },
+  { type: "error", name: "InvalidAmount", inputs: [] },
+  { type: "error", name: "EnforcedPause", inputs: [] },
+  { type: "error", name: "OwnableUnauthorizedAccount", inputs: [{ type: "address", name: "account" }] }
 ] as const;
 
 type Round = Database["public"]["Tables"]["game_rounds"]["Row"];
 type RiskRound = Round | OnchainRound;
+type CallClient = { call: (args: { to: `0x${string}`; data: `0x${string}` }) => Promise<unknown> };
 const defaultNetwork = getDefaultNetworkConfig();
 
 export default function AdminVaultPage() {
@@ -57,6 +62,7 @@ export default function AdminVaultPage() {
     reserved: "",
     reservedEth: 0,
     reservationReady: false,
+    withdrawSupported: false,
     paused: false
   });
   const [controls, setControls] = useState({
@@ -65,6 +71,7 @@ export default function AdminVaultPage() {
     houseEdgePct: "3"
   });
   const [fundAmountEth, setFundAmountEth] = useState("0.01");
+  const [withdrawAmountEth, setWithdrawAmountEth] = useState("0.001");
   const [refreshNonce, setRefreshNonce] = useState(0);
   const [risk, setRisk] = useState({
     rounds: 0,
@@ -92,9 +99,10 @@ export default function AdminVaultPage() {
         client.readContract({ address: vaultAddress, abi: vaultAbi, functionName: "houseEdgeBps" }),
         client.readContract({ address: vaultAddress, abi: vaultAbi, functionName: "paused" })
       ]);
-      const [availableLiquidity, reserved] = await Promise.all([
+      const [availableLiquidity, reserved, withdrawSupported] = await Promise.all([
         client.readContract({ address: vaultAddress, abi: vaultAbi, functionName: "availableLiquidity" }).catch(() => null),
-        client.readContract({ address: vaultAddress, abi: vaultAbi, functionName: "totalReservedPayout" }).catch(() => null)
+        client.readContract({ address: vaultAddress, abi: vaultAbi, functionName: "totalReservedPayout" }).catch(() => null),
+        probeWithdrawSupport(client, vaultAddress)
       ]);
 
       setState({
@@ -110,6 +118,7 @@ export default function AdminVaultPage() {
         reserved: reserved === null ? "" : `${formatEther(reserved)} ETH`,
         reservedEth: reserved === null ? 0 : Number(formatEther(reserved)),
         reservationReady: availableLiquidity !== null && reserved !== null,
+        withdrawSupported,
         paused
       });
       setControls({
@@ -127,7 +136,7 @@ export default function AdminVaultPage() {
     await switchChainAsync({ chainId: defaultNetwork.chainId });
   }
 
-  async function writeVault(functionName: "setMinBet" | "setMaxBet" | "setHouseEdge" | "pause" | "unpause" | "emergencyWithdraw", args: readonly unknown[] = []) {
+  async function writeVault(functionName: "setMinBet" | "setMaxBet" | "setHouseEdge" | "pause" | "unpause" | "withdraw" | "emergencyWithdraw", args: readonly unknown[] = []) {
     if (!vaultAddress) return;
     try {
       await ensureAdminNetwork();
@@ -143,6 +152,31 @@ export default function AdminVaultPage() {
     } catch (error) {
       toast({ tone: "error", title: "Vault transaction failed", description: error instanceof Error ? error.message : undefined });
     }
+  }
+
+  async function withdrawAvailableLiquidity() {
+    if (!vaultAddress) return;
+    if (!state.withdrawSupported) {
+      toast({ tone: "error", title: "Withdraw unavailable", description: "The deployed vault does not include amount-based withdraw. Deploy GameVaultV2 to enable it." });
+      return;
+    }
+    if (!state.paused) {
+      toast({ tone: "error", title: "Pause required", description: "Pause the vault before withdrawing available liquidity." });
+      return;
+    }
+
+    const value = parseEthControl(withdrawAmountEth);
+    if (value === null) return;
+    if (value <= 0n) {
+      toast({ tone: "error", title: "Invalid withdraw amount", description: "Use an ETH amount greater than zero." });
+      return;
+    }
+    if (Number(formatEther(value)) > state.availableLiquidityEth) {
+      toast({ tone: "error", title: "Amount exceeds available liquidity", description: "Withdraw only the available liquidity amount. Reserved payouts stay protected." });
+      return;
+    }
+
+    await writeVault("withdraw", [value]);
   }
 
   async function fundVault() {
@@ -182,6 +216,25 @@ export default function AdminVaultPage() {
       return null;
     }
     return BigInt(Math.round(numeric * 100));
+  }
+
+  async function probeWithdrawSupport(client: CallClient, address: `0x${string}`) {
+    try {
+      await client.call({
+        to: address,
+        data: encodeFunctionData({ abi: vaultAbi, functionName: "withdraw", args: [0n] })
+      });
+      return true;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error ?? "");
+      const revertData = extractRevertData(error);
+      return (
+        (typeof revertData === "string" && revertData !== "0x") ||
+        message.includes("InvalidAmount") ||
+        message.includes("EnforcedPause") ||
+        message.includes("OwnableUnauthorizedAccount")
+      );
+    }
   }
 
   useEffect(() => {
@@ -293,9 +346,65 @@ export default function AdminVaultPage() {
       <div className="mt-4 admin-note">
         <div className="mb-4 flex flex-col gap-2 border-b border-[var(--border)] pb-3 md:flex-row md:items-center md:justify-between">
           <div>
+            <h2 className="font-semibold text-[var(--text-1)]">Available withdraw</h2>
+            <p className="mt-1 text-sm leading-6 text-[var(--text-2)]">
+              Withdraw a specific ETH amount from available liquidity while the vault is paused. Reserved payouts remain protected.
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled={isVaultWritePending || !state.paused || !state.withdrawSupported}
+            onClick={() => void withdrawAvailableLiquidity()}
+            className="primary-action h-10 rounded-md px-4 text-sm font-bold text-white disabled:opacity-45"
+            title={!state.withdrawSupported ? "Deploy GameVaultV2 to enable amount-based withdraw" : state.paused ? "Withdraw available liquidity to owner" : "Pause vault before withdraw"}
+          >
+            Withdraw amount
+          </button>
+        </div>
+        <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+          <label className="grid gap-2">
+            <span className="font-mono text-[10px] font-semibold uppercase text-[var(--text-3)]">Withdraw amount ETH</span>
+            <input
+              value={withdrawAmountEth}
+              disabled={!state.withdrawSupported}
+              onChange={(event) => setWithdrawAmountEth(event.target.value)}
+              className="h-10 rounded-md border border-[var(--border-2)] bg-[var(--surface)] px-3 font-mono text-sm text-[var(--text-1)] outline-none focus:border-[var(--accent)] disabled:text-[var(--text-3)]"
+              aria-label="Withdraw amount"
+            />
+          </label>
+          <div className="grid grid-cols-3 gap-2 md:w-[270px]">
+            {[
+              { label: "25%", value: state.availableLiquidityEth * 0.25 },
+              { label: "50%", value: state.availableLiquidityEth * 0.5 },
+              { label: "Max", value: state.availableLiquidityEth }
+            ].map((preset) => (
+              <button
+                key={preset.label}
+                type="button"
+                disabled={!state.withdrawSupported}
+                onClick={() => setWithdrawAmountEth(formatEth(preset.value))}
+                className="play-button-ghost h-10 rounded-md px-3 font-mono text-xs font-bold disabled:opacity-45"
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className={`mt-3 rounded-md border p-3 text-sm leading-6 ${state.withdrawSupported ? "border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-2)]" : "border-[color-mix(in_srgb,var(--pending)_35%,transparent)] bg-[color-mix(in_srgb,var(--pending)_8%,transparent)] text-[var(--text-2)]"}`}>
+          {state.withdrawSupported
+            ? state.paused
+              ? "Vault is paused. Amount-based withdraw is available up to the available liquidity value."
+              : "Pause the vault first. Amount-based withdraw is intentionally blocked while games can accept new bets."
+            : "Current mainnet GameVault does not include amount-based withdraw. It is available in GameVaultV2, so a vault redeploy is required before this button can be enabled."}
+        </div>
+      </div>
+
+      <div className="mt-4 admin-note">
+        <div className="mb-4 flex flex-col gap-2 border-b border-[var(--border)] pb-3 md:flex-row md:items-center md:justify-between">
+          <div>
             <h2 className="font-semibold text-[var(--text-1)]">Emergency withdraw</h2>
             <p className="mt-1 text-sm leading-6 text-[var(--text-2)]">
-              Current GameVault supports full emergency withdraw only while the vault is paused. It does not support an amount input or partial withdraw in this deployed contract.
+              Full paused-vault drain to the owner wallet. Use only after active rounds are resolved or intentionally abandoned.
             </p>
           </div>
           <button
@@ -308,22 +417,9 @@ export default function AdminVaultPage() {
             Emergency withdraw
           </button>
         </div>
-        <div className="grid gap-3 md:grid-cols-[0.9fr_1.1fr]">
-          <label className="grid gap-2 rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3">
-            <span className="font-mono text-[10px] font-semibold uppercase text-[var(--text-3)]">Partial withdraw amount</span>
-            <input
-              value=""
-              disabled
-              placeholder="Not supported by current vault"
-              className="h-10 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text-3)]"
-              aria-label="Partial withdraw amount unavailable"
-            />
-            <span className="text-xs leading-5 text-[var(--text-3)]">Partial withdraw is prepared in the next vault source, but this deployed vault must be redeployed before the button can be enabled.</span>
-          </label>
-          <div className="rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3 text-sm leading-6 text-[var(--text-2)]">
-            {!state.paused ? "Pause the vault first to unlock emergency withdraw. " : "Vault is paused, so full emergency withdraw is available. "}
-            Before draining funds, resolve or refund active rounds where possible. A full emergency withdraw can leave pending payout/refund paths without liquidity.
-          </div>
+        <div className="rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3 text-sm leading-6 text-[var(--text-2)]">
+          {!state.paused ? "Pause the vault first to unlock emergency withdraw. " : "Vault is paused, so full emergency withdraw is available. "}
+          Before draining funds, resolve or refund active rounds where possible. A full emergency withdraw can leave pending payout/refund paths without liquidity.
         </div>
       </div>
 
@@ -443,4 +539,14 @@ function AdminControlInput({ label, value, disabled, onChange, onSave }: { label
       </button>
     </label>
   );
+}
+
+function extractRevertData(error: unknown): string | undefined {
+  const first = error as { data?: unknown; cause?: unknown };
+  if (typeof first.data === "string") return first.data;
+  const second = first.cause as { data?: unknown; cause?: unknown } | undefined;
+  if (typeof second?.data === "string") return second.data;
+  const third = second?.cause as { data?: unknown } | undefined;
+  if (typeof third?.data === "string") return third.data;
+  return undefined;
 }

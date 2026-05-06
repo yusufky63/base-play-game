@@ -1,6 +1,11 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
     date: "May 6, 2026",
+    title: "Vault withdraw controls clarified",
+    body: "Admin Vault now separates amount-based available withdraw from full emergency withdraw and explains when the deployed vault contract does not support partial withdrawal yet."
+  },
+  {
+    date: "May 6, 2026",
     title: "Explorer verification flow updated",
     body: "Contract verification now uses the Etherscan V2 API path for Base explorers and includes separate Blockscout verification commands for public source-code checks."
   },
