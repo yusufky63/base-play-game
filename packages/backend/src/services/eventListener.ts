@@ -21,25 +21,19 @@ interface EventClient {
   getContractEvents: (args: {
     address: Address;
     abi: typeof ROUND_SETTLED_ABI;
-    eventName: "RoundSettled";
+    eventName: "RoundSettled" | "CrashPointGenerated";
     fromBlock: bigint;
     toBlock: bigint;
   }) => Promise<Log[]>;
 }
 
-interface WatchClient extends EventClient {
-  watchContractEvent: (args: {
-    address: Address;
-    abi: typeof ROUND_SETTLED_ABI;
-    eventName: "RoundSettled" | "CrashPointGenerated";
-    onLogs: (logs: any[]) => void | Promise<void>;
-    onError: (error: Error) => void;
-  }) => () => void;
-}
-
 const DEFAULT_LOOKBACK_BLOCKS = 20_000n;
 const MAX_LOG_RANGE_BLOCKS = 9_000n;
-const watcherRestarts = new Set<string>();
+const POLL_INTERVAL_MS = readPositiveNumber("INDEXER_POLL_MS", 10_000);
+const ERROR_POLL_INTERVAL_MS = readPositiveNumber("INDEXER_ERROR_POLL_MS", 12_000);
+const POLL_GAME_SPACING_MS = readPositiveNumber("INDEXER_GAME_SPACING_MS", 150);
+const BLOCKPI_PATTERN = /blockpi\.network/i;
+const indexerRuntime = new Map<string, { nextBlock: bigint | null }>();
 const indexerHealth = new Map<
   string,
   {
@@ -64,12 +58,11 @@ async function listenChain(chainId: 84532 | 8453, options: InitOptions) {
 
   const client = createPublicClient({
     chain: viemChain,
-    transport: fallback(network.rpcUrls.filter(Boolean).map((url) => http(url, { timeout: 10_000 })))
+    transport: fallback(getBackendRpcUrls(network.rpcUrls).map((url) => http(url, { timeout: 10_000 })))
   });
 
-  for (const game of GAMES_REGISTRY.filter((entry) => entry.chains.includes(networkKey))) {
-    await watchGame(client as WatchClient, chainId, networkKey, game, options);
-  }
+  const games = GAMES_REGISTRY.filter((entry) => entry.chains.includes(networkKey));
+  startChainIndexerLoop(client as EventClient, chainId, networkKey, games, options);
 }
 
 export async function initEventListeners(options: InitOptions) {
@@ -77,130 +70,129 @@ export async function initEventListeners(options: InitOptions) {
   await listenChain(8453, options);
 }
 
-async function catchUpSettledRounds(
+async function getInitialFromBlock(
   client: EventClient,
   chainId: 84532 | 8453,
-  address: Address,
-  gameId: string
+  gameId: string,
+  latestBlock: bigint
 ) {
-  const latestBlock = await client.getBlockNumber();
   const envName = `INDEX_FROM_BLOCK_${chainId === 8453 ? "MAINNET" : "SEPOLIA"}`;
   const configuredFromBlock = process.env[envName] ? BigInt(process.env[envName]!) : undefined;
   const checkpoint = configuredFromBlock === undefined ? await getIndexedCheckpoint(chainId, gameId) : 0n;
-  const fromBlock =
+  return (
     configuredFromBlock ??
     (checkpoint > 0n
       ? checkpoint + 1n
       : latestBlock > DEFAULT_LOOKBACK_BLOCKS
         ? latestBlock - DEFAULT_LOOKBACK_BLOCKS
-        : 0n);
+        : 0n)
+  );
+}
 
-  let indexed = 0;
-  if (fromBlock > latestBlock) return;
+function startChainIndexerLoop(
+  client: EventClient,
+  chainId: 84532 | 8453,
+  networkKey: NetworkKey,
+  games: Array<(typeof GAMES_REGISTRY)[number]>,
+  options: InitOptions
+) {
+  const activeGames = games
+    .map((game) => ({ game, address: CONTRACT_ADDRESSES[chainId]?.[game.contractName] }))
+    .filter((entry): entry is { game: (typeof GAMES_REGISTRY)[number]; address: Address } => Boolean(entry.address));
 
-  for (const { from, to } of blockRanges(fromBlock, latestBlock, MAX_LOG_RANGE_BLOCKS)) {
-    setIndexerHealth(chainId, gameId, { status: "catching_up", lastError: null });
-    const logs = await client.getContractEvents({
+  for (const { game } of activeGames) {
+    setIndexerHealth(chainId, game.id, { status: "starting", lastError: null });
+    console.log(`[Listener] Polling ${game.id} on ${networkKey}`);
+  }
+
+  void (async () => {
+    while (true) {
+      let delayMs = POLL_INTERVAL_MS;
+      try {
+        const latestBlock = await client.getBlockNumber();
+        for (const { game, address } of activeGames) {
+          await pollGame(client, chainId, address, game.id, latestBlock, options);
+          await sleep(POLL_GAME_SPACING_MS);
+        }
+      } catch (error) {
+        delayMs = ERROR_POLL_INTERVAL_MS;
+        const message = cleanErrorMessage(error);
+        console.error(`[Listener][${networkKey}] ${message}`);
+        for (const { game } of activeGames) {
+          setIndexerHealth(chainId, game.id, { status: "error", lastError: message });
+        }
+      }
+      await sleep(delayMs);
+    }
+  })();
+}
+
+async function pollGame(
+  client: EventClient,
+  chainId: 84532 | 8453,
+  address: Address,
+  gameId: string,
+  latestBlock: bigint,
+  options: InitOptions
+) {
+  const key = `${chainId}:${gameId}`;
+  const state = indexerRuntime.get(key) ?? { nextBlock: null };
+
+  if (state.nextBlock === null) {
+    state.nextBlock = await getInitialFromBlock(client, chainId, gameId, latestBlock);
+    indexerRuntime.set(key, state);
+  }
+
+  if (state.nextBlock > latestBlock) {
+    setIndexerHealth(chainId, gameId, { status: "watching", lastError: null });
+    return;
+  }
+
+  const fromBlock = state.nextBlock;
+  const toBlock = fromBlock + MAX_LOG_RANGE_BLOCKS > latestBlock ? latestBlock : fromBlock + MAX_LOG_RANGE_BLOCKS;
+  const catchingUp = latestBlock - toBlock > MAX_LOG_RANGE_BLOCKS;
+
+  try {
+    setIndexerHealth(chainId, gameId, { status: catchingUp ? "catching_up" : "watching", lastError: null });
+
+    if (gameId === "crash" && latestBlock - toBlock <= 20n) {
+      const crashLogs = await client.getContractEvents({
+        address,
+        abi: ROUND_SETTLED_ABI,
+        eventName: "CrashPointGenerated",
+        fromBlock,
+        toBlock
+      });
+      for (const log of crashLogs) {
+        const args = "args" in log ? (log.args as { requestId?: bigint; crashPoint?: bigint }) : undefined;
+        if (args?.requestId === undefined || args.crashPoint === undefined) continue;
+        options.crashEngine.startRound(args.requestId.toString(), Number(args.crashPoint) / 100);
+      }
+    }
+
+    const settledLogs = await client.getContractEvents({
       address,
       abi: ROUND_SETTLED_ABI,
       eventName: "RoundSettled",
-      fromBlock: from,
-      toBlock: to
+      fromBlock,
+      toBlock
     });
 
-    if (logs.length > 0) {
-      await persistSettledLogs(chainId, gameId, logs);
-      indexed += logs.length;
-    }
-    await saveIndexedCheckpoint(chainId, gameId, to);
-    setIndexerHealth(chainId, gameId, { lastIndexedBlock: to.toString() });
+    const lastLogBlock = await persistSettledLogs(chainId, gameId, settledLogs);
+    await saveIndexedCheckpoint(chainId, gameId, toBlock);
+    state.nextBlock = toBlock + 1n;
+    indexerRuntime.set(key, state);
+    setIndexerHealth(chainId, gameId, {
+      status: catchingUp ? "catching_up" : "watching",
+      lastIndexedBlock: toBlock.toString(),
+      ...(lastLogBlock ? { lastLogAt: new Date().toISOString() } : {}),
+      lastError: null
+    });
+  } catch (error) {
+    const message = cleanErrorMessage(error);
+    console.error(`[Listener][${gameId}][${chainId}] ${message}`);
+    setIndexerHealth(chainId, gameId, { status: "error", lastError: message });
   }
-
-  if (indexed > 0) {
-    console.log(`[Listener] Indexed ${indexed} historical ${gameId} rounds on chainId ${chainId}`);
-  }
-}
-
-async function watchGame(
-  client: WatchClient,
-  chainId: 84532 | 8453,
-  networkKey: NetworkKey,
-  game: (typeof GAMES_REGISTRY)[number],
-  options: InitOptions
-) {
-  const address = CONTRACT_ADDRESSES[chainId]?.[game.contractName];
-  if (!address) return;
-
-  setIndexerHealth(chainId, game.id, { status: "starting", lastError: null });
-  await catchUpSettledRounds(client, chainId, address, game.id);
-
-  const watcherKey = `${chainId}:${game.id}:settled`;
-  const unwatchSettled = client.watchContractEvent({
-    address,
-    abi: ROUND_SETTLED_ABI,
-    eventName: "RoundSettled",
-    onLogs: async (logs) => {
-      const lastBlock = await persistSettledLogs(chainId, game.id, logs);
-      if (lastBlock) await saveIndexedCheckpoint(chainId, game.id, lastBlock);
-      if (lastBlock) {
-        setIndexerHealth(chainId, game.id, {
-          status: "watching",
-          lastIndexedBlock: lastBlock.toString(),
-          lastLogAt: new Date().toISOString(),
-          lastError: null
-        });
-      }
-    },
-    onError: (error) => {
-      console.error(`[Listener][${game.id}][${chainId}]`, error.message);
-      setIndexerHealth(chainId, game.id, { status: "error", lastError: error.message });
-      unwatchSettled();
-      scheduleWatcherRestart(watcherKey, () => void watchGame(client, chainId, networkKey, game, options));
-    }
-  });
-
-  if (game.id === "crash") {
-    watchCrashPoint(client, chainId, address, options);
-  }
-
-  setIndexerHealth(chainId, game.id, { status: "watching", lastError: null });
-  console.log(`[Listener] Watching ${game.id} on ${networkKey}`);
-}
-
-function watchCrashPoint(
-  client: WatchClient,
-  chainId: 84532 | 8453,
-  address: Address,
-  options: InitOptions
-) {
-  const crashWatcherKey = `${chainId}:crash:crash-point`;
-  const unwatchCrash = client.watchContractEvent({
-    address,
-    abi: ROUND_SETTLED_ABI,
-    eventName: "CrashPointGenerated",
-    onLogs: (logs) => {
-      for (const log of logs) {
-        const { requestId, crashPoint } = log.args;
-        if (requestId === undefined || crashPoint === undefined) continue;
-        options.crashEngine.startRound(requestId.toString(), Number(crashPoint) / 100);
-      }
-    },
-    onError: (error) => {
-      console.error(`[CrashListener][${chainId}]`, error.message);
-      setIndexerHealth(chainId, "crash", { status: "error", lastError: error.message });
-      unwatchCrash();
-      scheduleWatcherRestart(crashWatcherKey, () => watchCrashPoint(client, chainId, address, options));
-    }
-  });
-}
-
-function scheduleWatcherRestart(key: string, restart: () => void) {
-  if (watcherRestarts.has(key)) return;
-  watcherRestarts.add(key);
-  setTimeout(() => {
-    watcherRestarts.delete(key);
-    restart();
-  }, 10_000);
 }
 
 async function getIndexedCheckpoint(chainId: 84532 | 8453, gameId: string) {
@@ -260,17 +252,28 @@ function setIndexerHealth(
   });
 }
 
-function blockRanges(fromBlock: bigint, toBlock: bigint, maxRange: bigint) {
-  const ranges: Array<{ from: bigint; to: bigint }> = [];
-  let cursor = fromBlock;
+function getBackendRpcUrls(rpcUrls: readonly string[]) {
+  const urls = rpcUrls.filter((url) => url && !BLOCKPI_PATTERN.test(url));
+  return urls.length > 0 ? urls : rpcUrls.filter(Boolean);
+}
 
-  while (cursor <= toBlock) {
-    const to = cursor + maxRange > toBlock ? toBlock : cursor + maxRange;
-    ranges.push({ from: cursor, to });
-    cursor = to + 1n;
-  }
+function readPositiveNumber(name: string, fallbackValue: number) {
+  const parsed = Number(process.env[name]);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallbackValue;
+}
 
-  return ranges;
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function cleanErrorMessage(error: unknown) {
+  const raw = error instanceof Error ? error.message : String(error);
+  return raw
+    .replace(/Details:\s*"[\s\S]*/i, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 600);
 }
 
 async function persistSettledLogs(chainId: 84532 | 8453, gameId: string, logs: Log[]) {

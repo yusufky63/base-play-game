@@ -43,7 +43,7 @@ const playerNotes = [
   {
     icon: <Radio size={20} />,
     title: "Fast activity views",
-    body: "Live feed, profile stats, and leaderboard data are indexed from settled rounds, cached briefly, and refreshed in the background."
+    body: "Live feed, profile stats, and leaderboard data are indexed from settled Base events, cached briefly, and refreshed in the background."
   }
 ];
 
@@ -76,6 +76,10 @@ const faqs = [
   {
     question: "Where can I verify a round?",
     answer: "Open the Chainlink VRF button on a game page. It shows the request ID, the wager transaction, and the settlement transaction when available."
+  },
+  {
+    question: "Why can live feed take a few seconds?",
+    answer: "The on-chain result is final first. Feed, profile, and leaderboard views are updated by the backend indexer after it reads settled Base events, so display data can lag the transaction slightly."
   },
   {
     question: "Why can a round be pending?",

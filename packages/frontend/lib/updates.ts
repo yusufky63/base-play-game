@@ -1,6 +1,11 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
     date: "May 6, 2026",
+    title: "Indexer polling hardened",
+    body: "The backend indexer now avoids fragile RPC filter subscriptions, polls settled Base events from saved checkpoints, skips unreliable BlockPI endpoints, and keeps admin health errors short and readable."
+  },
+  {
+    date: "May 6, 2026",
     title: "Vercel monorepo build fixed",
     body: "Production deploys now install build dependencies explicitly and compile the shared workspace before the frontend, so Tailwind and shared contract config resolve correctly on Vercel."
   },
