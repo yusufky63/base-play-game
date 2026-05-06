@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { frontendEnvStatus } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
-const BACKEND_URL = process.env.BACKEND_URL || frontendEnvStatus.backendUrl || "";
+const BACKEND_URL = process.env.BACKEND_URL || frontendEnvStatus.backendUrl || readRootPublicEnv("NEXT_PUBLIC_BACKEND_URL") || "";
 
 export async function GET() {
   if (!BACKEND_URL) {
@@ -36,5 +38,18 @@ export async function GET() {
       },
       { status: 502 }
     );
+  }
+}
+
+function readRootPublicEnv(name: string) {
+  if (process.env.NODE_ENV === "production") return "";
+  try {
+    const envPath = resolve(process.cwd(), "../..", ".env");
+    const line = readFileSync(envPath, "utf8")
+      .split(/\r?\n/)
+      .find((item) => item.trim().startsWith(`${name}=`));
+    return line?.slice(line.indexOf("=") + 1).trim().replace(/^['"]|['"]$/g, "") ?? "";
+  } catch {
+    return "";
   }
 }
