@@ -11,35 +11,24 @@ export function GameCard({ game, playCount = 0 }: { game: GameConfig; playCount?
         game.active ? "hover:-translate-y-0.5" : "cursor-not-allowed opacity-45"
       }`}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="game-card-head">
         <div className={`game-icon-box game-icon-${game.id}`}>
           <GameGlyph id={game.id} />
         </div>
-        <span className="rounded-md border border-[var(--border-2)] bg-[var(--surface-2)] px-2 py-1 font-mono text-[11px] text-[var(--text-1)]">{game.maxMultiplier}x</span>
-      </div>
-
-      <div className="min-w-0 space-y-2">
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <h2 className="display-heading truncate text-lg font-bold text-[var(--text-1)]">{game.name}</h2>
-          {!game.active && <span className="rounded-md border border-[var(--border-2)] px-2 py-1 text-[10px] font-semibold text-[var(--text-3)]">Soon</span>}
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <h2 className="display-heading truncate text-lg font-bold text-[var(--text-1)]">{game.name}</h2>
+            {!game.active && <span className="rounded-md border border-[var(--border-2)] px-2 py-1 text-[10px] font-semibold text-[var(--text-3)]">Soon</span>}
+          </div>
+          <p className="mt-1 line-clamp-2 text-[13px] leading-5 text-[var(--text-2)]">{game.description}</p>
         </div>
-        <p className="line-clamp-2 text-[13px] leading-5 text-[var(--text-2)]">{game.description}</p>
-        <div className="flex flex-wrap gap-1.5">
-          {game.tags.slice(0, 2).map((tag) => (
-            <span key={tag} className="rounded-md border border-[var(--border)] bg-[var(--surface-2)] px-2 py-1 text-[10px] font-semibold uppercase text-[var(--text-2)]">
-              {tag}
-            </span>
-          ))}
-          <span className="rounded-md border border-[var(--border-2)] bg-[var(--surface)] px-2 py-1 font-mono text-[10px] font-semibold uppercase text-[var(--text-2)] md:hidden">
-            {formatCount(playCount)} played
-          </span>
-        </div>
+        <span className="game-card-payout">{game.maxMultiplier}x</span>
       </div>
 
       <div className="game-card-stats">
         <Meta label="Payout" value={`${game.maxMultiplier}x`} />
-        <Meta label="Edge" value="3%" />
         <Meta label="Played" value={formatCount(playCount)} />
+        <Meta label="Edge" value="3%" />
       </div>
 
       <div className="flex items-center justify-end gap-3">

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { isAddress } from "viem";
 import { useAccount } from "wagmi";
@@ -14,22 +15,54 @@ import { levelProgress } from "@/lib/progression";
 import { PendingRoundsPanel } from "@/components/wallet/PendingRoundsPanel";
 
 const gameNames = Object.fromEntries(GAMES_REGISTRY.map((game) => [game.id, game.name]));
+type ProfileTab = "games" | "rounds" | "refunds";
 
 export function ProfileClient({ address }: { address: string }) {
   const account = useAccount();
   const validAddress = isAddress(address) ? address : null;
   const profile = usePlayerProfile(validAddress);
-  const rounds = usePlayerRounds(validAddress, 20);
+  const rounds = usePlayerRounds(validAddress, 8);
   const ethUsd = useEthUsdPrice();
+  const [activeTab, setActiveTab] = useState<ProfileTab>("games");
+  const [roundPageIndex, setRoundPageIndex] = useState(0);
   const data = profile.data;
   const stats = data?.stats;
-  const rows = rounds.data?.pages.flatMap((page) => page.rows) ?? [];
+  const roundPages = rounds.data?.pages ?? [];
+  const currentRoundRows = roundPages[roundPageIndex]?.rows ?? [];
   const xp = stats?.lifetime_xp ?? 0;
   const level = stats?.level ?? 1;
   const progress = levelProgress(xp, level);
   const totalRounds = stats?.total_rounds ?? 0;
   const winRate = totalRounds > 0 && data ? (data.wins / totalRounds) * 100 : 0;
   const isConnectedProfile = Boolean(account.address && validAddress && account.address.toLowerCase() === validAddress.toLowerCase());
+  const profileTabs: Array<{ id: ProfileTab; label: string; detail: string }> = [
+    { id: "games", label: "Games", detail: `${data?.gameStats.length ?? 0} played` },
+    { id: "rounds", label: "Rounds", detail: `${roundPages.reduce((count, page) => count + page.rows.length, 0)} loaded` },
+    ...(isConnectedProfile ? [{ id: "refunds" as const, label: "Refunds", detail: "Active rounds" }] : [])
+  ];
+
+  useEffect(() => {
+    setRoundPageIndex(0);
+  }, [validAddress]);
+
+  useEffect(() => {
+    if (!isConnectedProfile && activeTab === "refunds") {
+      setActiveTab("games");
+    }
+  }, [activeTab, isConnectedProfile]);
+
+  async function goNextRoundPage() {
+    if (roundPageIndex + 1 < roundPages.length) {
+      setRoundPageIndex((current) => Math.min(current + 1, roundPages.length - 1));
+      return;
+    }
+
+    if (rounds.hasNextPage && !rounds.isFetchingNextPage) {
+      const nextIndex = roundPages.length;
+      await rounds.fetchNextPage();
+      setRoundPageIndex(nextIndex);
+    }
+  }
 
   if (!validAddress) {
     return (
@@ -52,7 +85,7 @@ export function ProfileClient({ address }: { address: string }) {
           </h1>
           <p className="mt-2 text-sm text-[var(--text-2)]">Public player stats, XP, streaks, and recent rounds.</p>
         </div>
-        <button type="button" onClick={() => { void profile.refetch(); void rounds.refetch(); }} className="control-shell flex items-center gap-2 px-3 text-xs font-bold">
+        <button type="button" onClick={() => { setRoundPageIndex(0); void profile.refetch(); void rounds.refetch(); }} className="control-shell flex items-center gap-2 px-3 text-xs font-bold">
           <RefreshCw size={13} className={profile.isFetching || rounds.isFetching ? "animate-spin text-[var(--accent)]" : ""} />
           Refresh
         </button>
@@ -93,73 +126,101 @@ export function ProfileClient({ address }: { address: string }) {
         </div>
       </section>
 
-      {isConnectedProfile && (
-        <section className="mt-4">
-          <div className="mb-2 rounded-md border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-sm leading-6 text-[var(--text-2)]">
-            Refund center scans your active on-chain rounds after reconnecting. If a VRF round times out while the tab is closed, the claim action appears here and in the wallet menu for the same wallet.
-          </div>
-          <PendingRoundsPanel />
-        </section>
-      )}
-
-      <section className="mt-4 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="panel overflow-hidden">
-          <div className="border-b border-[var(--border)] px-4 py-3">
-            <h2 className="display-heading text-lg font-bold text-[var(--text-1)]">Played games</h2>
-          </div>
-          <div className="divide-y divide-[var(--border)]">
-            {(data?.gameStats ?? []).map((game) => (
-              <div key={`${game.game_id}-${game.chain_id}`} className="grid grid-cols-[1fr_auto] gap-3 px-4 py-3 text-sm">
-                <div>
-                  <Link href={`/games/${game.game_id}`} className="font-bold text-[var(--text-1)] hover:text-[var(--accent)]">
-                    {gameNames[game.game_id] ?? game.game_id}
-                  </Link>
-                  <div className="mt-1 text-xs text-[var(--text-3)]">{game.wins} wins / {game.losses} losses</div>
-                </div>
-                <div className={`text-right font-mono text-xs ${game.net_profit >= 0 ? "text-[var(--win)]" : "text-[var(--lose)]"}`}>
-                  {game.net_profit >= 0 ? "+" : ""}{formatEth(game.net_profit)} ETH
-                  <span className="mt-1 block text-[var(--text-3)]">{game.total_rounds} rounds</span>
-                </div>
-              </div>
-            ))}
-            {profile.isLoading && <div className="px-4 py-5 text-sm text-[var(--text-3)]">Loading game stats...</div>}
-            {!profile.isLoading && (data?.gameStats.length ?? 0) === 0 && <div className="px-4 py-5 text-sm text-[var(--text-3)]">No played games yet.</div>}
-          </div>
+      <section className="profile-tab-shell mt-5">
+        <div className="profile-tabs" role="tablist" aria-label="Profile sections">
+          {profileTabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              className={`profile-tab ${activeTab === tab.id ? "profile-tab-active" : ""}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              <span>{tab.label}</span>
+              <small>{tab.detail}</small>
+            </button>
+          ))}
         </div>
 
-        <div className="panel overflow-hidden">
-          <div className="border-b border-[var(--border)] px-4 py-3">
-            <h2 className="display-heading text-lg font-bold text-[var(--text-1)]">Recent rounds</h2>
-          </div>
-          <div className="divide-y divide-[var(--border)]">
-            {rows.map((row) => {
-              const net = Number(row.payout) - Number(row.bet_amount);
-              return (
-                <div key={row.id} className="grid grid-cols-[1fr_auto] gap-3 px-4 py-3 text-sm">
+        {activeTab === "games" && (
+          <div className="profile-tab-panel">
+            <div className="profile-panel-heading">
+              <h2 className="display-heading text-lg font-bold text-[var(--text-1)]">Played games</h2>
+              <span>{data?.gameStats.length ?? 0} games</span>
+            </div>
+            <div className="divide-y divide-[var(--border)]">
+              {(data?.gameStats ?? []).map((game) => (
+                <div key={`${game.game_id}-${game.chain_id}`} className="profile-list-row">
                   <div>
-                    <Link href={`/games/${row.game_id}`} className="font-bold text-[var(--text-1)] hover:text-[var(--accent)]">
-                      {gameNames[row.game_id] ?? row.game_id}
+                    <Link href={`/games/${game.game_id}`} className="font-bold text-[var(--text-1)] hover:text-[var(--accent)]">
+                      {gameNames[game.game_id] ?? game.game_id}
                     </Link>
-                    <div className="mt-1 font-mono text-[11px] text-[var(--text-3)]">{new Date(row.settled_at).toLocaleString()}</div>
+                    <div className="mt-1 text-xs text-[var(--text-3)]">{game.wins} wins / {game.losses} losses</div>
                   </div>
-                  <div className={`text-right font-mono text-xs ${net >= 0 ? "text-[var(--win)]" : "text-[var(--lose)]"}`}>
-                    {net >= 0 ? "+" : ""}{formatEth(net)} ETH
-                    <span className="mt-1 block text-[var(--text-3)]">{row.won ? "Win" : "Loss"}</span>
+                  <div className={`profile-row-value ${game.net_profit >= 0 ? "text-[var(--win)]" : "text-[var(--lose)]"}`}>
+                    {game.net_profit >= 0 ? "+" : ""}{formatEth(game.net_profit)} ETH
+                    <span>{game.total_rounds} rounds</span>
                   </div>
                 </div>
-              );
-            })}
-            {rounds.isLoading && <div className="px-4 py-5 text-sm text-[var(--text-3)]">Loading rounds...</div>}
-            {!rounds.isLoading && rows.length === 0 && <div className="px-4 py-5 text-sm text-[var(--text-3)]">No settled rounds yet.</div>}
+              ))}
+              {profile.isLoading && <div className="px-4 py-5 text-sm text-[var(--text-3)]">Loading game stats...</div>}
+              {!profile.isLoading && (data?.gameStats.length ?? 0) === 0 && <div className="px-4 py-5 text-sm text-[var(--text-3)]">No played games yet.</div>}
+            </div>
           </div>
-          {rounds.hasNextPage && (
-            <div className="border-t border-[var(--border)] p-4 text-center">
-              <button type="button" onClick={() => void rounds.fetchNextPage()} disabled={rounds.isFetchingNextPage} className="play-button-ghost h-10 rounded-md px-4 text-sm font-bold disabled:opacity-50">
-                {rounds.isFetchingNextPage ? "Loading..." : "Load older"}
+        )}
+
+        {activeTab === "rounds" && (
+          <div className="profile-tab-panel">
+            <div className="profile-panel-heading">
+              <h2 className="display-heading text-lg font-bold text-[var(--text-1)]">Recent rounds</h2>
+              <span>Page {roundPages.length > 0 ? roundPageIndex + 1 : 0}</span>
+            </div>
+            <div className="divide-y divide-[var(--border)]">
+              {currentRoundRows.map((row) => {
+                const net = Number(row.payout) - Number(row.bet_amount);
+                return (
+                  <div key={row.id} className="profile-list-row">
+                    <div>
+                      <Link href={`/games/${row.game_id}`} className="font-bold text-[var(--text-1)] hover:text-[var(--accent)]">
+                        {gameNames[row.game_id] ?? row.game_id}
+                      </Link>
+                      <div className="mt-1 font-mono text-[11px] text-[var(--text-3)]">{new Date(row.settled_at).toLocaleString()}</div>
+                    </div>
+                    <div className={`profile-row-value ${net >= 0 ? "text-[var(--win)]" : "text-[var(--lose)]"}`}>
+                      {net >= 0 ? "+" : ""}{formatEth(net)} ETH
+                      <span>{row.won ? "Win" : "Loss"}</span>
+                    </div>
+                  </div>
+                );
+              })}
+              {rounds.isLoading && <div className="px-4 py-5 text-sm text-[var(--text-3)]">Loading rounds...</div>}
+              {!rounds.isLoading && currentRoundRows.length === 0 && <div className="px-4 py-5 text-sm text-[var(--text-3)]">No settled rounds yet.</div>}
+            </div>
+            <div className="profile-pagination">
+              <button type="button" onClick={() => setRoundPageIndex((current) => Math.max(0, current - 1))} disabled={roundPageIndex === 0} className="play-button-ghost h-10 rounded-md px-4 text-sm font-bold disabled:opacity-45">
+                Previous
+              </button>
+              <span>{roundPages.length > 0 ? `${roundPageIndex + 1} / ${Math.max(roundPages.length, roundPageIndex + 1)}` : "0 / 0"}</span>
+              <button type="button" onClick={() => void goNextRoundPage()} disabled={rounds.isFetchingNextPage || (roundPageIndex + 1 >= roundPages.length && !rounds.hasNextPage)} className="play-button-ghost h-10 rounded-md px-4 text-sm font-bold disabled:opacity-45">
+                {rounds.isFetchingNextPage ? "Loading..." : "Next"}
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {activeTab === "refunds" && isConnectedProfile && (
+          <div className="profile-tab-panel">
+            <div className="profile-panel-heading">
+              <h2 className="display-heading text-lg font-bold text-[var(--text-1)]">Pending refunds</h2>
+              <span>Connected wallet</span>
+            </div>
+            <div className="border-b border-[var(--border)] px-4 py-3 text-sm leading-6 text-[var(--text-2)]">
+              Refund center scans active on-chain rounds after reconnecting. If a VRF round times out while the tab is closed, the claim action appears here and in the wallet menu for the same wallet.
+            </div>
+            <PendingRoundsPanel />
+          </div>
+        )}
       </section>
     </main>
   );

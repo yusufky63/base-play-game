@@ -48,6 +48,12 @@ export function AdminHealthPanel() {
 
   const errored = indexers.filter((item) => item.status === "error").length;
   const watching = indexers.filter((item) => item.status === "watching").length;
+  const sortedIndexers = [...indexers].sort((a, b) => {
+    if (a.status === "error" && b.status !== "error") return -1;
+    if (a.status !== "error" && b.status === "error") return 1;
+    if (a.chainId !== b.chainId) return a.chainId - b.chainId;
+    return a.gameId.localeCompare(b.gameId);
+  });
 
   return (
     <section className="admin-note mt-4">
@@ -58,24 +64,26 @@ export function AdminHealthPanel() {
             RPC and indexer health
           </div>
           <p className="mt-1 text-sm text-[var(--text-2)]">
-            {status === "ready" ? `${watching} watching, ${errored} error` : status === "error" ? message : "Loading backend health"}
+            {status === "ready" ? `${watching} watching, ${errored} error, ${indexers.length} total` : status === "error" ? message : "Loading backend health"}
           </p>
         </div>
         {errored > 0 ? <AlertTriangle size={18} className="text-[var(--pending)]" /> : <CheckCircle2 size={18} className="text-[var(--win)]" />}
       </div>
 
-      <div className="grid gap-2 md:grid-cols-2">
-        {indexers.slice(0, 8).map((item) => (
-          <div key={`${item.chainId}-${item.gameId}`} className="rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3">
-            <div className="flex items-center justify-between gap-3">
-              <span className="font-mono text-xs font-semibold text-[var(--text-1)]">{item.gameId}</span>
-              <span className={item.status === "error" ? "text-xs text-[var(--lose)]" : "text-xs text-[var(--win)]"}>{item.status}</span>
+      <div className="admin-health-list">
+        {sortedIndexers.map((item) => (
+          <div key={`${item.chainId}-${item.gameId}`} className={`admin-health-row ${item.status === "error" ? "admin-health-row-error" : ""}`}>
+            <div className="admin-health-main">
+              <div className="min-w-0">
+                <span className="admin-health-game">{item.gameId}</span>
+                <div className="admin-health-meta">
+                  chain {item.chainId} / block {item.lastIndexedBlock ?? "-"}
+                  {item.lastLogAt ? ` / ${new Date(item.lastLogAt).toLocaleString()}` : ""}
+                </div>
+              </div>
+              <span className={item.status === "error" ? "admin-health-status admin-health-status-error" : "admin-health-status admin-health-status-ok"}>{item.status}</span>
             </div>
-            <div className="mt-2 font-mono text-[11px] text-[var(--text-3)]">
-              chain {item.chainId} · block {item.lastIndexedBlock ?? "-"}
-            </div>
-            {item.lastLogAt && <div className="mt-1 font-mono text-[10px] text-[var(--text-3)]">last update {new Date(item.lastLogAt).toLocaleString()}</div>}
-            {item.lastError && <div className="mt-2 text-xs text-[var(--lose)]">{item.lastError}</div>}
+            {item.lastError && <div className="admin-health-error">{item.lastError}</div>}
           </div>
         ))}
         {indexers.length === 0 && (

@@ -43,7 +43,7 @@ const playerNotes = [
   {
     icon: <Radio size={20} />,
     title: "Fast activity views",
-    body: "Live feed, profile stats, and leaderboard data are indexed from settled Base events, cached briefly, and refreshed in the background."
+    body: "Live feed, profile tabs, and leaderboard data are indexed from settled Base events, cached briefly, and refreshed in the background. Profile rounds are paginated so mobile views stay readable."
   }
 ];
 
@@ -142,13 +142,22 @@ export default function DocsPage() {
         </div>
       </div>
 
-      <section className="grid gap-3 md:grid-cols-4">
+      <nav className="doc-tab-nav" aria-label="Docs sections">
+        <a href="#essentials">Essentials</a>
+        <a href="#rounds">Rounds</a>
+        <a href="#refunds">Refunds</a>
+        <a href="#games">Games</a>
+        <a href="#contracts">Contracts</a>
+        <a href="#faq">Q&A</a>
+      </nav>
+
+      <section id="essentials" className="doc-section grid gap-3 md:grid-cols-4">
         {playerNotes.map((item) => (
           <InfoCard key={item.title} icon={item.icon} title={item.title} body={item.body} />
         ))}
       </section>
 
-      <section className="mt-4 panel p-4">
+      <section id="rounds" className="doc-section mt-4 panel p-4">
         <h2 className="display-heading text-xl font-bold text-[var(--text-1)]">How a round works</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {roundSteps.map((item, index) => (
@@ -161,7 +170,7 @@ export default function DocsPage() {
         </div>
       </section>
 
-      <section className="mt-4 panel p-4">
+      <section id="refunds" className="doc-section mt-4 panel p-4">
         <div className="flex items-start gap-3">
           <div className="mt-1 text-[var(--accent)]"><RotateCcw size={20} /></div>
           <div>
@@ -180,7 +189,7 @@ export default function DocsPage() {
         </div>
       </section>
 
-      <section className="mt-4 panel p-4">
+      <section id="games" className="doc-section mt-4 panel p-4">
         <h2 className="display-heading text-xl font-bold text-[var(--text-1)]">Games</h2>
         <div className="mt-4 grid gap-2">
           {GAMES_REGISTRY.map((game) => (
@@ -196,7 +205,7 @@ export default function DocsPage() {
         </div>
       </section>
 
-      <section className="mt-4 panel p-4">
+      <section id="contracts" className="doc-section mt-4 panel p-4">
         <h2 className="display-heading text-xl font-bold text-[var(--text-1)]">Public contracts</h2>
         <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">
           Game and vault contracts are public. The same shared contract registry powers game pages, docs, and production deployment. Use the explorer links to inspect transactions, events, code, and balances.
@@ -221,7 +230,7 @@ export default function DocsPage() {
         </div>
       </section>
 
-      <section className="mt-4 grid gap-4 lg:grid-cols-[1fr_0.9fr]">
+      <section id="account" className="doc-section mt-4 grid gap-4 lg:grid-cols-[1fr_0.9fr]">
         <div className="panel p-4">
           <h2 className="display-heading text-xl font-bold text-[var(--text-1)]">Wallet and results</h2>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -242,7 +251,7 @@ export default function DocsPage() {
         </div>
       </section>
 
-      <section className="mt-4 grid gap-4 lg:grid-cols-[1fr_0.9fr]">
+      <section className="doc-section mt-4 grid gap-4 lg:grid-cols-[1fr_0.9fr]">
         <div className="panel p-4">
           <h2 className="display-heading text-xl font-bold text-[var(--text-1)]">XP and leaderboard</h2>
           <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">
@@ -273,7 +282,7 @@ export default function DocsPage() {
         </div>
       </section>
 
-      <section className="mt-4 panel p-4">
+      <section id="faq" className="doc-section mt-4 panel p-4">
         <div className="flex items-start gap-3">
           <div className="mt-1 text-[var(--accent)]"><HelpCircle size={20} /></div>
           <div>

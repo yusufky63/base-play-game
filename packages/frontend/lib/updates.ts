@@ -1,6 +1,11 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
     date: "May 6, 2026",
+    title: "Profile, docs, and mobile cards refined",
+    body: "Profile now separates played games, paginated recent rounds, and pending refunds into tabs; Docs has section navigation for contracts and Q&A; mobile game cards are more compact and no longer show low-value tag pills."
+  },
+  {
+    date: "May 6, 2026",
     title: "Indexer polling hardened",
     body: "The backend indexer now avoids fragile RPC filter subscriptions, polls settled Base events from saved checkpoints, skips unreliable BlockPI endpoints, and keeps admin health errors short and readable."
   },
