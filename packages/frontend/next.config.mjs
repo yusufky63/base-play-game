@@ -1,8 +1,10 @@
 import nextEnv from "@next/env";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const { loadEnvConfig } = nextEnv;
-const rootEnv = loadEnvConfig(resolve(process.cwd(), "../..")).combinedEnv;
+const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const rootEnv = loadEnvConfig(rootDir).combinedEnv;
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
