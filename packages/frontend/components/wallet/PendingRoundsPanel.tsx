@@ -5,7 +5,7 @@ import { AlertTriangle, Clock3, ExternalLink, RefreshCw, RotateCcw } from "lucid
 import { getNetworkByChainId } from "@baseplay/shared/config/networks";
 import { useClaimPendingRound, usePendingRounds, type PendingRound } from "@/hooks/usePendingRounds";
 
-export function PendingRoundsPanel({ compact = false }: { compact?: boolean }) {
+export function PendingRoundsPanel({ compact = false, embedded = false }: { compact?: boolean; embedded?: boolean }) {
   const pending = usePendingRounds();
   const refund = useClaimPendingRound();
   const rows = pending.data ?? [];
@@ -13,7 +13,7 @@ export function PendingRoundsPanel({ compact = false }: { compact?: boolean }) {
   if (compact && rows.length === 0) return null;
 
   return (
-    <section className={compact ? "rounded-md border border-[var(--border)] bg-[var(--surface)] p-3" : "panel overflow-hidden"}>
+    <section className={compact ? "rounded-md border border-[var(--border)] bg-[var(--surface)] p-3" : embedded ? "pending-rounds-embedded" : "panel overflow-hidden"}>
       <div className={compact ? "mb-2 flex items-center justify-between gap-3" : "flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3"}>
         <div className="flex items-center gap-2 font-bold text-[var(--text-1)]">
           <Clock3 size={15} className={rows.length ? "text-[var(--pending)]" : "text-[var(--text-3)]"} />

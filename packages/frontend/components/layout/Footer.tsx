@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { BookOpen, Newspaper, Radio, ShieldCheck, Trophy, UserRound } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { BASEPLAY_SOCIAL_LINKS } from "@/lib/socialLinks";
 
@@ -38,26 +37,13 @@ export function Footer() {
         </div>
 
         <nav className="footer-nav">
-          <h2 className="footer-section-title">
-            <ShieldCheck size={14} className="text-[var(--win)]" />
-            Project
-          </h2>
+          <h2 className="footer-section-title">Project</h2>
           <div className="footer-link-grid">
-            <FooterLink href="/docs" icon={<BookOpen size={13} />}>
-              Docs
-            </FooterLink>
-            <FooterLink href="/updates" icon={<Newspaper size={13} />}>
-              Updates
-            </FooterLink>
-            <FooterLink href="/live-feed" icon={<Radio size={13} />}>
-              Live Feed
-            </FooterLink>
-            <FooterLink href="/leaderboard" icon={<Trophy size={13} />}>
-              Leaderboard
-            </FooterLink>
-            <FooterLink href="/profile" icon={<UserRound size={13} />}>
-              Profile
-            </FooterLink>
+            <FooterLink href="/docs">Docs</FooterLink>
+            <FooterLink href="/updates">Updates</FooterLink>
+            <FooterLink href="/live-feed">Live Feed</FooterLink>
+            <FooterLink href="/leaderboard">Leaderboard</FooterLink>
+            <FooterLink href="/profile">Profile</FooterLink>
           </div>
         </nav>
       </div>
@@ -65,10 +51,9 @@ export function Footer() {
   );
 }
 
-function FooterLink({ href, children, icon }: { href: string; children: React.ReactNode; icon?: React.ReactNode }) {
+function FooterLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
     <Link href={href} className="footer-link">
-      {icon}
       {children}
     </Link>
   );

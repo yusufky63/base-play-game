@@ -126,7 +126,7 @@ export function ProfileClient({ address }: { address: string }) {
         </div>
       </section>
 
-      <section className="profile-tab-shell mt-5">
+      <section className="profile-tab-shell mt-8">
         <div className="profile-tabs" role="tablist" aria-label="Profile sections">
           {profileTabs.map((tab) => (
             <button
@@ -218,7 +218,7 @@ export function ProfileClient({ address }: { address: string }) {
             <div className="border-b border-[var(--border)] px-4 py-3 text-sm leading-6 text-[var(--text-2)]">
               Refund center scans active on-chain rounds after reconnecting. If a VRF round times out while the tab is closed, the claim action appears here and in the wallet menu for the same wallet.
             </div>
-            <PendingRoundsPanel />
+            <PendingRoundsPanel embedded />
           </div>
         )}
       </section>

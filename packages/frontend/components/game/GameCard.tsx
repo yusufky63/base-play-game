@@ -11,18 +11,26 @@ export function GameCard({ game, playCount = 0 }: { game: GameConfig; playCount?
         game.active ? "hover:-translate-y-0.5" : "cursor-not-allowed opacity-45"
       }`}
     >
-      <div className="game-card-head">
+      <div className="game-card-top">
         <div className={`game-icon-box game-icon-${game.id}`}>
           <GameGlyph id={game.id} />
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <h2 className="display-heading truncate text-lg font-bold text-[var(--text-1)]">{game.name}</h2>
-            {!game.active && <span className="rounded-md border border-[var(--border-2)] px-2 py-1 text-[10px] font-semibold text-[var(--text-3)]">Soon</span>}
-          </div>
-          <p className="mt-1 line-clamp-2 text-[13px] leading-5 text-[var(--text-2)]">{game.description}</p>
-        </div>
         <span className="game-card-payout">{game.maxMultiplier}x</span>
+      </div>
+
+      <div className="game-card-body min-w-0 space-y-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <h2 className="display-heading truncate text-lg font-bold text-[var(--text-1)]">{game.name}</h2>
+          {!game.active && <span className="rounded-md border border-[var(--border-2)] px-2 py-1 text-[10px] font-semibold text-[var(--text-3)]">Soon</span>}
+        </div>
+        <p className="line-clamp-2 text-[13px] leading-5 text-[var(--text-2)]">{game.description}</p>
+        <div className="game-card-tags">
+          {game.tags.slice(0, 2).map((tag) => (
+            <span key={tag} className="rounded-md border border-[var(--border)] bg-[var(--surface-2)] px-2 py-1 text-[10px] font-semibold uppercase text-[var(--text-2)]">
+              {tag}
+            </span>
+          ))}
+        </div>
       </div>
 
       <div className="game-card-stats">

@@ -1,8 +1,8 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
     date: "May 6, 2026",
-    title: "Profile, docs, and mobile cards refined",
-    body: "Profile now separates played games, paginated recent rounds, and pending refunds into tabs; Docs has section navigation for contracts and Q&A; mobile game cards are more compact and no longer show low-value tag pills."
+    title: "Docs, profile tabs, and mobile cards refined",
+    body: "Docs now reads like a structured player manual with a side navigation and separated sections, profile refunds are embedded cleanly inside the Refunds tab, and game cards keep the full desktop layout while using a tighter mobile-only treatment."
   },
   {
     date: "May 6, 2026",

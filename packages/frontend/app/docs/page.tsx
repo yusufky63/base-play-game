@@ -5,6 +5,16 @@ import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
 import { NETWORKS } from "@baseplay/shared/config/networks";
 import { SITE_UPDATES } from "@/lib/updates";
 
+const docNav = [
+  { href: "#essentials", label: "Essentials" },
+  { href: "#rounds", label: "Round flow" },
+  { href: "#refunds", label: "Refunds" },
+  { href: "#games", label: "Games" },
+  { href: "#contracts", label: "Contracts" },
+  { href: "#account", label: "Account" },
+  { href: "#faq", label: "Q&A" }
+];
+
 const roundSteps = [
   {
     title: "Choose a game",
@@ -20,30 +30,30 @@ const roundSteps = [
   },
   {
     title: "See the result",
-    body: "The contract settles the round. The screen shows win or loss, and the result appears in the live feed after it is indexed. If settlement is delayed, the connected profile and wallet menu show the pending round and refund action. Refunds are separate transactions and do not run a new VRF result."
+    body: "The contract settles the round. The screen shows win or loss, and the result appears in the live feed after it is indexed. If settlement is delayed, the connected profile and wallet menu show the pending round and refund action."
   }
 ];
 
 const playerNotes = [
   {
-    icon: <ShieldCheck size={20} />,
+    icon: <ShieldCheck size={18} />,
     title: "Fair results",
     body: "Results are settled by contracts using Chainlink VRF on Base. The UI does not decide whether a player wins or loses."
   },
   {
-    icon: <CircleDollarSign size={20} />,
+    icon: <CircleDollarSign size={18} />,
     title: "Clear payouts",
-    body: "Wagers are shown in ETH with a lightweight USD reference where it helps. Bet presets are quick buttons, while the contract enforces the minimum and maximum bet."
+    body: "Wagers are shown in ETH with a lightweight USD reference where it helps. The contract enforces minimum and maximum bet limits."
   },
   {
-    icon: <Sparkles size={20} />,
+    icon: <Sparkles size={18} />,
     title: "XP and streaks",
     body: "Settled rounds grant XP mainly from wager size, not from winning luck. Playing on active days builds your daily streak."
   },
   {
-    icon: <Radio size={20} />,
+    icon: <Radio size={18} />,
     title: "Fast activity views",
-    body: "Live feed, profile tabs, and leaderboard data are indexed from settled Base events, cached briefly, and refreshed in the background. Profile rounds are paginated so mobile views stay readable."
+    body: "Live feed, profile tabs, and leaderboard data are indexed from settled Base events, cached briefly, and refreshed in the background."
   }
 ];
 
@@ -129,204 +139,202 @@ const faqs = [
 
 export default function DocsPage() {
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-10">
-      <div className="mb-7 border-b border-[var(--border)] pb-6">
-        <div>
-          <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-md border border-[var(--border-2)] bg-[var(--accent-light)] text-[var(--accent)]">
-            <BookOpen size={22} />
-          </div>
-          <h1 className="display-heading text-4xl font-bold text-[var(--text-1)]">Docs</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--text-2)]">
-            A player guide for BasePlay: how rounds work, how payouts are shown, how XP is earned, and what to check before playing.
-          </p>
+    <main className="docs-page mx-auto w-full max-w-7xl px-4 py-10">
+      <header className="docs-hero">
+        <div className="docs-kicker">
+          <BookOpen size={16} />
+          BasePlay Docs
         </div>
-      </div>
+        <h1 className="display-heading text-4xl font-bold text-[var(--text-1)]">Player documentation</h1>
+        <p>
+          A structured guide to BasePlay games, round settlement, refunds, XP, public contracts, and account data. It is written for players, not for internal deployment work.
+        </p>
+      </header>
 
-      <nav className="doc-tab-nav" aria-label="Docs sections">
-        <a href="#essentials">Essentials</a>
-        <a href="#rounds">Rounds</a>
-        <a href="#refunds">Refunds</a>
-        <a href="#games">Games</a>
-        <a href="#contracts">Contracts</a>
-        <a href="#faq">Q&A</a>
-      </nav>
+      <div className="docs-layout">
+        <aside className="docs-sidebar" aria-label="Docs navigation">
+          <nav>
+            {docNav.map((item) => (
+              <a key={item.href} href={item.href} className="docs-nav-link">
+                {item.label}
+              </a>
+            ))}
+          </nav>
+        </aside>
 
-      <section id="essentials" className="doc-section grid gap-3 md:grid-cols-4">
-        {playerNotes.map((item) => (
-          <InfoCard key={item.title} icon={item.icon} title={item.title} body={item.body} />
-        ))}
-      </section>
-
-      <section id="rounds" className="doc-section mt-4 panel p-4">
-        <h2 className="display-heading text-xl font-bold text-[var(--text-1)]">How a round works</h2>
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {roundSteps.map((item, index) => (
-            <div key={item.title} className="rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-4">
-              <div className="font-mono text-[11px] font-bold uppercase text-[var(--accent)]">Step {index + 1}</div>
-              <h3 className="mt-2 font-bold text-[var(--text-1)]">{item.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">{item.body}</p>
+        <article className="docs-article">
+          <section id="essentials" className="docs-block">
+            <SectionHeading eyebrow="Overview" title="Essentials" />
+            <p className="docs-lede">
+              BasePlay keeps the game result on-chain and uses the connected wallet as the player identity. These are the concepts worth knowing before placing a wager.
+            </p>
+            <div className="docs-feature-list">
+              {playerNotes.map((item) => (
+                <InfoCard key={item.title} icon={item.icon} title={item.title} body={item.body} />
+              ))}
             </div>
-          ))}
-        </div>
-      </section>
+          </section>
 
-      <section id="refunds" className="doc-section mt-4 panel p-4">
-        <div className="flex items-start gap-3">
-          <div className="mt-1 text-[var(--accent)]"><RotateCcw size={20} /></div>
-          <div>
-            <h2 className="display-heading text-xl font-bold text-[var(--text-1)]">Pending rounds and refunds</h2>
-            <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">
+          <section id="rounds" className="docs-block">
+            <SectionHeading eyebrow="Round flow" title="How a round works" />
+            <ol className="docs-step-list">
+              {roundSteps.map((item, index) => (
+                <li key={item.title}>
+                  <span>{index + 1}</span>
+                  <div>
+                    <h3>{item.title}</h3>
+                    <p>{item.body}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </section>
+
+          <section id="refunds" className="docs-block">
+            <SectionHeading eyebrow="Fallback" title="Pending rounds and refunds" icon={<RotateCcw size={18} />} />
+            <p className="docs-lede">
               Refunds are a fallback for unresolved VRF rounds. They are tracked from the contract, so they survive refreshes and closed tabs.
             </p>
-          </div>
-        </div>
-        <div className="mt-4 grid gap-2 md:grid-cols-2">
-          {refundNotes.map((item) => (
-            <div key={item} className="rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3 text-sm leading-6 text-[var(--text-2)]">
-              {item}
-            </div>
-          ))}
-        </div>
-      </section>
+            <ul className="docs-note-list">
+              {refundNotes.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </section>
 
-      <section id="games" className="doc-section mt-4 panel p-4">
-        <h2 className="display-heading text-xl font-bold text-[var(--text-1)]">Games</h2>
-        <div className="mt-4 grid gap-2">
-          {GAMES_REGISTRY.map((game) => (
-            <Link key={game.id} href={game.path} className="grid gap-3 rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3 hover:border-[var(--accent)] md:grid-cols-[1fr_120px_120px] md:items-center">
-              <div>
-                <div className="font-bold text-[var(--text-1)]">{game.name}</div>
-                <p className="mt-1 text-sm leading-5 text-[var(--text-2)]">{game.description}</p>
-              </div>
-              <Metric label="Max payout" value={`${game.maxMultiplier}x`} />
-              <Metric label="Edge" value="3%" />
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section id="contracts" className="doc-section mt-4 panel p-4">
-        <h2 className="display-heading text-xl font-bold text-[var(--text-1)]">Public contracts</h2>
-        <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">
-          Game and vault contracts are public. The same shared contract registry powers game pages, docs, and production deployment. Use the explorer links to inspect transactions, events, code, and balances.
-        </p>
-        <div className="mt-4 grid gap-3 lg:grid-cols-2">
-          {Object.values(NETWORKS).map((network) => (
-            <div key={network.chainId} className="rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3">
-              <div className="mb-3 flex items-center justify-between gap-3 border-b border-[var(--border)] pb-3">
-                <h3 className="font-bold text-[var(--text-1)]">{network.name}</h3>
-                <a href={network.blockExplorer} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-bold text-[var(--accent)]">
-                  Explorer <ExternalLink size={12} />
-                </a>
-              </div>
-              <div className="grid gap-2">
-                <ContractDocRow label="GameVault" address={CONTRACT_ADDRESSES[network.chainId]?.GameVault} explorer={network.blockExplorer} />
-                {GAMES_REGISTRY.filter((game) => game.active && game.chains.includes(network.chainId === 8453 ? "baseMainnet" : "baseSepolia")).map((game) => (
-                  <ContractDocRow key={`${network.chainId}-${game.id}`} label={game.name} address={CONTRACT_ADDRESSES[network.chainId]?.[game.contractName]} explorer={network.blockExplorer} />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section id="account" className="doc-section mt-4 grid gap-4 lg:grid-cols-[1fr_0.9fr]">
-        <div className="panel p-4">
-          <h2 className="display-heading text-xl font-bold text-[var(--text-1)]">Wallet and results</h2>
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            <InfoCard icon={<WalletCards size={18} />} title="Wallet connection" body="Your connected wallet is your player identity. Base-compatible wallet connectors are bundled with the app and are used for bets, results, XP, and leaderboard display." />
-            <InfoCard icon={<Radio size={18} />} title="Live feed" body="Game pages show the latest results for that game. The full live feed page shows recent activity across games." />
-          </div>
-        </div>
-
-        <div className="panel p-4">
-          <h2 className="display-heading text-xl font-bold text-[var(--text-1)]">Before playing</h2>
-          <div className="mt-4 grid gap-2">
-            {safetyNotes.map((item) => (
-              <div key={item} className="rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3 text-sm leading-6 text-[var(--text-2)]">
-                {item}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="doc-section mt-4 grid gap-4 lg:grid-cols-[1fr_0.9fr]">
-        <div className="panel p-4">
-          <h2 className="display-heading text-xl font-bold text-[var(--text-1)]">XP and leaderboard</h2>
-          <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">
-            XP rewards regular play volume and scales with wager size. Wins do not add a separate XP bonus. Leaderboard profit stays separate so you can compare actual net game performance.
-          </p>
-          <div className="mt-3 grid gap-2 md:grid-cols-2">
-            <DocLink href="/leaderboard" label="Open leaderboard" />
-            <DocLink href="/live-feed" label="Open live feed" />
-          </div>
-        </div>
-
-        <div className="panel p-4">
-          <h2 className="display-heading text-xl font-bold text-[var(--text-1)]">Latest updates</h2>
-          {SITE_UPDATES.length > 0 ? (
-            <div className="mt-4 grid gap-2">
-              {SITE_UPDATES.slice(0, 3).map((update) => (
-                <Link key={update.title} href="/updates" className="footer-update">
-                  <span className="font-mono text-[10px] text-[var(--text-3)]">{update.date}</span>
-                  <span className="mt-1 block font-bold text-[var(--text-1)]">{update.title}</span>
+          <section id="games" className="docs-block">
+            <SectionHeading eyebrow="Library" title="Games" />
+            <div className="docs-game-list">
+              {GAMES_REGISTRY.map((game) => (
+                <Link key={game.id} href={game.path} className="docs-game-row">
+                  <div>
+                    <strong>{game.name}</strong>
+                    <p>{game.description}</p>
+                  </div>
+                  <Metric label="Max payout" value={`${game.maxMultiplier}x`} />
+                  <Metric label="Edge" value="3%" />
                 </Link>
               ))}
             </div>
-          ) : (
-            <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">
-              Public release notes will appear after production launch.
-            </p>
-          )}
-        </div>
-      </section>
+          </section>
 
-      <section id="faq" className="doc-section mt-4 panel p-4">
-        <div className="flex items-start gap-3">
-          <div className="mt-1 text-[var(--accent)]"><HelpCircle size={20} /></div>
-          <div>
-            <h2 className="display-heading text-xl font-bold text-[var(--text-1)]">Questions and answers</h2>
-            <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">
-              Common questions about game logic, randomness, refunds, XP, payouts, and account tracking.
+          <section id="contracts" className="docs-block">
+            <SectionHeading eyebrow="Public records" title="Public contracts" />
+            <p className="docs-lede">
+              Game and vault contracts are public. Use the explorer links to inspect transactions, events, code, and balances for each deployed network.
             </p>
-          </div>
-        </div>
-        <div className="mt-4 grid gap-2 md:grid-cols-2">
-          {faqs.map((item) => (
-            <details key={item.question} className="rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3">
-              <summary className="cursor-pointer list-none font-bold text-[var(--text-1)]">{item.question}</summary>
-              <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">{item.answer}</p>
-            </details>
-          ))}
-        </div>
-      </section>
+            <div className="docs-network-list">
+              {Object.values(NETWORKS).map((network) => (
+                <div key={network.chainId} className="docs-network">
+                  <div className="docs-network-head">
+                    <h3>{network.name}</h3>
+                    <a href={network.blockExplorer} target="_blank" rel="noopener noreferrer">
+                      Explorer <ExternalLink size={12} />
+                    </a>
+                  </div>
+                  <div className="docs-contract-list">
+                    <ContractDocRow label="GameVault" address={CONTRACT_ADDRESSES[network.chainId]?.GameVault} explorer={network.blockExplorer} />
+                    {GAMES_REGISTRY.filter((game) => game.active && game.chains.includes(network.chainId === 8453 ? "baseMainnet" : "baseSepolia")).map((game) => (
+                      <ContractDocRow key={`${network.chainId}-${game.id}`} label={game.name} address={CONTRACT_ADDRESSES[network.chainId]?.[game.contractName]} explorer={network.blockExplorer} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section id="account" className="docs-block">
+            <SectionHeading eyebrow="Account" title="Wallet, stats, and safety" icon={<WalletCards size={18} />} />
+            <div className="docs-grid-two">
+              <div>
+                <h3>Wallet and results</h3>
+                <p>
+                  Your connected wallet is your player identity. Game pages show the latest results for that game, while the full live feed shows recent activity across games.
+                </p>
+                <div className="docs-link-row">
+                  <DocLink href="/leaderboard" label="Open leaderboard" />
+                  <DocLink href="/live-feed" label="Open live feed" />
+                </div>
+              </div>
+              <div>
+                <h3>Before playing</h3>
+                <ul className="docs-note-list docs-note-list-compact">
+                  {safetyNotes.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section className="docs-block">
+            <SectionHeading eyebrow="Changelog" title="Latest updates" />
+            {SITE_UPDATES.length > 0 ? (
+              <div className="docs-update-list">
+                {SITE_UPDATES.slice(0, 3).map((update) => (
+                  <Link key={update.title} href="/updates">
+                    <span>{update.date}</span>
+                    <strong>{update.title}</strong>
+                    <p>{update.body}</p>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="docs-lede">Public release notes will appear after production launch.</p>
+            )}
+          </section>
+
+          <section id="faq" className="docs-block">
+            <SectionHeading eyebrow="Questions" title="Questions and answers" icon={<HelpCircle size={18} />} />
+            <div className="docs-faq-list">
+              {faqs.map((item) => (
+                <details key={item.question} className="docs-faq-item">
+                  <summary>{item.question}</summary>
+                  <p>{item.answer}</p>
+                </details>
+              ))}
+            </div>
+          </section>
+        </article>
+      </div>
     </main>
+  );
+}
+
+function SectionHeading({ eyebrow, title, icon }: { eyebrow: string; title: string; icon?: React.ReactNode }) {
+  return (
+    <div className="docs-section-heading">
+      <div>
+        <span>{eyebrow}</span>
+        <h2>{title}</h2>
+      </div>
+      {icon && <div className="docs-heading-icon">{icon}</div>}
+    </div>
   );
 }
 
 function InfoCard({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
   return (
-    <div className="doc-summary">
-      <div className="text-[var(--accent)]">{icon}</div>
-      <h2 className="mt-3 display-heading text-lg font-bold text-[var(--text-1)]">{title}</h2>
-      <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">{body}</p>
+    <div className="docs-feature">
+      <div>{icon}</div>
+      <h3>{title}</h3>
+      <p>{body}</p>
     </div>
   );
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <div className="font-mono text-[10px] font-bold uppercase text-[var(--text-3)]">{label}</div>
-      <div className="mt-1 font-mono text-sm font-bold text-[var(--text-1)]">{value}</div>
+    <div className="docs-metric">
+      <span>{label}</span>
+      <strong>{value}</strong>
     </div>
   );
 }
 
 function DocLink({ href, label }: { href: string; label: string }) {
   return (
-    <Link href={href} className="rounded-md border border-[var(--border)] bg-[var(--surface-2)] px-3 py-3 text-sm font-semibold text-[var(--text-1)] hover:border-[var(--accent)]">
+    <Link href={href} className="docs-inline-link">
       {label}
     </Link>
   );
@@ -334,11 +342,11 @@ function DocLink({ href, label }: { href: string; label: string }) {
 
 function ContractDocRow({ label, address, explorer }: { label: string; address?: string; explorer: string }) {
   return (
-    <div className="grid gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] p-2 text-sm md:grid-cols-[130px_1fr_auto] md:items-center">
-      <span className="font-bold text-[var(--text-1)]">{label}</span>
-      <code className="break-all font-mono text-[11px] text-[var(--text-2)]">{address ?? "Not deployed"}</code>
+    <div className="docs-contract-row">
+      <span>{label}</span>
+      <code>{address ?? "Not deployed"}</code>
       {address && (
-        <a href={`${explorer}/address/${address}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-mono text-[10px] font-bold uppercase text-[var(--accent)]">
+        <a href={`${explorer}/address/${address}`} target="_blank" rel="noopener noreferrer">
           View <ExternalLink size={11} />
         </a>
       )}
