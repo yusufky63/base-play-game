@@ -238,7 +238,7 @@ export default async function DocsPage({ searchParams }: { searchParams?: Promis
           <section className="docs-block">
             <SectionHeading eyebrow="Public records" title="Public contracts" />
             <p className="docs-lede">
-              Game and vault contracts are public. Use the explorer links to inspect transactions, events, verified source code, balances, and owner-only vault actions for each deployed network.
+              Game and vault contracts are public. Use the explorer links to inspect transactions, events, verified source code, balances, and owner-only vault actions for each deployed network. Base mainnet now uses the V2 vault source for amount-based withdraw controls.
             </p>
             <div className="docs-network-list">
               {Object.values(NETWORKS).map((network) => (

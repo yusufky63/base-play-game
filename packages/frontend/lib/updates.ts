@@ -1,6 +1,11 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
     date: "May 6, 2026",
+    title: "GameVaultV2 activated on Base",
+    body: "Base mainnet now points to the deployed GameVaultV2 suite with amount-based withdraw support, newly approved game contracts, and Chainlink VRF consumers registered for the new games."
+  },
+  {
+    date: "May 6, 2026",
     title: "Vault withdraw controls clarified",
     body: "Admin Vault now separates amount-based available withdraw from full emergency withdraw and explains when the deployed vault contract does not support partial withdrawal yet."
   },

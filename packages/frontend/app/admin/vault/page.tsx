@@ -82,6 +82,7 @@ export default function AdminVaultPage() {
     payoutRatio: 0
   });
   const vaultAddress = CONTRACT_ADDRESSES[defaultNetwork.chainId]?.GameVault;
+  const v2VaultAddress = CONTRACT_ADDRESSES[defaultNetwork.chainId]?.GameVaultV2;
 
   useEffect(() => {
     if (!vaultAddress) return;
@@ -104,6 +105,7 @@ export default function AdminVaultPage() {
         client.readContract({ address: vaultAddress, abi: vaultAbi, functionName: "totalReservedPayout" }).catch(() => null),
         probeWithdrawSupport(client, vaultAddress)
       ]);
+      const knownV2Vault = v2VaultAddress?.toLowerCase() === vaultAddress.toLowerCase();
 
       setState({
         balance: `${formatEther(balance)} ETH`,
@@ -118,7 +120,7 @@ export default function AdminVaultPage() {
         reserved: reserved === null ? "" : `${formatEther(reserved)} ETH`,
         reservedEth: reserved === null ? 0 : Number(formatEther(reserved)),
         reservationReady: availableLiquidity !== null && reserved !== null,
-        withdrawSupported,
+        withdrawSupported: knownV2Vault || withdrawSupported,
         paused
       });
       setControls({
@@ -129,7 +131,7 @@ export default function AdminVaultPage() {
     }
 
     void load();
-  }, [vaultAddress, refreshNonce]);
+  }, [v2VaultAddress, vaultAddress, refreshNonce]);
 
   async function ensureAdminNetwork() {
     if (chain?.id === defaultNetwork.chainId) return;

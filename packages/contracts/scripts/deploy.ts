@@ -126,8 +126,10 @@ async function main() {
   const slots = await ethers.deployContract("SlotsGame", constructorArgs);
   await slots.waitForDeployment();
 
+  const deployedVaultAddress = await vault.getAddress();
   const addresses = {
-    GameVault: await vault.getAddress(),
+    GameVault: deployedVaultAddress,
+    ...(VAULT_CONTRACT_NAME === "GameVaultV2" ? { GameVaultV2: deployedVaultAddress } : {}),
     CoinFlipGame: await coinFlip.getAddress(),
     DiceGame: await dice.getAddress(),
     CrashGame: await crash.getAddress(),
@@ -146,18 +148,21 @@ async function main() {
     SlotsGame: await slots.getAddress()
   };
 
-  for (const address of Object.entries(addresses).filter(([name]) => name !== "GameVault").map(([, address]) => address)) {
+  for (const address of Object.entries(addresses).filter(([name]) => !name.startsWith("GameVault")).map(([, address]) => address)) {
     const tx = await vault.approveGame(address);
     await tx.wait();
   }
 
-  for (const address of Object.entries(addresses).filter(([name]) => name !== "GameVault").map(([, address]) => address)) {
+  for (const address of Object.entries(addresses).filter(([name]) => !name.startsWith("GameVault")).map(([, address]) => address)) {
     const tx = await coordinator.addConsumer(subscriptionId, address);
     await tx.wait();
   }
 
   writeSharedAddresses(chainId, addresses);
-  copyAbiFiles([VAULT_CONTRACT_NAME, ...Object.keys(addresses).filter((name) => name !== "GameVault")]);
+  copyAbiFiles([VAULT_CONTRACT_NAME, ...Object.keys(addresses).filter((name) => !name.startsWith("GameVault"))]);
+  if (VAULT_CONTRACT_NAME !== "GameVault") {
+    copyAbiAlias(VAULT_CONTRACT_NAME, "GameVault");
+  }
 
   console.log("[Deploy] Addresses:");
   console.table(addresses);
@@ -285,6 +290,13 @@ function copyAbiFiles(contractNames: string[]) {
     const artifact = JSON.parse(fs.readFileSync(artifactPath, "utf8")) as { abi: unknown };
     fs.writeFileSync(path.join(abiDir, `${contractName}.json`), JSON.stringify(artifact.abi, null, 2));
   }
+}
+
+function copyAbiAlias(contractName: string, aliasName: string) {
+  const abiDir = path.resolve(__dirname, "../../shared/abis");
+  const artifactPath = path.resolve(__dirname, `../artifacts/contracts/${contractPath(contractName)}/${contractName}.json`);
+  const artifact = JSON.parse(fs.readFileSync(artifactPath, "utf8")) as { abi: unknown };
+  fs.writeFileSync(path.join(abiDir, `${aliasName}.json`), JSON.stringify(artifact.abi, null, 2));
 }
 
 function contractPath(contractName: string) {
