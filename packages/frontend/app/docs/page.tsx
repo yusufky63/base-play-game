@@ -41,7 +41,7 @@ const playerNotes = [
   {
     icon: <Radio size={20} />,
     title: "Fast activity views",
-    body: "Live feed, stats, and leaderboard data are cached briefly, refreshed in the background, and can use Supabase, backend indexing, or on-chain fallback data."
+    body: "Live feed, profile stats, and leaderboard data are indexed from settled rounds, cached briefly, and refreshed in the background."
   }
 ];
 
