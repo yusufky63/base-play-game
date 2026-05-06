@@ -897,34 +897,6 @@ select {
   line-height: 1.6;
 }
 
-.game-operational-banner dl {
-  display: grid;
-  gap: 8px;
-}
-
-.game-operational-banner dl > div {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-ui);
-  background: color-mix(in srgb, var(--surface) 72%, transparent);
-  padding: 9px;
-}
-
-.game-operational-banner dt {
-  color: var(--text-3);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-.game-operational-banner dd {
-  margin-top: 3px;
-  color: var(--text-1);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 800;
-}
-
 .game-operational-vault_paused,
 .game-operational-no_liquidity {
   border-color: color-mix(in srgb, var(--lose) 38%, var(--border-2));
@@ -933,12 +905,7 @@ select {
 
 @media (min-width: 768px) {
   .game-operational-banner {
-    grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr);
     align-items: center;
-  }
-
-  .game-operational-banner dl {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

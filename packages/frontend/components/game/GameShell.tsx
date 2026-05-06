@@ -61,20 +61,6 @@ export function GameShell({
             <h2>{operationalStatus.title}</h2>
             <p>{operationalStatus.description}</p>
           </div>
-          <dl>
-            <div>
-              <dt>Network</dt>
-              <dd>{operationalStatus.networkName}</dd>
-            </div>
-            <div>
-              <dt>Min / Max</dt>
-              <dd>{operationalStatus.minBetEth} / {operationalStatus.maxBetEth} ETH</dd>
-            </div>
-            <div>
-              <dt>Liquidity</dt>
-              <dd>{operationalStatus.availableLiquidityEth} ETH</dd>
-            </div>
-          </dl>
         </section>
       )}
 

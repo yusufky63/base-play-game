@@ -23,6 +23,7 @@ const DEFAULT_NATIVE_SUBSCRIPTION_FUNDING: Record<number, string> = {
   84532: "0.1",
   8453: "0.001"
 };
+const VAULT_CONTRACT_NAME = process.env.VAULT_CONTRACT_NAME || "GameVault";
 const VRF_SUBSCRIPTION_ABI = [
   "function createSubscription() external returns (uint256)",
   "function fundSubscriptionWithNative(uint256 subId) external payable",
@@ -55,7 +56,11 @@ async function main() {
   console.log(`[Deploy] Deployer: ${deployer.address}`);
   console.log(`[Deploy] VRF Subscription: ${subscriptionId}`);
 
-  const vault = await ethers.deployContract("GameVault");
+  if (!["GameVault", "GameVaultV2"].includes(VAULT_CONTRACT_NAME)) {
+    throw new Error("VAULT_CONTRACT_NAME must be GameVault or GameVaultV2.");
+  }
+
+  const vault = await ethers.deployContract(VAULT_CONTRACT_NAME);
   await vault.waitForDeployment();
   const vaultFunding = process.env[`VAULT_FUND_ETH_${chainId === 8453 ? "MAINNET" : "SEPOLIA"}`] ?? DEFAULT_VAULT_FUNDING[chainId] ?? "0";
   if (parseEther(vaultFunding) > 0n) {
@@ -152,7 +157,7 @@ async function main() {
   }
 
   writeSharedAddresses(chainId, addresses);
-  copyAbiFiles(Object.keys(addresses));
+  copyAbiFiles([VAULT_CONTRACT_NAME, ...Object.keys(addresses).filter((name) => name !== "GameVault")]);
 
   console.log("[Deploy] Addresses:");
   console.table(addresses);
@@ -284,6 +289,7 @@ function copyAbiFiles(contractNames: string[]) {
 
 function contractPath(contractName: string) {
   if (contractName === "GameVault") return "core/GameVault.sol";
+  if (contractName === "GameVaultV2") return "core/GameVaultV2.sol";
   return `games/${contractName}.sol`;
 }
 

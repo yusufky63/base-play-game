@@ -8,6 +8,8 @@
     "deploy:base": "hardhat run scripts/deploy.ts --network base",
     "deploy:missing:base-sepolia": "hardhat run scripts/deploy-missing-games.ts --network baseSepolia",
     "deploy:missing:base": "hardhat run scripts/deploy-missing-games.ts --network base",
+    "verify:base-sepolia": "hardhat run scripts/verify-all.ts --network baseSepolia",
+    "verify:base": "hardhat run scripts/verify-all.ts --network base",
     "test": "hardhat test",
     "coverage": "hardhat coverage"
   },

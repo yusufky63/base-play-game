@@ -9,6 +9,7 @@ dotenv.config({ path: ".env" });
 const accounts = process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [];
 const baseSepoliaRpcUrl = process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org";
 const baseMainnetRpcUrl = process.env.BASE_MAINNET_RPC_URL || "https://mainnet.base.org";
+const basescanApiKey = process.env.BASESCAN_API_KEY || process.env.ETHERSCAN_API_KEY || "";
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -34,6 +35,30 @@ const config: HardhatUserConfig = {
       url: baseMainnetRpcUrl,
       accounts
     }
+  },
+  etherscan: {
+    apiKey: {
+      base: basescanApiKey,
+      baseSepolia: basescanApiKey
+    },
+    customChains: [
+      {
+        network: "base",
+        chainId: 8453,
+        urls: {
+          apiURL: "https://api.basescan.org/api",
+          browserURL: "https://basescan.org"
+        }
+      },
+      {
+        network: "baseSepolia",
+        chainId: 84532,
+        urls: {
+          apiURL: "https://api-sepolia.basescan.org/api",
+          browserURL: "https://sepolia.basescan.org"
+        }
+      }
+    ]
   }
 };
 

@@ -1,6 +1,11 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
     date: "May 6, 2026",
+    title: "Vault funding and safer controls prepared",
+    body: "Admin Vault now includes wallet-based vault funding, player pause messages are simpler, verification scripts are ready for Basescan, and the next vault source includes a safer paused partial withdraw path."
+  },
+  {
+    date: "May 6, 2026",
     title: "Pause and vault states surfaced",
     body: "Game pages now read game pause, vault pause, bet limits, and vault liquidity before allowing Play, while Admin explains full emergency withdraw, unavailable partial withdraw, and practical liquidity guardrails."
   },

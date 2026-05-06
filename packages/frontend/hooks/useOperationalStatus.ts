@@ -164,38 +164,38 @@ function getOperationalCopy(status: OperationalStatus, networkName: string) {
     case "live":
       return {
         title: "Game live",
-        description: `New wagers are open on ${networkName}.`,
+        description: `New rounds are open on ${networkName}.`,
         playDisabledLabel: ""
       };
     case "game_paused":
       return {
-        title: "Game paused",
-        description: "New wagers are temporarily disabled for this game. Existing pending rounds can still settle or become refundable after the timeout window.",
-        playDisabledLabel: "Game paused"
+        title: "Game temporarily paused",
+        description: "New rounds are closed for this game right now. You can pick another game or try again later.",
+        playDisabledLabel: "Paused"
       };
     case "vault_paused":
       return {
-        title: "Vault paused",
-        description: "The vault is in admin or emergency mode. New wagers are disabled across games until the vault is unpaused.",
-        playDisabledLabel: "Vault paused"
+        title: "Games temporarily paused",
+        description: "New rounds are closed for a short maintenance window. Try again later.",
+        playDisabledLabel: "Paused"
       };
     case "no_liquidity":
       return {
-        title: "Vault liquidity unavailable",
-        description: "The vault cannot reserve new payouts right now. New wagers are disabled until liquidity is restored.",
-        playDisabledLabel: "No liquidity"
+        title: "Games reopening soon",
+        description: "New rounds are closed while the bankroll is topped up. Try again later.",
+        playDisabledLabel: "Reopening soon"
       };
     case "loading":
       return {
         title: "Checking contract status",
-        description: "Reading game and vault status from the selected Base network.",
+        description: "Checking whether this game is ready.",
         playDisabledLabel: "Checking status"
       };
     case "unavailable":
     default:
       return {
-        title: "Contract status unavailable",
-        description: `BasePlay could not read the game and vault status on ${networkName}. Switch networks or try again after the RPC recovers.`,
+        title: "Game unavailable",
+        description: `This game is not ready on ${networkName}. Switch networks or try again later.`,
         playDisabledLabel: "Unavailable"
       };
   }

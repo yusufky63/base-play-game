@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, ExternalLink, ShieldCheck } from "lucide-react";
 import { createPublicClient, fallback, formatEther, http, parseEther } from "viem";
-import { useWriteContract } from "wagmi";
+import { useAccount, usePublicClient, useSendTransaction, useSwitchChain, useWriteContract } from "wagmi";
 import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
 import type { Database } from "@baseplay/shared/types/supabase.types";
@@ -39,7 +39,11 @@ const defaultNetwork = getDefaultNetworkConfig();
 export default function AdminVaultPage() {
   const ethUsd = useEthUsdPrice();
   const toast = useToast();
-  const { writeContractAsync, isPending } = useWriteContract();
+  const { chain } = useAccount();
+  const publicClient = usePublicClient();
+  const { switchChainAsync } = useSwitchChain();
+  const { writeContractAsync, isPending: isVaultWritePending } = useWriteContract();
+  const { sendTransactionAsync, isPending: isFundPending } = useSendTransaction();
   const [state, setState] = useState({
     balance: "",
     balanceEth: 0,
@@ -60,6 +64,8 @@ export default function AdminVaultPage() {
     maxBetEth: "0.001",
     houseEdgePct: "3"
   });
+  const [fundAmountEth, setFundAmountEth] = useState("0.01");
+  const [refreshNonce, setRefreshNonce] = useState(0);
   const [risk, setRisk] = useState({
     rounds: 0,
     wagered: 0,
@@ -114,11 +120,17 @@ export default function AdminVaultPage() {
     }
 
     void load();
-  }, [vaultAddress]);
+  }, [vaultAddress, refreshNonce]);
+
+  async function ensureAdminNetwork() {
+    if (chain?.id === defaultNetwork.chainId) return;
+    await switchChainAsync({ chainId: defaultNetwork.chainId });
+  }
 
   async function writeVault(functionName: "setMinBet" | "setMaxBet" | "setHouseEdge" | "pause" | "unpause" | "emergencyWithdraw", args: readonly unknown[] = []) {
     if (!vaultAddress) return;
     try {
+      await ensureAdminNetwork();
       const hash = await writeContractAsync({
         address: vaultAddress,
         abi: vaultAbi,
@@ -126,8 +138,31 @@ export default function AdminVaultPage() {
         args: args as never
       });
       toast({ tone: "success", title: "Vault transaction sent", description: hash });
+      await publicClient?.waitForTransactionReceipt({ hash });
+      setRefreshNonce((value) => value + 1);
     } catch (error) {
       toast({ tone: "error", title: "Vault transaction failed", description: error instanceof Error ? error.message : undefined });
+    }
+  }
+
+  async function fundVault() {
+    if (!vaultAddress) return;
+    const value = parseEthControl(fundAmountEth);
+    if (value === null) return;
+    if (value <= 0n) {
+      toast({ tone: "error", title: "Invalid funding amount", description: "Use an ETH amount greater than zero." });
+      return;
+    }
+
+    try {
+      await ensureAdminNetwork();
+      const hash = await sendTransactionAsync({ to: vaultAddress, value });
+      toast({ tone: "success", title: "Vault funding sent", description: hash });
+      await publicClient?.waitForTransactionReceipt({ hash });
+      setRefreshNonce((current) => current + 1);
+      toast({ tone: "success", title: "Vault funded", description: `${fundAmountEth} ETH was sent to the vault.` });
+    } catch (error) {
+      toast({ tone: "error", title: "Vault funding failed", description: error instanceof Error ? error.message : undefined });
     }
   }
 
@@ -194,6 +229,47 @@ export default function AdminVaultPage() {
         <AdminMetric label="House edge" value={state.houseEdge || "Loading"} detail="Read from GameVault" />
       </div>
 
+      <div className="mt-4 admin-note">
+        <div className="mb-4 flex flex-col gap-2 border-b border-[var(--border)] pb-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="font-semibold text-[var(--text-1)]">Fund vault</h2>
+            <p className="mt-1 text-sm leading-6 text-[var(--text-2)]">
+              Send ETH from the connected owner wallet directly to the deployed GameVault. Current vault contracts accept plain ETH transfers.
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled={isFundPending || !vaultAddress}
+            onClick={() => void fundVault()}
+            className="primary-action h-10 rounded-md px-4 text-sm font-bold text-white disabled:opacity-50"
+          >
+            {isFundPending ? "Funding..." : "Fund vault"}
+          </button>
+        </div>
+        <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+          <label className="grid gap-2">
+            <span className="font-mono text-[10px] font-semibold uppercase text-[var(--text-3)]">Funding amount ETH</span>
+            <input
+              value={fundAmountEth}
+              onChange={(event) => setFundAmountEth(event.target.value)}
+              className="h-10 rounded-md border border-[var(--border-2)] bg-[var(--surface)] px-3 font-mono text-sm text-[var(--text-1)] outline-none focus:border-[var(--accent)]"
+            />
+          </label>
+          <div className="grid grid-cols-3 gap-2 md:w-[270px]">
+            {["0.01", "0.05", "0.1"].map((amount) => (
+              <button
+                key={amount}
+                type="button"
+                onClick={() => setFundAmountEth(amount)}
+                className="play-button-ghost h-10 rounded-md px-3 font-mono text-xs font-bold"
+              >
+                {amount}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       <div className={`mt-4 admin-alert ${liquidityTone === "loss" ? "admin-danger" : ""}`}>
         <div className="flex items-start gap-3">
           {liquidityTone === "win" ? <ShieldCheck size={18} className="text-[var(--win)]" /> : <AlertTriangle size={18} className={liquidityTone === "loss" ? "text-[var(--lose)]" : "text-[var(--pending)]"} />}
@@ -224,7 +300,7 @@ export default function AdminVaultPage() {
           </div>
           <button
             type="button"
-            disabled={isPending || !state.paused}
+            disabled={isVaultWritePending || !state.paused}
             onClick={() => void writeVault("emergencyWithdraw")}
             className="play-button-ghost h-10 rounded-md px-4 text-sm font-bold text-[var(--lose)] disabled:opacity-45"
             title={state.paused ? "Withdraw full paused vault balance to owner" : "Pause vault before emergency withdraw"}
@@ -242,7 +318,7 @@ export default function AdminVaultPage() {
               className="h-10 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text-3)]"
               aria-label="Partial withdraw amount unavailable"
             />
-            <span className="text-xs leading-5 text-[var(--text-3)]">To withdraw a specific amount, the vault contract needs a separate owner-only withdraw(amount) function with reserve checks.</span>
+            <span className="text-xs leading-5 text-[var(--text-3)]">Partial withdraw is prepared in the next vault source, but this deployed vault must be redeployed before the button can be enabled.</span>
           </label>
           <div className="rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3 text-sm leading-6 text-[var(--text-2)]">
             {!state.paused ? "Pause the vault first to unlock emergency withdraw. " : "Vault is paused, so full emergency withdraw is available. "}
@@ -259,7 +335,7 @@ export default function AdminVaultPage() {
           </div>
           <button
             type="button"
-            disabled={isPending}
+            disabled={isVaultWritePending}
             onClick={() => void writeVault(state.paused ? "unpause" : "pause")}
             className="play-button-ghost h-10 rounded-md px-4 text-sm font-bold disabled:opacity-50"
           >
@@ -276,7 +352,7 @@ export default function AdminVaultPage() {
               const value = parseEthControl(controls.minBetEth);
               if (value !== null) void writeVault("setMinBet", [value]);
             }}
-            disabled={isPending}
+            disabled={isVaultWritePending}
           />
           <AdminControlInput
             label="Max bet ETH"
@@ -286,7 +362,7 @@ export default function AdminVaultPage() {
               const value = parseEthControl(controls.maxBetEth);
               if (value !== null) void writeVault("setMaxBet", [value]);
             }}
-            disabled={isPending}
+            disabled={isVaultWritePending}
           />
           <AdminControlInput
             label="House edge %"
@@ -296,7 +372,7 @@ export default function AdminVaultPage() {
               const value = parseHouseEdgeControl(controls.houseEdgePct);
               if (value !== null) void writeVault("setHouseEdge", [value]);
             }}
-            disabled={isPending}
+            disabled={isVaultWritePending}
           />
         </div>
       </div>

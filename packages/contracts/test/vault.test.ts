@@ -6,10 +6,10 @@ const LIQUIDITY = ethers.parseEther("0.1");
 const KEY_HASH = "0x" + "55".repeat(32);
 
 describe("GameVault controls", function () {
-  async function deployFixture() {
+  async function deployFixture(vaultContractName = "GameVault") {
     const [owner, player] = await ethers.getSigners();
 
-    const Vault = await ethers.getContractFactory("GameVault");
+    const Vault = await ethers.getContractFactory(vaultContractName);
     const vault = await Vault.deploy();
     await owner.sendTransaction({ to: await vault.getAddress(), value: LIQUIDITY });
 
@@ -64,6 +64,40 @@ describe("GameVault controls", function () {
     await vault.pause();
     expect(await vault.canAcceptBet(BET)).to.equal(false);
     await expect(game.connect(player).placeBet(params, { value: BET })).to.be.reverted;
+  });
+
+  it("accepts direct and explicit vault funding", async function () {
+    const { owner, vault } = await deployFixture("GameVaultV2");
+
+    await expect(owner.sendTransaction({ to: await vault.getAddress(), value: BET }))
+      .to.emit(vault, "VaultFunded")
+      .withArgs(owner.address, BET);
+    await expect(vault.fund({ value: BET }))
+      .to.emit(vault, "VaultFunded")
+      .withArgs(owner.address, BET);
+  });
+
+  it("allows paused partial withdraw only from available liquidity", async function () {
+    const { owner, vault } = await deployFixture("GameVaultV2");
+    const amount = ethers.parseEther("0.02");
+
+    await vault.pause();
+    await expect(vault.withdraw(amount)).to.emit(vault, "VaultWithdraw").withArgs(owner.address, amount);
+    expect(await ethers.provider.getBalance(await vault.getAddress())).to.equal(LIQUIDITY - amount);
+  });
+
+  it("keeps reserved payouts protected during partial and emergency withdraw", async function () {
+    const { game, owner, player, vault } = await deployFixture("GameVaultV2");
+    const params = ethers.AbiCoder.defaultAbiCoder().encode(["uint8"], [1]);
+
+    await game.connect(player).placeBet(params, { value: BET });
+    await vault.pause();
+
+    const available = await vault.availableLiquidity();
+    await expect(vault.withdraw(available + 1n)).to.be.revertedWithCustomError(vault, "InsufficientLiquidity");
+    await expect(vault.emergencyWithdraw()).to.be.revertedWithCustomError(vault, "ActivePayoutsReserved");
+    await expect(vault.withdraw(available)).to.emit(vault, "VaultWithdraw").withArgs(owner.address, available);
+    expect(await ethers.provider.getBalance(await vault.getAddress())).to.equal(await vault.totalReservedPayout());
   });
 
   it("allows emergency withdraw while paused", async function () {
