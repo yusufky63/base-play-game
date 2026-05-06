@@ -2,15 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPublicClient, fallback, http } from "viem";
-import { baseSepolia } from "viem/chains";
 import { useWriteContract } from "wagmi";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
 import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
-import { BASE_SEPOLIA_RPC_URLS } from "@baseplay/shared/config/networks";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { useToast } from "@/components/ui/ToastProvider";
+import { getDefaultNetworkConfig } from "@/lib/networkConfig";
 
-const deployedGameNames = new Set(Object.keys(CONTRACT_ADDRESSES[84532] ?? {}));
+const defaultNetwork = getDefaultNetworkConfig();
+const deployedGameNames = new Set(Object.keys(CONTRACT_ADDRESSES[defaultNetwork.chainId] ?? {}));
 type StatusFilter = "all" | "deployed" | "not-deployed";
 
 const gameAdminAbi = [
@@ -37,14 +37,14 @@ export default function AdminGamesPage() {
   useEffect(() => {
     let mounted = true;
     const client = createPublicClient({
-      chain: baseSepolia,
-      transport: fallback(BASE_SEPOLIA_RPC_URLS.map((url) => http(url, { timeout: 10_000 })))
+      chain: defaultNetwork.viemChain,
+      transport: fallback(defaultNetwork.rpcUrls.map((url) => http(url, { timeout: 10_000 })))
     });
 
     async function loadPausedStates() {
       const entries = await Promise.all(
         GAMES_REGISTRY.map(async (game) => {
-          const address = CONTRACT_ADDRESSES[84532]?.[game.contractName];
+          const address = CONTRACT_ADDRESSES[defaultNetwork.chainId]?.[game.contractName];
           if (!address) return [game.id, false] as const;
           const paused = await client.readContract({ address, abi: gameAdminAbi, functionName: "gamePaused" }).catch(() => false);
           return [game.id, Boolean(paused)] as const;
@@ -62,7 +62,7 @@ export default function AdminGamesPage() {
   }, []);
 
   async function setPaused(gameId: string, contractName: string, paused: boolean) {
-    const address = CONTRACT_ADDRESSES[84532]?.[contractName];
+    const address = CONTRACT_ADDRESSES[defaultNetwork.chainId]?.[contractName];
     if (!address) return;
 
     try {
@@ -109,7 +109,7 @@ export default function AdminGamesPage() {
             <div key={game.id} className="grid grid-cols-[1fr_90px_90px_110px_120px] gap-3 border-b border-[var(--border)] px-4 py-4 text-sm last:border-b-0">
               <div className="min-w-0">
                 <div className="font-medium text-[var(--text-1)]">{game.name}</div>
-                <div className="mt-1 truncate font-mono text-[11px] text-[var(--text-3)]">{CONTRACT_ADDRESSES[84532]?.[game.contractName] ?? "No address"}</div>
+                <div className="mt-1 truncate font-mono text-[11px] text-[var(--text-3)]">{CONTRACT_ADDRESSES[defaultNetwork.chainId]?.[game.contractName] ?? "No address"}</div>
               </div>
               <span className="text-right font-mono text-[var(--text-2)]">{game.minBetEth}</span>
               <span className="text-right font-mono text-[var(--text-2)]">{game.maxBetEth}</span>

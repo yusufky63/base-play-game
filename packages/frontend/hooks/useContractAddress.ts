@@ -1,12 +1,12 @@
 "use client";
 
 import { getContractAddress } from "@baseplay/shared/config/addresses";
-import { baseSepolia } from "wagmi/chains";
 import { useAccount } from "wagmi";
+import { defaultChainId } from "@/lib/env";
 
 export function useContractAddress(contractName: string): `0x${string}` | null {
   const { chain } = useAccount();
-  const chainId = chain?.id ?? baseSepolia.id;
+  const chainId = chain?.id ?? defaultChainId;
 
   try {
     return getContractAddress(chainId, contractName);

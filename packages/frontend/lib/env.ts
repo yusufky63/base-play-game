@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { base, baseSepolia } from "wagmi/chains";
+import type { NetworkKey } from "@baseplay/shared/config/networks";
 
 const cleanEnv = (value: string | undefined) => value?.trim();
 
@@ -35,6 +37,9 @@ export const frontendEnvStatus = {
   appUrl: env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   backendUrl: env.NEXT_PUBLIC_BACKEND_URL || ""
 };
+
+export const defaultNetworkKey = env.NEXT_PUBLIC_DEFAULT_CHAIN as NetworkKey;
+export const defaultChainId = defaultNetworkKey === "baseMainnet" ? base.id : baseSepolia.id;
 
 const parsedBetPresetAmounts = env.NEXT_PUBLIC_BET_PRESETS_ETH.split(",")
   .map((item) => item.trim())

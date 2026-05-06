@@ -18,7 +18,7 @@ const roundSteps = [
   },
   {
     title: "See the result",
-    body: "The contract settles the round. The screen shows win or loss, and the result appears in the live feed after it is indexed."
+    body: "The contract settles the round. The screen shows win or loss, and the result appears in the live feed after it is indexed. If settlement is delayed, the connected profile and wallet menu show the pending round and refund action."
   }
 ];
 
@@ -49,7 +49,7 @@ const safetyNotes = [
   "Only confirm transactions you understand in your wallet.",
   "Small games can still lose real ETH. Play with amounts you are comfortable risking.",
   "A pending round may take time while the transaction and randomness settle.",
-  "If a round is delayed beyond the contract window, the refund action appears when available."
+  "If a round is delayed beyond the contract window, the refund action appears in the connected wallet menu and your profile page."
 ];
 
 export default function DocsPage() {

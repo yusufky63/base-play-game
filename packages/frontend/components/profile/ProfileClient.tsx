@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { isAddress } from "viem";
+import { useAccount } from "wagmi";
 import { Activity, Flame, RefreshCw, Sparkles, Trophy, WalletCards } from "lucide-react";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
 import { BasenameLabel } from "@/components/base/BasenameLabel";
@@ -10,10 +11,12 @@ import { usePlayerProfile } from "@/hooks/usePlayerProfile";
 import { usePlayerRounds } from "@/hooks/usePlayerRounds";
 import { formatEth, formatUsd, shortenAddress } from "@/lib/formatters";
 import { levelProgress } from "@/lib/progression";
+import { PendingRoundsPanel } from "@/components/wallet/PendingRoundsPanel";
 
 const gameNames = Object.fromEntries(GAMES_REGISTRY.map((game) => [game.id, game.name]));
 
 export function ProfileClient({ address }: { address: string }) {
+  const account = useAccount();
   const validAddress = isAddress(address) ? address : null;
   const profile = usePlayerProfile(validAddress);
   const rounds = usePlayerRounds(validAddress, 20);
@@ -26,6 +29,7 @@ export function ProfileClient({ address }: { address: string }) {
   const progress = levelProgress(xp, level);
   const totalRounds = stats?.total_rounds ?? 0;
   const winRate = totalRounds > 0 && data ? (data.wins / totalRounds) * 100 : 0;
+  const isConnectedProfile = Boolean(account.address && validAddress && account.address.toLowerCase() === validAddress.toLowerCase());
 
   if (!validAddress) {
     return (
@@ -88,6 +92,12 @@ export function ProfileClient({ address }: { address: string }) {
           <Metric label="Profit rank" value={data?.weekly?.profit_rank ? `#${data.weekly.profit_rank}` : "-"} />
         </div>
       </section>
+
+      {isConnectedProfile && (
+        <section className="mt-4">
+          <PendingRoundsPanel />
+        </section>
+      )}
 
       <section className="mt-4 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="panel overflow-hidden">

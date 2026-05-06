@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { Database } from "@baseplay/shared/types/supabase.types";
 import { getSupabaseBrowser } from "@/lib/supabase";
 import { fetchRecentOnchainRounds } from "@/lib/onchainRounds";
+import { defaultChainId } from "@/lib/env";
 
 type Round = Database["public"]["Tables"]["game_rounds"]["Row"];
 type GameStatRow = Pick<Database["public"]["Tables"]["game_stats"]["Row"], "game_id" | "total_rounds">;
@@ -47,7 +48,7 @@ async function fetchGlobalStats(): Promise<GlobalStats> {
   if (supabase) {
     const [{ data: platform, error: platformError }, { data: rawGameRows, error: gameRowsError }] = await Promise.all([
       supabase.from("platform_stats").select("*").eq("id", 1).maybeSingle(),
-      supabase.from("game_stats").select("game_id,total_rounds").eq("chain_id", 84532)
+      supabase.from("game_stats").select("game_id,total_rounds").eq("chain_id", defaultChainId)
     ]);
 
     if (platformError || gameRowsError) {

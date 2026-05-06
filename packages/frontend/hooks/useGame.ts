@@ -4,10 +4,10 @@ import type { Abi } from "viem";
 import { formatEther, parseEther, parseEventLogs } from "viem";
 import { useEffect, useRef, useState } from "react";
 import { useAccount, usePublicClient, useSwitchChain, useWriteContract } from "wagmi";
-import { baseSepolia } from "wagmi/chains";
 import { getContractAddress } from "@baseplay/shared/config/addresses";
 import { getNetworkByChainId } from "@baseplay/shared/config/networks";
 import { parseContractError } from "@/lib/errors";
+import { defaultChainId } from "@/lib/env";
 import { useContractAddress } from "@/hooks/useContractAddress";
 import { useVRF } from "@/hooks/useVRF";
 import { useToast } from "@/components/ui/ToastProvider";
@@ -42,7 +42,7 @@ export function useGame(gameId: string, contractName: string, abi: Abi | null) {
     }
     const selectedChainId = getPreferredChainId();
     const walletChainId = chain?.id;
-    const targetChainId = selectedChainId ?? walletChainId ?? baseSepolia.id;
+    const targetChainId = selectedChainId ?? walletChainId ?? defaultChainId;
     const targetNetwork = getNetworkByChainId(targetChainId);
     if (!targetNetwork) {
       toast({ tone: "error", title: "Unsupported network", description: "Switch to Base Sepolia or Base Mainnet before placing a wager." });

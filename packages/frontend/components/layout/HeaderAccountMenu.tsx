@@ -8,6 +8,7 @@ import { BasenameLabel } from "@/components/base/BasenameLabel";
 import { ChainSwitcher } from "@/components/wallet/ChainSwitcher";
 import { SiweButton } from "@/components/wallet/SiweButton";
 import { WalletStatus } from "@/components/wallet/WalletStatus";
+import { PendingRoundsPanel } from "@/components/wallet/PendingRoundsPanel";
 import { useBalance } from "@/hooks/useBalance";
 import { useMounted } from "@/hooks/useMounted";
 import { usePlayerProgress } from "@/hooks/usePlayerProgress";
@@ -127,6 +128,8 @@ export function HeaderAccountMenu() {
             <span className="text-xs font-bold text-[var(--text-2)]">SIWE</span>
             <SiweButton />
           </section>
+
+          <PendingRoundsPanel compact />
 
         </div>
       )}

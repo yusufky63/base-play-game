@@ -2,10 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { createPublicClient, fallback, formatEther, http, parseEther } from "viem";
-import { baseSepolia } from "viem/chains";
 import { useWriteContract } from "wagmi";
 import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
-import { BASE_SEPOLIA_RPC_URLS } from "@baseplay/shared/config/networks";
 import type { Database } from "@baseplay/shared/types/supabase.types";
 import { AdminMetric, AdminShell } from "@/components/admin/AdminShell";
 import { getSupabaseBrowser } from "@/lib/supabase";
@@ -14,6 +12,7 @@ import { formatEth, formatUsd } from "@/lib/formatters";
 import { useEthUsdPrice } from "@/hooks/useEthUsdPrice";
 import { useToast } from "@/components/ui/ToastProvider";
 import { betPresetAmounts } from "@/lib/env";
+import { getDefaultNetworkConfig } from "@/lib/networkConfig";
 
 const vaultAbi = [
   { type: "function", name: "vaultBalance", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
@@ -32,6 +31,7 @@ const vaultAbi = [
 
 type Round = Database["public"]["Tables"]["game_rounds"]["Row"];
 type RiskRound = Round | OnchainRound;
+const defaultNetwork = getDefaultNetworkConfig();
 
 export default function AdminVaultPage() {
   const ethUsd = useEthUsdPrice();
@@ -60,14 +60,14 @@ export default function AdminVaultPage() {
     winRate: 0,
     payoutRatio: 0
   });
-  const vaultAddress = CONTRACT_ADDRESSES[84532]?.GameVault;
+  const vaultAddress = CONTRACT_ADDRESSES[defaultNetwork.chainId]?.GameVault;
 
   useEffect(() => {
     if (!vaultAddress) return;
 
     const client = createPublicClient({
-      chain: baseSepolia,
-      transport: fallback(BASE_SEPOLIA_RPC_URLS.map((url) => http(url, { timeout: 10_000 })))
+      chain: defaultNetwork.viemChain,
+      transport: fallback(defaultNetwork.rpcUrls.map((url) => http(url, { timeout: 10_000 })))
     });
 
     async function load() {

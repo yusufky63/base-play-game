@@ -4,6 +4,7 @@ import { ExternalLink, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { useAccount } from "wagmi";
 import { getNetworkByChainId } from "@baseplay/shared/config/networks";
+import { defaultChainId } from "@/lib/env";
 import { Modal } from "@/components/ui/Modal";
 
 export function FairnessButton({ requestId, txHash }: { requestId?: string | null; txHash?: string | null }) {
@@ -36,7 +37,7 @@ function FairnessModal({
   txHash: string | null;
 }) {
   const { chain } = useAccount();
-  const network = getNetworkByChainId(chain?.id ?? 84532);
+  const network = getNetworkByChainId(chain?.id ?? defaultChainId);
   const explorerBase = network?.blockExplorer ?? "https://sepolia.basescan.org";
 
   return (

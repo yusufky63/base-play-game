@@ -4,6 +4,7 @@ import { CheckCircle2, Clock3, ExternalLink, Loader2, RadioTower, ReceiptText } 
 import { useAccount } from "wagmi";
 import { getNetworkByChainId } from "@baseplay/shared/config/networks";
 import type { VRFState } from "@/hooks/useVRF";
+import { defaultChainId } from "@/lib/env";
 
 interface RoundStatusProps {
   state: VRFState;
@@ -13,7 +14,7 @@ interface RoundStatusProps {
 
 export function RoundStatus({ state, requestId, txHash }: RoundStatusProps) {
   const { chain } = useAccount();
-  const network = getNetworkByChainId(chain?.id ?? 84532);
+  const network = getNetworkByChainId(chain?.id ?? defaultChainId);
   const explorerBase = network?.blockExplorer ?? "https://sepolia.basescan.org";
 
   if (state === "idle" && !requestId && !txHash) return null;

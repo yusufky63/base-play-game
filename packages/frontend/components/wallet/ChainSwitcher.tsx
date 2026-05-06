@@ -5,6 +5,7 @@ import { Check, ChevronDown, Circle } from "lucide-react";
 import { base, baseSepolia } from "wagmi/chains";
 import { useAccount, useSwitchChain } from "wagmi";
 import { useMounted } from "@/hooks/useMounted";
+import { defaultChainId } from "@/lib/env";
 
 const chainOptions = [
   { chain: baseSepolia, label: "Base Sepolia", shortLabel: "Sepolia", tag: "testnet" },
@@ -15,14 +16,14 @@ export function ChainSwitcher() {
   const mounted = useMounted();
   const { chain, isConnected } = useAccount();
   const { switchChain, isPending } = useSwitchChain();
-  const [selectedChainId, setSelectedChainId] = useState<number>(baseSepolia.id);
+  const [selectedChainId, setSelectedChainId] = useState<number>(defaultChainId);
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const selected = chainOptions.find((option) => option.chain.id === selectedChainId) ?? chainOptions[0];
 
   useEffect(() => {
     const stored = Number(window.localStorage.getItem("baseplay:chainId"));
-    const next = chain?.id ?? (stored || baseSepolia.id);
+    const next = chain?.id ?? (stored || defaultChainId);
     setSelectedChainId(next);
   }, [chain?.id]);
 
