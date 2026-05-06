@@ -221,7 +221,7 @@ export default function DocsPage() {
         <div className="panel p-4">
           <h2 className="display-heading text-xl font-bold text-[var(--text-1)]">Wallet and results</h2>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
-            <InfoCard icon={<WalletCards size={18} />} title="Wallet connection" body="Your connected wallet is your player identity. It is used for bets, results, XP, and leaderboard display." />
+            <InfoCard icon={<WalletCards size={18} />} title="Wallet connection" body="Your connected wallet is your player identity. Base-compatible wallet connectors are bundled with the app and are used for bets, results, XP, and leaderboard display." />
             <InfoCard icon={<Radio size={18} />} title="Live feed" body="Game pages show the latest results for that game. The full live feed page shows recent activity across games." />
           </div>
         </div>

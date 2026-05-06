@@ -1,6 +1,11 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
     date: "May 6, 2026",
+    title: "Wallet build dependency fixed",
+    body: "The frontend now includes the bs58 dependency required by the Base/Coinbase wallet connector chain, preventing production builds from failing during wallet component SSR."
+  },
+  {
+    date: "May 6, 2026",
     title: "Admin analytics and public contract links added",
     body: "Game pages and Docs now expose explorer-ready contract addresses, while Admin adds per-game totals, paginated logs, vault liquidity USD/risk alerts, emergency withdraw controls, and Supabase fallback health."
   },
