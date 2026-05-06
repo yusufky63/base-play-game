@@ -15,7 +15,6 @@ export function LiveFeedPageClient({ initialGame = "all" }: { initialGame?: stri
   const feed = useRoundPages({ gameId: gameFilter, limit: 50 });
   const rows = useMemo(() => feed.data?.pages.flatMap((page) => page.rows) ?? [], [feed.data]);
   const ready = !feed.isLoading;
-  const source = feed.data?.pages[0]?.source ?? "onchain";
 
   useEffect(() => {
     setSelectedGame(initialGame);
@@ -65,7 +64,7 @@ export function LiveFeedPageClient({ initialGame = "all" }: { initialGame?: stri
           <>
             <Metric label="Rounds" value={String(rows.length)} />
             <Metric label="Volume" value={`${formatEth(totalVolume)} ETH`} />
-            <Metric label="Source" value={source} />
+            <Metric label="Wins" value={String(rows.filter((row) => row.won).length)} />
           </>
         ) : (
           <>

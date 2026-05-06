@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Circle, Flame, LogOut, Sparkles, Wallet } from "lucide-react";
-import { baseSepolia } from "wagmi/chains";
 import { useAccount, useDisconnect } from "wagmi";
 import { BasenameLabel } from "@/components/base/BasenameLabel";
 import { ChainSwitcher } from "@/components/wallet/ChainSwitcher";
@@ -12,6 +11,7 @@ import { PendingRoundsPanel } from "@/components/wallet/PendingRoundsPanel";
 import { useBalance } from "@/hooks/useBalance";
 import { useMounted } from "@/hooks/useMounted";
 import { usePlayerProgress } from "@/hooks/usePlayerProgress";
+import { defaultChainId } from "@/lib/env";
 import { levelProgress } from "@/lib/progression";
 import { getNetworkByChainId } from "@baseplay/shared/config/networks";
 
@@ -27,7 +27,7 @@ export function HeaderAccountMenu() {
   const xp = progress?.lifetime_xp ?? 0;
   const streak = progress?.current_streak ?? 0;
   const bar = levelProgress(xp, level);
-  const network = getNetworkByChainId(chain?.id ?? baseSepolia.id);
+  const network = getNetworkByChainId(chain?.id ?? defaultChainId);
 
   useEffect(() => {
     function handlePointerDown(event: PointerEvent) {
@@ -66,7 +66,7 @@ export function HeaderAccountMenu() {
               </span>
               <span className="mt-1 flex items-center gap-2 font-mono text-[9px] uppercase leading-none text-[var(--text-3)]">
                 <span>{formatted} {symbol}</span>
-                <span>{network?.shortName ?? "Sepolia"}</span>
+                <span>{network?.shortName ?? "base"}</span>
               </span>
             </span>
             <ChevronDown size={14} className={`text-[var(--text-3)] transition-transform ${open ? "rotate-180" : ""}`} />

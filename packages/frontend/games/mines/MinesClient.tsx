@@ -22,13 +22,15 @@ export function MinesClient() {
   const [running, setRunning] = useState(false);
   const game = useGame("mines", "MinesGame", minesAbi as Abi);
   const safeCount = revealed.size;
-  const maxSafeSelections = maxFairSafeSelections(mineCount);
-  const canPlay = safeCount > 0 && safeCount <= maxSafeSelections;
-  const multiplier = calcMinesMultiplier(mineCount, safeCount).toFixed(2);
-  const cells = useMemo(() => Array.from({ length: GRID_SIZE }, (_, index) => index), []);
   const settled = game.vrfState === "settled" && typeof game.vrfResult?.won === "boolean";
   const won = game.vrfResult?.won === true;
   const isBusy = game.vrfState === "pending_tx" || game.vrfState === "pending_vrf";
+  const maxSafeSelections = maxFairSafeSelections(mineCount);
+  const canPlay = safeCount > 0 && safeCount <= maxSafeSelections;
+  const displayMineCount = isBusy || settled ? roundMineCount : mineCount;
+  const displaySafeCount = isBusy || settled ? roundSafeCount : safeCount;
+  const multiplier = calcMinesMultiplier(displayMineCount, Math.max(displaySafeCount, 0)).toFixed(2);
+  const cells = useMemo(() => Array.from({ length: GRID_SIZE }, (_, index) => index), []);
   const minesResult = findEventArgs(game.vrfResult, "MinesResult");
   const mineMask = toNumber(minesResult?.mineMask) ?? 0;
 
@@ -90,7 +92,7 @@ export function MinesClient() {
               <span className="text-[var(--text-2)]">Risk setup</span>
               <span className="font-mono text-[var(--text-1)]">{mineCount} mines</span>
             </div>
-            <input type="range" min={1} max={10} value={mineCount} onChange={(event) => setMineCount(Number(event.target.value))} className="mb-3 w-full accent-[var(--accent)]" />
+            <input type="range" min={1} max={10} value={mineCount} disabled={isBusy} onChange={(event) => setMineCount(Number(event.target.value))} className="mb-3 w-full accent-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-55" />
             <div className="mb-3 rounded-md bg-[var(--surface-2)] px-3 py-2 text-xs leading-5 text-[var(--text-2)]">
               Select 1-{maxSafeSelections} cells before playing. Higher picks are capped out by max payout rules, so they are not offered.
             </div>
@@ -123,6 +125,20 @@ export function MinesClient() {
             ]}
             status={settled ? (won ? "win" : "loss") : isBusy ? "running" : "idle"}
           />
+
+          <div className="mines-risk-preview" aria-label={`${displayMineCount} hidden mines risk setup`}>
+            <div>
+              <span>Risk field</span>
+              <strong>{displayMineCount} hidden mines</strong>
+            </div>
+            <div className="mines-risk-pips" aria-hidden="true">
+              {Array.from({ length: 10 }).map((_, index) => (
+                <span key={index} className={index < displayMineCount ? "mines-risk-pip-active" : ""}>
+                  <Bomb size={12} />
+                </span>
+              ))}
+            </div>
+          </div>
 
           <div className="mines-board">
             {cells.map((index) => {

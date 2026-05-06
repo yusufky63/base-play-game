@@ -14,7 +14,7 @@ const roundSteps = [
   },
   {
     title: "Wait for verification",
-    body: "After the transaction confirms, the game waits for verifiable randomness. The round status card shows the transaction and verification state."
+    body: "After the transaction confirms, the game waits for verifiable randomness. The round status card shows the transaction, request ID, and final settlement link when it is available."
   },
   {
     title: "See the result",
@@ -49,6 +49,7 @@ const safetyNotes = [
   "Only confirm transactions you understand in your wallet.",
   "Small games can still lose real ETH. Play with amounts you are comfortable risking.",
   "A pending round may take time while the transaction and randomness settle.",
+  "The Chainlink VRF button shows the request ID and the Basescan transaction link used to verify the round.",
   "If a round is delayed beyond the contract window, the refund action appears in the connected wallet menu and your profile page."
 ];
 

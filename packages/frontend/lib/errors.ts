@@ -35,7 +35,7 @@ export function parseContractError(error: unknown): GameError {
   if (message.includes("GamePaused")) {
     return new GameError(GameErrorCode.CONTRACT_PAUSED, "Game is temporarily paused", error);
   }
-  if (message.includes("rate limit") || message.includes("fetch failed")) {
+  if (message.includes("rate limit") || message.includes("over rate limit") || message.includes("fetch failed")) {
     return new GameError(GameErrorCode.RPC_ERROR, "Network busy, please retry", error);
   }
 

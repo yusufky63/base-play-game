@@ -123,6 +123,9 @@ export function useGame(gameId: string, contractName: string, abi: Abi | null) {
           onSettled: (result) => {
             if (activeRoundRef.current !== roundKey) return;
             pollAbortRef.current = null;
+            if (typeof result.tx_hash === "string" && result.tx_hash.startsWith("0x")) {
+              setTxHash(result.tx_hash as `0x${string}`);
+            }
             vrf.settle(result);
             toast({
               tone: result.won ? "success" : "info",
@@ -228,18 +231,18 @@ async function waitForRoundSettled({
 }) {
   const startedAt = Date.now();
   const delays = [8_000, 12_000, 18_000, 25_000, 35_000];
+  let nextFromBlock = fromBlock;
 
   for (const delay of delays) {
     if (signal?.aborted) return;
-    const logs = await publicClient.getContractEvents({
-      address: contractAddress,
+    const log = await findRoundSettledLog({
+      publicClient,
+      contractAddress,
       abi,
-      eventName: "RoundSettled",
-      args: { requestId },
-      fromBlock
-    } as any);
+      requestId,
+      fromBlock: nextFromBlock
+    });
 
-    const log = logs[0] as { args?: Record<string, unknown>; transactionHash?: string } | undefined;
     if (log?.args) {
       const receipt = log.transactionHash
         ? await publicClient.getTransactionReceipt({ hash: log.transactionHash as `0x${string}` })
@@ -263,12 +266,66 @@ async function waitForRoundSettled({
       return;
     }
 
+    if (log?.lastScannedBlock) {
+      nextFromBlock = log.lastScannedBlock + 1n;
+    }
+
     await sleep(delay, signal);
     if (Date.now() - startedAt > 120_000) break;
   }
 
   if (signal?.aborted) return;
   onTimeout();
+}
+
+async function findRoundSettledLog({
+  publicClient,
+  contractAddress,
+  abi,
+  requestId,
+  fromBlock
+}: {
+  publicClient: NonNullable<ReturnType<typeof usePublicClient>>;
+  contractAddress: `0x${string}`;
+  abi: Abi;
+  requestId: bigint;
+  fromBlock: bigint;
+}): Promise<({ args?: Record<string, unknown>; transactionHash?: string; lastScannedBlock?: bigint } | undefined)> {
+  const latestBlock = await publicClient.getBlockNumber();
+  if (fromBlock > latestBlock) return { lastScannedBlock: latestBlock };
+
+  const maxRange = 9_500n;
+  let cursor = fromBlock;
+  let lastScannedBlock = fromBlock;
+
+  while (cursor <= latestBlock) {
+    const toBlock = cursor + maxRange > latestBlock ? latestBlock : cursor + maxRange;
+    lastScannedBlock = toBlock;
+
+    try {
+      const logs = await publicClient.getContractEvents({
+        address: contractAddress,
+        abi,
+        eventName: "RoundSettled",
+        args: { requestId },
+        fromBlock: cursor,
+        toBlock
+      } as any);
+
+      const log = logs[0] as { args?: Record<string, unknown>; transactionHash?: string } | undefined;
+      if (log?.args) return { ...log, lastScannedBlock };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error ?? "");
+      if (!message.includes("10,000") && !message.includes("rate limit") && !message.includes("over rate limit")) {
+        throw error;
+      }
+      return { lastScannedBlock: cursor > fromBlock ? cursor - 1n : fromBlock };
+    }
+
+    cursor = toBlock + 1n;
+  }
+
+  return { lastScannedBlock };
 }
 
 function sleep(ms: number, signal?: AbortSignal) {

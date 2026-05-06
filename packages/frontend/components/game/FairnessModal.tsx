@@ -68,6 +68,11 @@ function FairnessModal({
             <span className="break-all font-mono text-xs text-[var(--text-2)]">{requestId}</span>
           </InfoRow>
         )}
+        <InfoRow label="Where to verify">
+          <span className="text-xs leading-5 text-[var(--text-2)]">
+            Use the transaction link on Basescan. Chainlink VRF does not expose a separate public page per request on Base; the request ID and game events are the on-chain proof.
+          </span>
+        </InfoRow>
         <InfoRow label="Oracle">
           <a
             href="https://docs.chain.link/vrf"

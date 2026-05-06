@@ -1,6 +1,11 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
     date: "May 6, 2026",
+    title: "Round verification and game feedback improved",
+    body: "Live feed no longer exposes internal data-source labels, Mines now shows a clear risk preview for selected mine count, and round polling handles Base RPC log-range limits more safely."
+  },
+  {
+    date: "May 6, 2026",
     title: "Pending refund tracking added",
     body: "Connected players can now see unresolved on-chain rounds in the wallet menu and profile page, including refund availability after the contract timeout window."
   },

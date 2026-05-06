@@ -1941,6 +1941,64 @@ select {
   align-content: center;
 }
 
+.mines-risk-preview {
+  display: grid;
+  width: min(100%, 500px);
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+  border: 1.5px solid color-mix(in srgb, var(--lose) 34%, var(--border-2));
+  border-radius: var(--radius-ui);
+  background:
+    radial-gradient(circle at 8% 20%, color-mix(in srgb, var(--lose) 10%, transparent), transparent 42%),
+    var(--surface);
+  box-shadow: 4px 4px 0 color-mix(in srgb, var(--lose) 8%, transparent);
+  padding: 10px 12px;
+}
+
+.mines-risk-preview span {
+  display: block;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.mines-risk-preview strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--text-1);
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.mines-risk-pips {
+  display: grid;
+  grid-template-columns: repeat(5, 22px);
+  gap: 5px;
+}
+
+.mines-risk-pips span {
+  display: grid;
+  height: 22px;
+  width: 22px;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-3);
+  opacity: 0.48;
+}
+
+.mines-risk-pips .mines-risk-pip-active {
+  border-color: color-mix(in srgb, var(--lose) 46%, var(--border-2));
+  background: var(--lose-light);
+  color: var(--lose);
+  opacity: 1;
+}
+
 .mines-board {
   display: grid;
   width: min(100%, 500px);
