@@ -17,7 +17,7 @@ export function RoundStatus({ state, requestId, txHash }: RoundStatusProps) {
   const network = getNetworkByChainId(chain?.id ?? defaultChainId);
   const explorerBase = network?.blockExplorer ?? "https://sepolia.basescan.org";
 
-  if (state === "idle" && !requestId && !txHash) return null;
+  if (state === "idle") return null;
 
   const activeTx = state === "pending_tx";
   const activeVrf = state === "pending_vrf";

@@ -18,7 +18,7 @@ const roundSteps = [
   },
   {
     title: "See the result",
-    body: "The contract settles the round. The screen shows win or loss, and the result appears in the live feed after it is indexed. If settlement is delayed, the connected profile and wallet menu show the pending round and refund action."
+    body: "The contract settles the round. The screen shows win or loss, and the result appears in the live feed after it is indexed. If settlement is delayed, the connected profile and wallet menu show the pending round and refund action. Refunds are separate transactions and do not run a new VRF result."
   }
 ];
 
@@ -50,7 +50,8 @@ const safetyNotes = [
   "Small games can still lose real ETH. Play with amounts you are comfortable risking.",
   "A pending round may take time while the transaction and randomness settle.",
   "The Chainlink VRF button shows the request ID and the Basescan transaction link used to verify the round.",
-  "If a round is delayed beyond the contract window, the refund action appears in the connected wallet menu and your profile page."
+  "If a round is delayed beyond the contract window, the refund action appears in the connected wallet menu and your profile page.",
+  "Claiming a refund only returns the locked bet. It does not create a new random result."
 ];
 
 export default function DocsPage() {

@@ -163,16 +163,23 @@ export function useGame(gameId: string, contractName: string, abi: Abi | null) {
       throw new Error(`${contractName} is not configured for this chain`);
     }
 
+    activeRoundRef.current += 1;
+    pollAbortRef.current?.abort();
+    pollAbortRef.current = null;
+    vrf.reset();
+    setTxHash(null);
+
     try {
       const hash = await writeContractAsync({
         address: contractAddress,
         abi,
         functionName: "claimRefund"
       });
-      setTxHash(hash);
-      toast({ tone: "success", title: "Refund submitted", description: "Refund transaction was sent to the network." });
-      activeRoundRef.current += 1;
-      vrf.reset();
+      toast({
+        tone: "success",
+        title: "Refund submitted",
+        description: `Refund transaction sent: ${hash.slice(0, 10)}...${hash.slice(-6)}`
+      });
       return hash;
     } catch (error) {
       const parsed = parseContractError(error);

@@ -1,6 +1,11 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
     date: "May 6, 2026",
+    title: "Refund flow separated from VRF status",
+    body: "Claim refund now clears the active game verification state and no longer shows refund transactions as if they were new Chainlink VRF rounds."
+  },
+  {
+    date: "May 6, 2026",
     title: "Round verification and game feedback improved",
     body: "Live feed no longer exposes internal data-source labels, Mines now shows a clear risk preview for selected mine count, and round polling handles Base RPC log-range limits more safely."
   },
