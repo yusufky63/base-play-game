@@ -1,6 +1,11 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
     date: "May 6, 2026",
+    title: "Lower bet limits enabled",
+    body: "Base mainnet vault limits and quick bet presets were lowered to support smaller wagers around 0.000055 ETH, 0.00023 ETH, and 0.0005 ETH."
+  },
+  {
+    date: "May 6, 2026",
     title: "GameVaultV2 activated on Base",
     body: "Base mainnet now points to the deployed GameVaultV2 suite with amount-based withdraw support, newly approved game contracts, and Chainlink VRF consumers registered for the new games."
   },

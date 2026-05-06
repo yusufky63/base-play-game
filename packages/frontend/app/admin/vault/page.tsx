@@ -66,8 +66,8 @@ export default function AdminVaultPage() {
     paused: false
   });
   const [controls, setControls] = useState({
-    minBetEth: "0.0002",
-    maxBetEth: "0.001",
+    minBetEth: "0.000055",
+    maxBetEth: "0.0005",
     houseEdgePct: "3"
   });
   const [fundAmountEth, setFundAmountEth] = useState("0.01");
@@ -500,7 +500,7 @@ export default function AdminVaultPage() {
         <div className="admin-note">
           <h2 className="font-semibold text-[var(--text-1)]">UI bet presets</h2>
           <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">
-            Game pages show three quick bet buttons. They are frontend presets, not separate contract limits. Change them with <code>NEXT_PUBLIC_BET_PRESETS_ETH</code>, for example <code>0.0002,0.0005,0.001</code>.
+            Game pages show three quick bet buttons. They are frontend presets, not separate contract limits. Change them with <code>NEXT_PUBLIC_BET_PRESETS_ETH</code>, for example <code>0.000055,0.00023,0.0005</code>.
           </p>
           <div className="mt-3 grid grid-cols-3 gap-2">
             {betPresetAmounts.map((amount) => (

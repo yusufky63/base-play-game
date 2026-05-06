@@ -44,7 +44,7 @@ const playerNotes = [
   {
     icon: <CircleDollarSign size={18} />,
     title: "Clear payouts",
-    body: "Wagers are shown in ETH with a lightweight USD reference where it helps. The contract enforces minimum and maximum bet limits."
+    body: "Wagers are shown in ETH with a lightweight USD reference where it helps. Quick bet buttons now use smaller amounts, and the contract enforces the active minimum and maximum bet limits."
   },
   {
     icon: <Sparkles size={18} />,
@@ -60,6 +60,7 @@ const playerNotes = [
 
 const safetyNotes = [
   "Only confirm transactions you understand in your wallet.",
+  "Current quick bet buttons are 0.000055 ETH, 0.00023 ETH, and 0.0005 ETH on supported game pages.",
   "Small games can still lose real ETH. Play with amounts you are comfortable risking.",
   "A pending round may take time while the transaction and randomness settle.",
   "The Chainlink VRF button shows the request ID and the Basescan transaction link used to verify the round.",
