@@ -7,6 +7,7 @@ import { GameContractPanel } from "@/components/game/GameContractPanel";
 import { FairnessButton } from "@/components/game/FairnessModal";
 import { HowItWorks } from "@/components/game/HowItWorks";
 import { RoundStatus } from "@/components/game/RoundStatus";
+import { PlayerProgressionWidget } from "@/components/progression/PlayerProgressionWidget";
 import type { VRFState } from "@/hooks/useVRF";
 import { useOperationalStatus } from "@/hooks/useOperationalStatus";
 
@@ -76,6 +77,7 @@ export function GameShell({
         </div>
         <div className="game-side-stack lg:col-start-2 lg:row-span-2 lg:row-start-1">
           {side}
+          <PlayerProgressionWidget variant="game" />
         </div>
         <div className="game-how-area lg:col-start-1 lg:row-start-2">
           <HowItWorks gameId={gameId} />

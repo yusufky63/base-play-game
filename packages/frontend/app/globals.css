@@ -4400,6 +4400,343 @@ select {
   color: var(--accent);
 }
 
+.progression-widget {
+  overflow: hidden;
+  border: 1.5px solid color-mix(in srgb, var(--border-2) 82%, transparent);
+  border-radius: var(--radius-ui);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 6%, transparent), transparent 46%),
+    var(--surface);
+  box-shadow: var(--card-shadow-3d);
+  padding: 16px;
+}
+
+.game-side-stack > .progression-widget {
+  margin-top: 16px;
+}
+
+.progression-widget-home {
+  display: grid;
+  gap: 16px;
+}
+
+.progression-widget-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.progression-widget-kicker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.progression-widget h2 {
+  margin-top: 4px;
+  color: var(--text-1);
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 900;
+}
+
+.progression-widget-link {
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 7px 9px;
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.progression-widget-link:hover {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border-2));
+  color: var(--accent);
+}
+
+.progression-widget-empty {
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.progression-widget-score {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.progression-widget-score div {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--surface-2) 76%, transparent);
+  padding: 10px;
+}
+
+.progression-widget-score span,
+.progression-mini-meta,
+.progression-badge-chip span {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.progression-widget-score span,
+.progression-mini-meta {
+  color: var(--text-3);
+}
+
+.progression-widget-score strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-size: 16px;
+}
+
+.progression-mini-quests {
+  display: grid;
+  gap: 9px;
+}
+
+.progression-mini-quest {
+  border: 1px solid color-mix(in srgb, var(--border-2) 72%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-2) 78%, transparent);
+  padding: 10px;
+}
+
+.progression-mini-quest-done {
+  border-color: color-mix(in srgb, var(--win) 38%, var(--border-2));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--win) 10%, transparent), transparent 58%),
+    color-mix(in srgb, var(--surface-2) 84%, transparent);
+}
+
+.progression-mini-row,
+.progression-mini-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.progression-mini-row span {
+  min-width: 0;
+  color: var(--text-1);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.progression-mini-row strong {
+  display: inline-flex;
+  align-items: center;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.progression-mini-track {
+  height: 6px;
+  margin-top: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-3);
+}
+
+.progression-mini-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--win) 58%, var(--accent)));
+}
+
+.progression-mini-meta {
+  margin-top: 7px;
+}
+
+.progression-badge-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.progression-badge-chip {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+  border-radius: 999px;
+  background: var(--accent-light);
+  padding: 7px 9px;
+  color: var(--accent);
+}
+
+.progression-badge-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.progression-badge-chip-muted {
+  border-color: var(--border);
+  background: var(--surface-2);
+  color: var(--text-3);
+}
+
+.profile-badge-shelf {
+  border: 1.5px solid color-mix(in srgb, var(--border-2) 82%, transparent);
+  border-radius: var(--radius-ui);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 5%, transparent), transparent 48%),
+    var(--surface);
+  box-shadow: var(--card-shadow-3d);
+  padding: 14px;
+}
+
+.profile-badge-shelf-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+}
+
+.profile-badge-shelf-head span {
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.profile-badge-shelf-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding-top: 12px;
+}
+
+.profile-badge-token {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--surface-2) 74%, transparent);
+  padding: 10px;
+}
+
+.profile-badge-token-icon,
+.profile-badge-token > i {
+  display: grid;
+  height: 38px;
+  width: 38px;
+  flex: 0 0 38px;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--accent);
+  color: white;
+  box-shadow: 4px 4px 0 color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.profile-badge-token strong {
+  display: block;
+  overflow: hidden;
+  color: var(--text-1);
+  font-size: 13px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-badge-token span {
+  display: block;
+  margin-top: 3px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.profile-badge-token-empty {
+  grid-column: 1 / -1;
+}
+
+.profile-badge-token-loading i,
+.profile-badge-token-loading b {
+  animation: skeleton-sheen 1.2s ease-in-out infinite;
+  background: var(--surface-3);
+}
+
+.profile-badge-token-loading b {
+  display: block;
+  height: 10px;
+  width: 110px;
+  border-radius: 999px;
+}
+
+.profile-badge-token-loading b + b {
+  width: 76px;
+  margin-top: 7px;
+}
+
+@media (min-width: 1024px) {
+  .progression-widget-home {
+    grid-template-columns: 1fr 1.1fr 0.85fr;
+    align-items: start;
+  }
+
+  .progression-widget-home .progression-widget-head {
+    display: block;
+  }
+
+  .progression-widget-home .progression-widget-link {
+    display: inline-flex;
+    margin-top: 16px;
+  }
+
+  .progression-widget-home .progression-badge-strip {
+    grid-column: 2 / -1;
+  }
+}
+
+@media (max-width: 1023px) {
+  .game-side-stack > .progression-widget {
+    order: 6;
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .profile-badge-shelf-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .progression-widget-score {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .progression-widget-score div {
+    padding: 8px;
+  }
+}
+
 @media (max-width: 640px) {
   .profile-tab {
     min-width: 112px;

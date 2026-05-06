@@ -79,12 +79,12 @@ const rewardNotes = [
   {
     icon: <Gift size={18} />,
     title: "Daily and weekly quests",
-    body: "Quests reward simple activity such as one round, five rounds, trying different games, getting a win, and keeping streaks."
+    body: "Quests reward simple activity such as one round, five rounds, trying different games, getting a win, and keeping streaks. Connected players can see active quest progress on Home and game pages."
   },
   {
     icon: <BadgeCheck size={18} />,
     title: "Badges",
-    body: "Badges are off-chain profile achievements in this version. They are designed with token metadata fields so they can become mint-ready later."
+    body: "Badges are off-chain profile achievements in this version. Recent badges appear in progression panels, and the full shelf is shown on the player profile."
   },
   {
     icon: <Radio size={18} />,

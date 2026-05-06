@@ -44,8 +44,6 @@ export function ProfileClient({ address }: { address: string }) {
   const profileTabs: Array<{ id: ProfileTab; label: string; detail: string }> = [
     { id: "games", label: "Games", detail: `${data?.gameStats.length ?? 0} played` },
     { id: "rounds", label: "Rounds", detail: `${roundPages.reduce((count, page) => count + page.rows.length, 0)} loaded` },
-    { id: "quests", label: "Quests", detail: `${data?.quests.filter((quest) => quest.completed).length ?? 0} done` },
-    { id: "badges", label: "Badges", detail: `${data?.badges.length ?? 0} earned` },
     { id: "referrals", label: "Referrals", detail: `${referralSummary.data?.totalReferrals ?? 0} invited` },
     ...(isConnectedProfile ? [{ id: "refunds" as const, label: "Refunds", detail: "Active rounds" }] : [])
   ];
@@ -150,6 +148,8 @@ export function ProfileClient({ address }: { address: string }) {
           <Metric label="Profit rank" value={data?.weekly?.profit_rank ? `#${data.weekly.profit_rank}` : "-"} />
         </div>
       </section>
+
+      <ProfileBadgeShelf badges={data?.badges ?? []} loading={profile.isLoading} />
 
       <section className="profile-tab-shell mt-8">
         <div className="profile-tabs" role="tablist" aria-label="Profile sections">
@@ -372,5 +372,61 @@ function Metric({ label, value, detail, icon, tone }: { label: string; value: st
       <div className={`mt-2 font-mono text-sm font-bold ${tone === "win" ? "text-[var(--win)]" : tone === "loss" ? "text-[var(--lose)]" : "text-[var(--text-1)]"}`}>{value}</div>
       {detail && <div className="mt-1 font-mono text-[10px] text-[var(--text-3)]">{detail}</div>}
     </div>
+  );
+}
+
+function ProfileBadgeShelf({
+  badges,
+  loading
+}: {
+  badges: NonNullable<ReturnType<typeof usePlayerProfile>["data"]>["badges"];
+  loading: boolean;
+}) {
+  return (
+    <section className="profile-badge-shelf mt-5">
+      <div className="profile-badge-shelf-head">
+        <div>
+          <div className="flex items-center gap-2 font-mono text-[10px] font-bold uppercase text-[var(--text-3)]">
+            <BadgeCheck size={14} className="text-[var(--accent)]" />
+            Badge shelf
+          </div>
+          <h2 className="display-heading text-xl font-bold text-[var(--text-1)]">Earned achievements</h2>
+        </div>
+        <span>{badges.length} earned</span>
+      </div>
+      <div className="profile-badge-shelf-grid">
+        {badges.slice(0, 6).map((badge) => (
+          <div key={badge.badge_id} className="profile-badge-token">
+            <div className="profile-badge-token-icon">
+              <BadgeCheck size={18} />
+            </div>
+            <div>
+              <strong>{badge.title}</strong>
+              <span>{new Date(badge.awarded_at).toLocaleDateString()}</span>
+            </div>
+          </div>
+        ))}
+        {loading && badges.length === 0 && Array.from({ length: 3 }).map((_, index) => (
+          <div key={index} className="profile-badge-token profile-badge-token-loading">
+            <i />
+            <div>
+              <b />
+              <b />
+            </div>
+          </div>
+        ))}
+        {!loading && badges.length === 0 && (
+          <div className="profile-badge-token profile-badge-token-empty">
+            <div className="profile-badge-token-icon">
+              <Trophy size={18} />
+            </div>
+            <div>
+              <strong>No badges yet</strong>
+              <span>Play settled rounds to unlock the first one.</span>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }

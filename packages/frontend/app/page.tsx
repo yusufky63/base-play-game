@@ -1,6 +1,7 @@
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
 import { GameLibrary } from "@/components/game/GameLibrary";
 import { NetworkStatusPanel } from "@/components/home/NetworkStatusPanel";
+import { PlayerProgressionWidget } from "@/components/progression/PlayerProgressionWidget";
 
 const activeCount = GAMES_REGISTRY.filter((game) => game.active).length;
 
@@ -21,6 +22,10 @@ export default function HomePage() {
         </div>
 
         <NetworkStatusPanel activeCount={activeCount} />
+      </section>
+
+      <section className="mt-8">
+        <PlayerProgressionWidget />
       </section>
 
       <section className="mt-8">

@@ -1,6 +1,11 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
     date: "May 6, 2026",
+    title: "Progression panels moved closer to play",
+    body: "Quest progress now appears on Home and game pages, while profile badges are presented as a dedicated achievement shelf instead of being buried in tabs."
+  },
+  {
+    date: "May 6, 2026",
     title: "Referral, quests, badges, and cached RPC reads prepared",
     body: "Player progression now includes referral XP, daily and weekly quests, profile badges, improved win sharing, Slither CI coverage, and backend-cached contract status reads to reduce browser RPC pressure."
   },
