@@ -93,7 +93,7 @@ export function RockPaperScissorsClient() {
             variant={isBusy ? "pending" : settled ? (won ? "win" : "loss") : "idle"}
             title={isBusy ? "House move is resolving" : won ? "Your move won" : "House won"}
             detail={isBusy ? "Waiting for contract settlement" : settled ? `${moves[playerMove ?? 0].label} vs ${moves[houseMove ?? 0].label}` : undefined}
-            share={settled && won ? { game: "Rock Paper Scissors", detail: `${moves[playerMove ?? 0].label} beat ${moves[houseMove ?? 0].label}.` } : undefined}
+            share={settled && won ? { game: "Rock Paper Scissors", detail: `${moves[playerMove ?? 0].label} beat ${moves[houseMove ?? 0].label}.`, txHash: game.txHash } : undefined}
           />
         </div>
       </section>

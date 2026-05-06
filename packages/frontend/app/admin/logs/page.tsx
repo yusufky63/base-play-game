@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ExternalLink, RefreshCw } from "lucide-react";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
 import type { Database } from "@baseplay/shared/types/supabase.types";
@@ -23,7 +23,7 @@ export default function AdminLogsPage() {
   const [page, setPage] = useState(0);
   const [count, setCount] = useState<number | null>(null);
 
-  async function load(nextPage = page) {
+  const load = useCallback(async (nextPage: number) => {
     setLoading(true);
     const supabase = getSupabaseBrowser();
     const selectedGame = gameId === "all" ? undefined : gameId;
@@ -54,12 +54,12 @@ export default function AdminLogsPage() {
       setCount(total ?? null);
     }
     setLoading(false);
-  }
+  }, [gameId]);
 
   useEffect(() => {
     setPage(0);
     void load(0);
-  }, [gameId]);
+  }, [gameId, load]);
 
   const totalPages = count === null ? null : Math.max(1, Math.ceil(count / PAGE_SIZE));
   const canPrev = page > 0;

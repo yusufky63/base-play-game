@@ -3,7 +3,7 @@ import { createPublicClient, fallback, http } from "viem";
 
 export function createResilientClient(networkKey: NetworkKey) {
   const network = NETWORKS[networkKey];
-  const transports = network.rpcUrls
+  const transports = network.frontendRpcUrls
     .filter(Boolean)
     .map((url) => http(url, { timeout: 8_000, retryCount: 2, retryDelay: 200 }));
 

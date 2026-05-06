@@ -131,7 +131,7 @@ export function RouletteLiteClient() {
             variant={isBusy ? "pending" : settled ? (won ? "win" : "loss") : "idle"}
             title={isBusy ? "Wheel is spinning" : won ? "Roulette hit" : "Roulette missed"}
             detail={isBusy ? "Waiting for contract settlement" : settled ? `${betTypes[round.betType].label}, result ${(result ?? 0) + 1}, ${((multiplierBps ?? 0) / 10_000).toFixed(2)}x gross` : undefined}
-            share={settled && won ? { game: "Roulette Lite", detail: `Hit ${(result ?? 0) + 1} for ${((multiplierBps ?? 0) / 10_000).toFixed(2)}x.` } : undefined}
+            share={settled && won ? { game: "Roulette Lite", detail: `Hit ${(result ?? 0) + 1} for ${((multiplierBps ?? 0) / 10_000).toFixed(2)}x.`, txHash: game.txHash } : undefined}
           />
         </div>
       </section>

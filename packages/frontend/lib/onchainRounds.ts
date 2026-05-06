@@ -1,6 +1,6 @@
 import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
-import { BASE_SEPOLIA_RPC_URLS } from "@baseplay/shared/config/networks";
+import { BASE_SEPOLIA_FRONTEND_RPC_URLS } from "@baseplay/shared/config/networks";
 import { netPayoutFromGross } from "@baseplay/shared/utils/payout";
 import { createPublicClient, fallback, formatEther, http, parseAbi } from "viem";
 import { baseSepolia } from "viem/chains";
@@ -28,7 +28,7 @@ export interface OnchainRound {
 
 const client = createPublicClient({
   chain: baseSepolia,
-  transport: fallback(BASE_SEPOLIA_RPC_URLS.map((url) => http(url, { timeout: 10_000 })))
+  transport: fallback(BASE_SEPOLIA_FRONTEND_RPC_URLS.map((url) => http(url, { timeout: 10_000 })))
 });
 
 export async function fetchRecentOnchainRounds({

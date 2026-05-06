@@ -105,7 +105,7 @@ export function DiceClient() {
             variant={rolling ? "pending" : rolled !== null ? (won ? "win" : "loss") : "idle"}
             title={rolling ? "Dice is rolling on-chain" : won ? "Face matched" : "Face missed"}
             detail={rolling ? "Waiting for contract settlement" : rolled !== null ? `Picked ${roundGuess}, rolled ${rolled}` : undefined}
-            share={rolled !== null && won ? { game: "Dice", detail: `Picked ${roundGuess}, rolled ${rolled}.` } : undefined}
+            share={rolled !== null && won ? { game: "Dice", detail: `Picked ${roundGuess}, rolled ${rolled}.`, txHash: game.txHash } : undefined}
           />
         </div>
       </section>

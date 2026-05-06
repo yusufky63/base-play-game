@@ -11,6 +11,8 @@ export interface ChainConfig {
   name: string;
   shortName: string;
   rpcUrls: string[];
+  frontendRpcUrls: string[];
+  backendRpcUrls: string[];
   blockExplorer: string;
   vrf: VRFConfig;
   testnet: boolean;

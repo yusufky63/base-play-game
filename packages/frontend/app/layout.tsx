@@ -27,13 +27,13 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "BasePlay - Mini Onchain Games",
-    description: "Provably fair games on Base L2. $0.50-$3 bets.",
+    description: "Provably fair games on Base L2. Small on-chain wagers with XP, quests, and badges.",
     images: ["/brand/baseplay-logo-full.png"]
   },
   twitter: {
     card: "summary_large_image",
     title: "BasePlay - Mini Onchain Games",
-    description: "Provably fair games on Base L2. $0.50-$3 bets.",
+    description: "Provably fair games on Base L2. Small on-chain wagers with XP, quests, and badges.",
     images: ["/brand/baseplay-logo-full.png"],
     creator: "@BasePlayGames"
   },

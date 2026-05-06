@@ -154,12 +154,151 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["indexer_state"]["Row"]>;
         Relationships: [];
       };
+      referral_codes: {
+        Row: {
+          player: string;
+          code: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["referral_codes"]["Row"]> & { player: string };
+        Update: Partial<Database["public"]["Tables"]["referral_codes"]["Row"]>;
+        Relationships: [];
+      };
+      player_referrals: {
+        Row: {
+          referred_player: string;
+          referrer_player: string;
+          referral_code: string | null;
+          source: string;
+          claimed_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["player_referrals"]["Row"]> &
+          Pick<Database["public"]["Tables"]["player_referrals"]["Row"], "referred_player" | "referrer_player">;
+        Update: Partial<Database["public"]["Tables"]["player_referrals"]["Row"]>;
+        Relationships: [];
+      };
+      referral_rewards: {
+        Row: {
+          id: string;
+          referrer_player: string;
+          referred_player: string;
+          round_id: string;
+          xp_awarded: number;
+          reward_day: string;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["referral_rewards"]["Row"]> &
+          Pick<Database["public"]["Tables"]["referral_rewards"]["Row"], "referrer_player" | "referred_player" | "round_id" | "xp_awarded" | "reward_day">;
+        Update: Partial<Database["public"]["Tables"]["referral_rewards"]["Row"]>;
+        Relationships: [];
+      };
+      quest_definitions: {
+        Row: {
+          id: string;
+          title: string;
+          description: string;
+          period: "daily" | "weekly";
+          metric: string;
+          target: number;
+          reward_xp: number;
+          badge_id: string | null;
+          active: boolean;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["quest_definitions"]["Row"]> & { id: string };
+        Update: Partial<Database["public"]["Tables"]["quest_definitions"]["Row"]>;
+        Relationships: [];
+      };
+      player_quest_progress: {
+        Row: {
+          player: string;
+          quest_id: string;
+          period_start: string;
+          progress: number;
+          completed: boolean;
+          completed_at: string | null;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["player_quest_progress"]["Row"]> &
+          Pick<Database["public"]["Tables"]["player_quest_progress"]["Row"], "player" | "quest_id" | "period_start">;
+        Update: Partial<Database["public"]["Tables"]["player_quest_progress"]["Row"]>;
+        Relationships: [];
+      };
+      badge_definitions: {
+        Row: {
+          id: string;
+          title: string;
+          description: string;
+          category: string;
+          token_id: number | null;
+          metadata_uri: string | null;
+          mint_ready: boolean;
+          active: boolean;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["badge_definitions"]["Row"]> & { id: string };
+        Update: Partial<Database["public"]["Tables"]["badge_definitions"]["Row"]>;
+        Relationships: [];
+      };
+      player_badges: {
+        Row: {
+          player: string;
+          badge_id: string;
+          source: string;
+          awarded_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["player_badges"]["Row"]> &
+          Pick<Database["public"]["Tables"]["player_badges"]["Row"], "player" | "badge_id">;
+        Update: Partial<Database["public"]["Tables"]["player_badges"]["Row"]>;
+        Relationships: [];
+      };
     };
     Views: {
       leaderboard_weekly_ranked: {
         Row: Database["public"]["Tables"]["leaderboard_weekly"]["Row"] & {
           xp_rank: number;
           profit_rank: number;
+        };
+        Relationships: [];
+      };
+      player_quest_summary: {
+        Row: Database["public"]["Tables"]["player_quest_progress"]["Row"] & {
+          title: string;
+          description: string;
+          period: "daily" | "weekly";
+          metric: string;
+          target: number;
+          reward_xp: number;
+          badge_id: string | null;
+          sort_order: number;
+        };
+        Relationships: [];
+      };
+      player_badge_summary: {
+        Row: Database["public"]["Tables"]["player_badges"]["Row"] & {
+          title: string;
+          description: string;
+          category: string;
+          token_id: number | null;
+          metadata_uri: string | null;
+          mint_ready: boolean;
+          sort_order: number;
+        };
+        Relationships: [];
+      };
+      player_referral_summary: {
+        Row: {
+          player: string;
+          code: string;
+          total_referrals: number;
+          active_referrals: number;
+          total_referral_xp: number;
+          last_reward_at: string | null;
         };
         Relationships: [];
       };

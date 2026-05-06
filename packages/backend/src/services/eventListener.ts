@@ -1,6 +1,6 @@
 import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
-import { NETWORKS, type NetworkKey } from "@baseplay/shared/config/networks";
+import { BASE_MAINNET_BACKEND_RPC_URLS, BASE_SEPOLIA_BACKEND_RPC_URLS, type NetworkKey } from "@baseplay/shared/config/networks";
 import { netPayoutFromGross } from "@baseplay/shared/utils/payout";
 import { createPublicClient, fallback, formatEther, http, parseAbi, type Address, type Log } from "viem";
 import { base, baseSepolia } from "viem/chains";
@@ -53,12 +53,11 @@ export function getIndexerHealth() {
 
 async function listenChain(chainId: 84532 | 8453, options: InitOptions) {
   const networkKey = chainId === 8453 ? "baseMainnet" : "baseSepolia";
-  const network = NETWORKS[networkKey];
   const viemChain = chainId === 8453 ? base : baseSepolia;
 
   const client = createPublicClient({
     chain: viemChain,
-    transport: fallback(getBackendRpcUrls(network.rpcUrls).map((url) => http(url, { timeout: 10_000 })))
+    transport: fallback(getBackendRpcUrls(chainId).map((url) => http(url, { timeout: 10_000 })))
   });
 
   const games = GAMES_REGISTRY.filter((entry) => entry.chains.includes(networkKey));
@@ -252,7 +251,8 @@ function setIndexerHealth(
   });
 }
 
-function getBackendRpcUrls(rpcUrls: readonly string[]) {
+function getBackendRpcUrls(chainId: 84532 | 8453) {
+  const rpcUrls = chainId === 8453 ? BASE_MAINNET_BACKEND_RPC_URLS : BASE_SEPOLIA_BACKEND_RPC_URLS;
   const urls = rpcUrls.filter((url) => url && !BLOCKPI_PATTERN.test(url));
   return urls.length > 0 ? urls : rpcUrls.filter(Boolean);
 }

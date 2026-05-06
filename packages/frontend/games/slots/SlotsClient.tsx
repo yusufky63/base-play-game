@@ -130,7 +130,7 @@ export function SlotsClient() {
             variant={isBusy ? "pending" : settled ? (won ? "win" : "loss") : "idle"}
             title={isBusy ? "Reels are spinning" : won ? resultLabel : "No matching line"}
             detail={isBusy ? "Waiting for contract settlement" : settled ? `${visibleReels.map((value) => symbols[value]?.label ?? "BASE").join(" / ")} - ${(multiplierBps / 10_000).toFixed(2)}x gross` : undefined}
-            share={settled && won ? { game: "Slots", detail: `${resultLabel} for ${(multiplierBps / 10_000).toFixed(2)}x.` } : undefined}
+            share={settled && won ? { game: "Slots", detail: `${resultLabel} for ${(multiplierBps / 10_000).toFixed(2)}x.`, txHash: game.txHash } : undefined}
           />
         </div>
       </section>

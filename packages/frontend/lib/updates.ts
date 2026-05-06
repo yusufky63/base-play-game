@@ -1,6 +1,11 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
     date: "May 6, 2026",
+    title: "Referral, quests, badges, and cached RPC reads prepared",
+    body: "Player progression now includes referral XP, daily and weekly quests, profile badges, improved win sharing, Slither CI coverage, and backend-cached contract status reads to reduce browser RPC pressure."
+  },
+  {
+    date: "May 6, 2026",
     title: "Lower bet limits enabled",
     body: "Base mainnet vault limits and quick bet presets were lowered to support smaller wagers around 0.000055 ETH, 0.00023 ETH, and 0.0005 ETH."
   },

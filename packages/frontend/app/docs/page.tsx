@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, CircleDollarSign, ExternalLink, HelpCircle, Radio, RotateCcw, ShieldCheck, Sparkles, WalletCards } from "lucide-react";
+import { BadgeCheck, BookOpen, CircleDollarSign, ExternalLink, Gift, HelpCircle, Radio, RotateCcw, ShieldCheck, Sparkles, WalletCards } from "lucide-react";
 import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
 import { NETWORKS } from "@baseplay/shared/config/networks";
@@ -11,6 +11,7 @@ const docNav = [
   { id: "games", label: "Games", title: "Games", description: "Active games and their player-facing rules." },
   { id: "contracts", label: "Contracts", title: "Public contracts", description: "Explorer links for game and vault contracts." },
   { id: "account", label: "Account", title: "Wallet, stats, and safety", description: "Wallet identity, live data, XP, and safety notes." },
+  { id: "rewards", label: "Rewards", title: "XP, quests, badges, and referrals", description: "How player progression works without affecting payouts." },
   { id: "faq", label: "Q&A", title: "Questions and answers", description: "Common player questions about results and mechanics." }
 ] as const;
 
@@ -69,6 +70,29 @@ const safetyNotes = [
   "Claiming a refund only returns the locked bet. It does not create a new random result."
 ];
 
+const rewardNotes = [
+  {
+    icon: <Sparkles size={18} />,
+    title: "XP",
+    body: "Settled rounds grant XP from wager size. Quest and referral XP are bonus progression only and never change game payouts."
+  },
+  {
+    icon: <Gift size={18} />,
+    title: "Daily and weekly quests",
+    body: "Quests reward simple activity such as one round, five rounds, trying different games, getting a win, and keeping streaks."
+  },
+  {
+    icon: <BadgeCheck size={18} />,
+    title: "Badges",
+    body: "Badges are off-chain profile achievements in this version. They are designed with token metadata fields so they can become mint-ready later."
+  },
+  {
+    icon: <Radio size={18} />,
+    title: "Referrals",
+    body: "Referral links award small capped XP to the referrer after referred players settle rounds. Referral never pays ETH and never touches the vault."
+  }
+];
+
 const refundNotes = [
   "Refunds are only possible when the contract still has an unresolved active round for your wallet.",
   "The claim button appears after the contract timeout block has fully passed. The UI does not show it one block early.",
@@ -109,6 +133,18 @@ const faqs = [
   {
     question: "How is XP calculated?",
     answer: "XP is based on the settled wager amount. Wins and losses at the same bet size earn the same XP, so XP represents play volume rather than lucky outcomes."
+  },
+  {
+    question: "Do referral rewards pay ETH?",
+    answer: "No. Referral rewards are only XP and badge progression. They do not create claimable ETH, rebates, or vault liabilities."
+  },
+  {
+    question: "When do quests complete?",
+    answer: "Daily and weekly quests update after a settled on-chain round is indexed. Pending, failed, or refunded rounds do not count."
+  },
+  {
+    question: "Can badges be minted?",
+    answer: "Not in the first version. Badges are profile achievements now, with mint-ready metadata fields prepared for a future contract if it is added."
   },
   {
     question: "Why are XP and net profit separate rankings?",
@@ -282,6 +318,44 @@ export default async function DocsPage({ searchParams }: { searchParams?: Promis
                   {safetyNotes.map((item) => (
                     <li key={item}>{item}</li>
                   ))}
+                </ul>
+              </div>
+            </div>
+          </section>
+          )}
+
+          {selectedSection === "rewards" && (
+          <section className="docs-block">
+            <SectionHeading eyebrow="Progression" title="XP, quests, badges, and referrals" icon={<Gift size={18} />} />
+            <p className="docs-lede">
+              Progression is separate from game odds. It gives players profile goals and shareable achievements without changing the contract result, payout, or vault accounting.
+            </p>
+            <div className="docs-feature-list">
+              {rewardNotes.map((item) => (
+                <InfoCard key={item.title} icon={item.icon} title={item.title} body={item.body} />
+              ))}
+            </div>
+            <div className="docs-grid-two mt-4">
+              <div>
+                <h3>Current quest rewards</h3>
+                <ul className="docs-note-list docs-note-list-compact">
+                  <li>Daily: 1 round gives 20 XP.</li>
+                  <li>Daily: 5 rounds gives 50 XP.</li>
+                  <li>Daily: 3 different games gives 40 XP.</li>
+                  <li>Daily: 1 win gives 25 XP.</li>
+                  <li>Weekly: 10 rounds gives 100 XP and a badge.</li>
+                  <li>Weekly: 5 different games gives 100 XP.</li>
+                  <li>Weekly: 7-day streak gives 150 XP and a badge.</li>
+                </ul>
+              </div>
+              <div>
+                <h3>Referral rules</h3>
+                <ul className="docs-note-list docs-note-list-compact">
+                  <li>Referral links can use an address or a referral code.</li>
+                  <li>The referred wallet signs once to link the referral.</li>
+                  <li>Self-referral and changing referrer later are blocked.</li>
+                  <li>Referrer XP is capped per round and per day.</li>
+                  <li>Only settled indexed rounds count. Refunds and pending rounds do not.</li>
                 </ul>
               </div>
             </div>

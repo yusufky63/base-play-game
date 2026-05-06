@@ -1,18 +1,34 @@
 import type { ChainConfig } from "../types/network.types.js";
 
-export const BASE_SEPOLIA_RPC_URLS = [
+export const BASE_SEPOLIA_ALCHEMY_RPC_URL = "https://base-sepolia.g.alchemy.com/v2/qeMia_xnXrvUzsNNiuFiH";
+export const BASE_MAINNET_ALCHEMY_RPC_URL = "https://base-mainnet.g.alchemy.com/v2/qeMia_xnXrvUzsNNiuFiH";
+
+export const BASE_SEPOLIA_FRONTEND_RPC_URLS = [
+  BASE_SEPOLIA_ALCHEMY_RPC_URL,
   "https://sepolia.base.org",
-  "https://base-sepolia.g.alchemy.com/v2/qeMia_xnXrvUzsNNiuFiH",
-  "https://base-sepolia-rpc.publicnode.com",
-  "https://base-sepolia.blockpi.network/v1/rpc/public"
+  "https://base-sepolia-rpc.publicnode.com"
 ];
 
-export const BASE_MAINNET_RPC_URLS = [
+export const BASE_MAINNET_FRONTEND_RPC_URLS = [
+  BASE_MAINNET_ALCHEMY_RPC_URL,
   "https://mainnet.base.org",
-  "https://base-mainnet.g.alchemy.com/v2/qeMia_xnXrvUzsNNiuFiH",
-  "https://base-rpc.publicnode.com",
-  "https://base.blockpi.network/v1/rpc/public"
+  "https://base-rpc.publicnode.com"
 ];
+
+export const BASE_SEPOLIA_BACKEND_RPC_URLS = [
+  BASE_SEPOLIA_ALCHEMY_RPC_URL,
+  "https://sepolia.base.org",
+  "https://base-sepolia-rpc.publicnode.com"
+];
+
+export const BASE_MAINNET_BACKEND_RPC_URLS = [
+  BASE_MAINNET_ALCHEMY_RPC_URL,
+  "https://mainnet.base.org",
+  "https://base-rpc.publicnode.com"
+];
+
+export const BASE_SEPOLIA_RPC_URLS = BASE_SEPOLIA_FRONTEND_RPC_URLS;
+export const BASE_MAINNET_RPC_URLS = BASE_MAINNET_FRONTEND_RPC_URLS;
 
 const env = (name: string) => process.env[name] ?? "";
 
@@ -22,6 +38,8 @@ export const NETWORKS = {
     name: "Base Sepolia",
     shortName: "base-sep",
     rpcUrls: BASE_SEPOLIA_RPC_URLS,
+    frontendRpcUrls: BASE_SEPOLIA_FRONTEND_RPC_URLS,
+    backendRpcUrls: BASE_SEPOLIA_BACKEND_RPC_URLS,
     blockExplorer: "https://sepolia.basescan.org",
     vrf: {
       coordinator: "0x5C210eF41CD1a72de73bF76eC39637bB0d3d7BEE",
@@ -38,6 +56,8 @@ export const NETWORKS = {
     name: "Base",
     shortName: "base",
     rpcUrls: BASE_MAINNET_RPC_URLS,
+    frontendRpcUrls: BASE_MAINNET_FRONTEND_RPC_URLS,
+    backendRpcUrls: BASE_MAINNET_BACKEND_RPC_URLS,
     blockExplorer: "https://basescan.org",
     vrf: {
       coordinator: "0xd5D517aBE5cF79B7e95eC98dB0f0277788aFF634",

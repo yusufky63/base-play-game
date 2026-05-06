@@ -98,7 +98,7 @@ export function PlinkoLiteClient() {
             variant={isBusy ? "pending" : settled ? (won ? "win" : "loss") : "idle"}
             title={isBusy ? "Ball is dropping" : won ? "Slot paid" : "Center loss"}
             detail={isBusy ? "Waiting for contract settlement" : settled ? `${profiles[roundProfile].label} risk, slot ${(slot ?? 0) + 1}, ${((multiplierBps ?? 0) / 10_000).toFixed(2)}x gross` : undefined}
-            share={settled && won ? { game: "Plinko Lite", detail: `Landed ${((multiplierBps ?? 0) / 10_000).toFixed(2)}x on ${profiles[roundProfile].label} risk.` } : undefined}
+            share={settled && won ? { game: "Plinko Lite", detail: `Landed ${((multiplierBps ?? 0) / 10_000).toFixed(2)}x on ${profiles[roundProfile].label} risk.`, txHash: game.txHash } : undefined}
           />
         </div>
       </section>

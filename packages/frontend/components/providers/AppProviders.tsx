@@ -8,6 +8,7 @@ import { useState } from "react";
 import { WagmiProvider } from "wagmi";
 import { rainbowKitEnabled, wagmiConfig } from "@/lib/wagmi.config";
 import { ToastProvider } from "@/components/ui/ToastProvider";
+import { ReferralAttribution } from "@/components/referral/ReferralAttribution";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -28,6 +29,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
           <ToastProvider>
+            <ReferralAttribution />
             {rainbowKitEnabled ? (
               <RainbowKitProvider theme={lightTheme({ accentColor: "#1457ff", borderRadius: "small" })}>
                 {children}

@@ -80,7 +80,7 @@ export function LuckySevenClient() {
             variant={isBusy ? "pending" : settled ? (won ? "win" : "loss") : "idle"}
             title={isBusy ? "Dice are rolling" : won ? "Seven call hit" : "Seven call missed"}
             detail={isBusy ? "Waiting for contract settlement" : settled ? `${choices[roundChoice].label}, rolled ${dieA}+${dieB}=${total}` : undefined}
-            share={settled && won ? { game: "Lucky Seven", detail: `${choices[roundChoice].label}, rolled ${total}.` } : undefined}
+            share={settled && won ? { game: "Lucky Seven", detail: `${choices[roundChoice].label}, rolled ${total}.`, txHash: game.txHash } : undefined}
           />
         </div>
       </section>

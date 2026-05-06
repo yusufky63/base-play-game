@@ -95,7 +95,7 @@ export function OverUnderClient() {
             variant={isBusy ? "pending" : settled ? (won ? "win" : "loss") : "idle"}
             title={isBusy ? "Number is rolling" : won ? "Threshold hit" : "Threshold missed"}
             detail={isBusy ? "Waiting for contract settlement" : settled ? `Rolled ${rolled}, needed ${roundChoice} ${roundTarget}` : undefined}
-            share={settled && won ? { game: "Over / Under", detail: `Rolled ${rolled}, needed ${roundChoice} ${roundTarget}.` } : undefined}
+            share={settled && won ? { game: "Over / Under", detail: `Rolled ${rolled}, needed ${roundChoice} ${roundTarget}.`, txHash: game.txHash } : undefined}
           />
         </div>
       </section>

@@ -5,6 +5,7 @@ import { createPublicClient, fallback, formatEther, http, type Abi } from "viem"
 import { useAccount } from "wagmi";
 import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
 import { getNetworkByChainId } from "@baseplay/shared/config/networks";
+import { fetchBackendJson } from "@/lib/backend";
 import { defaultChainId } from "@/lib/env";
 import { getNetworkConfigByChainId } from "@/lib/networkConfig";
 import { usePreferredChainId } from "@/lib/preferredChain";
@@ -49,6 +50,28 @@ export type OperationalState = {
 };
 
 type SupportedChainId = 8453 | 84532;
+type BackendContractStatus = {
+  status: "ok";
+  chainId: SupportedChainId;
+  networkName: string;
+  games: Record<string, {
+    status: OperationalStatus;
+    gameAddress: `0x${string}` | null;
+    vaultAddress: `0x${string}` | null;
+    gamePaused: boolean;
+    vaultPaused: boolean;
+    minBetWei: string | null;
+    maxBetWei: string | null;
+    houseEdgeBps: number | null;
+    availableLiquidityWei: string | null;
+    totalReservedPayoutWei: string | null;
+    vaultBalanceWei: string | null;
+    minBetEth: string;
+    maxBetEth: string;
+    availableLiquidityEth: string;
+    vaultBalanceEth: string;
+  }>;
+};
 
 export function useOperationalStatus(contractName: string | null | undefined) {
   const { chain } = useAccount();
@@ -58,8 +81,8 @@ export function useOperationalStatus(contractName: string | null | undefined) {
   const query = useQuery({
     queryKey: ["operational-status", effectiveChainId, contractName],
     enabled: Boolean(contractName),
-    staleTime: 15_000,
-    refetchInterval: 30_000,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
     refetchOnWindowFocus: true,
     queryFn: async () => loadOperationalStatus(effectiveChainId, contractName!)
   });
@@ -68,6 +91,34 @@ export function useOperationalStatus(contractName: string | null | undefined) {
 }
 
 async function loadOperationalStatus(chainId: SupportedChainId, contractName: string): Promise<OperationalState> {
+  const backend = await fetchBackendJson<BackendContractStatus>(`/api/contracts/status?chainId=${chainId}`).catch(() => null);
+  const backendGame = backend?.games?.[contractName];
+  if (backendGame) {
+    return decorateStatus({
+      status: backendGame.status,
+      chainId,
+      networkName: backend.networkName,
+      gameAddress: backendGame.gameAddress ?? undefined,
+      vaultAddress: backendGame.vaultAddress ?? undefined,
+      gamePaused: backendGame.gamePaused,
+      vaultPaused: backendGame.vaultPaused,
+      minBetWei: parseOptionalBigInt(backendGame.minBetWei),
+      maxBetWei: parseOptionalBigInt(backendGame.maxBetWei),
+      houseEdgeBps: backendGame.houseEdgeBps,
+      availableLiquidityWei: parseOptionalBigInt(backendGame.availableLiquidityWei),
+      totalReservedPayoutWei: parseOptionalBigInt(backendGame.totalReservedPayoutWei),
+      vaultBalanceWei: parseOptionalBigInt(backendGame.vaultBalanceWei),
+      minBetEth: backendGame.minBetEth,
+      maxBetEth: backendGame.maxBetEth,
+      availableLiquidityEth: backendGame.availableLiquidityEth,
+      vaultBalanceEth: backendGame.vaultBalanceEth
+    });
+  }
+
+  return loadOperationalStatusDirect(chainId, contractName);
+}
+
+async function loadOperationalStatusDirect(chainId: SupportedChainId, contractName: string): Promise<OperationalState> {
   const networkConfig = getNetworkConfigByChainId(chainId);
   const network = networkConfig.network;
   const gameAddress = CONTRACT_ADDRESSES[network.chainId]?.[contractName];
@@ -123,6 +174,15 @@ async function loadOperationalStatus(chainId: SupportedChainId, contractName: st
     availableLiquidityEth: availableLiquidityWei === null ? "-" : formatEther(availableLiquidityWei),
     vaultBalanceEth: vaultBalanceWei === null ? "-" : formatEther(vaultBalanceWei)
   });
+}
+
+function parseOptionalBigInt(value: string | null) {
+  if (!value) return null;
+  try {
+    return BigInt(value);
+  } catch {
+    return null;
+  }
 }
 
 function buildFallbackStatus(chainId: number, status: OperationalStatus): OperationalState {

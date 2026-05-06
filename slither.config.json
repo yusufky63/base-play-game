@@ -1,0 +1,4 @@
+{
+  "filter_paths": "node_modules|packages/contracts/contracts/test|packages/contracts/test|packages/contracts/artifacts|packages/contracts/cache|packages/contracts/coverage|packages/contracts/coverage.json|packages/contracts/typechain-types",
+  "exclude_dependencies": true
+}

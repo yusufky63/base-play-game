@@ -1135,6 +1135,16 @@ select {
   padding-top: 10px;
 }
 
+.win-share-card {
+  margin-top: 12px;
+  border: 1.5px solid color-mix(in srgb, var(--win) 38%, var(--border-2));
+  border-radius: var(--radius-ui);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--win) 12%, transparent), transparent 52%),
+    var(--surface);
+  padding: 12px;
+}
+
 .result-callout-loss {
   border-color: color-mix(in srgb, var(--lose) 58%, var(--border-2));
   color: var(--lose);
@@ -4359,6 +4369,35 @@ select {
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 800;
+}
+
+.progression-card,
+.badge-card {
+  border: 1.5px solid color-mix(in srgb, var(--border-2) 78%, transparent);
+  border-radius: var(--radius-ui);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 4%, transparent), transparent 42%),
+    var(--surface-2);
+  padding: 14px;
+  box-shadow: var(--card-shadow-3d);
+}
+
+.progression-card-complete {
+  border-color: color-mix(in srgb, var(--win) 42%, var(--border-2));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--win) 10%, transparent), transparent 46%),
+    var(--surface-2);
+}
+
+.badge-card-icon {
+  display: grid;
+  height: 42px;
+  width: 42px;
+  place-items: center;
+  border: 1.5px solid color-mix(in srgb, var(--accent) 42%, var(--border-2));
+  border-radius: var(--radius-ui);
+  background: var(--accent-light);
+  color: var(--accent);
 }
 
 @media (max-width: 640px) {

@@ -88,7 +88,7 @@ export function ColorPickClient() {
             variant={isBusy ? "pending" : settled ? (won ? "win" : "loss") : "idle"}
             title={isBusy ? "Color is cycling" : won ? "Color matched" : "Color missed"}
             detail={isBusy ? "Waiting for contract settlement" : settled ? `Picked ${colors[roundChoice].name}, result ${colors[resultColor ?? 0].name}` : undefined}
-            share={settled && won ? { game: "Color Pick", detail: `Matched ${colors[resultColor ?? 0].name}.` } : undefined}
+            share={settled && won ? { game: "Color Pick", detail: `Matched ${colors[resultColor ?? 0].name}.`, txHash: game.txHash } : undefined}
           />
         </div>
       </section>

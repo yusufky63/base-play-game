@@ -102,7 +102,7 @@ export function CoinFlipClient() {
             variant={isBusy ? "pending" : settled ? (won ? "win" : "loss") : "idle"}
             title={isBusy ? "Coin is spinning on-chain" : won ? "Correct side" : "Wrong side"}
             detail={isBusy ? "Waiting for contract settlement" : settled ? `Picked ${roundChoice}, landed ${result}` : undefined}
-            share={settled && won && result ? { game: "Coin Flip", detail: `Picked ${roundChoice}, landed ${result}.` } : undefined}
+            share={settled && won && result ? { game: "Coin Flip", detail: `Picked ${roundChoice}, landed ${result}.`, txHash: game.txHash } : undefined}
           />
         </div>
       </section>

@@ -125,7 +125,7 @@ export function HiLoClient() {
                   ? `${roundDirection ?? "choice"} from ${cardLabel(roundCardValue)} to ${displayNext ?? "hidden"}`
                   : undefined
             }
-            share={settled && won ? { game: "Hi-Lo", detail: `${roundDirection ?? "choice"} from ${cardLabel(roundCardValue)} to ${displayNext ?? "hidden"}.` } : undefined}
+            share={settled && won ? { game: "Hi-Lo", detail: `${roundDirection ?? "choice"} from ${cardLabel(roundCardValue)} to ${displayNext ?? "hidden"}.`, txHash: game.txHash } : undefined}
           />
         </div>
       </section>

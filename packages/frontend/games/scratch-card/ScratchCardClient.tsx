@@ -103,7 +103,7 @@ export function ScratchCardClient() {
             variant={isBusy ? "pending" : settled ? (won ? "win" : "loss") : "idle"}
             title={isBusy ? "Card is revealing" : won ? "Prize revealed" : "No prize"}
             detail={isBusy ? "Waiting for contract settlement" : settled ? `${tiers[tier ?? 0].label}, ${((multiplierBps ?? 0) / 10_000).toFixed(2)}x gross` : undefined}
-            share={settled && won ? { game: "Scratch Card", detail: `Revealed ${tiers[tier ?? 0].label} for ${((multiplierBps ?? 0) / 10_000).toFixed(2)}x.` } : undefined}
+            share={settled && won ? { game: "Scratch Card", detail: `Revealed ${tiers[tier ?? 0].label} for ${((multiplierBps ?? 0) / 10_000).toFixed(2)}x.`, txHash: game.txHash } : undefined}
           />
         </div>
       </section>

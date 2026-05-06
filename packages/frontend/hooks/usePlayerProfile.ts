@@ -9,11 +9,15 @@ import { calculateRoundXp, currentDailyStreak, levelFromXp } from "@/lib/progres
 type PlayerStats = Database["public"]["Tables"]["player_stats"]["Row"];
 type PlayerGameStats = Database["public"]["Tables"]["player_game_stats"]["Row"];
 type RankedLeader = Database["public"]["Views"]["leaderboard_weekly_ranked"]["Row"];
+type PlayerQuest = Database["public"]["Views"]["player_quest_summary"]["Row"];
+type PlayerBadge = Database["public"]["Views"]["player_badge_summary"]["Row"];
 
 export interface PlayerProfileData {
   stats: PlayerStats;
   gameStats: PlayerGameStats[];
   weekly: RankedLeader | null;
+  quests: PlayerQuest[];
+  badges: PlayerBadge[];
   wins: number;
   losses: number;
   source: "supabase" | "onchain";
@@ -36,14 +40,22 @@ async function fetchPlayerProfile(address: string): Promise<PlayerProfileData> {
   const supabase = getSupabaseBrowser();
 
   if (supabase) {
-    const [{ data: stats, error: statsError }, { data: gameStats, error: gameStatsError }, { data: weekly, error: weeklyError }] = await Promise.all([
+    const [
+      { data: stats, error: statsError },
+      { data: gameStats, error: gameStatsError },
+      { data: weekly, error: weeklyError },
+      { data: quests, error: questsError },
+      { data: badges, error: badgesError }
+    ] = await Promise.all([
       supabase.from("player_stats").select("*").eq("player", player).maybeSingle(),
       supabase.from("player_game_stats").select("*").eq("player", player).order("total_rounds", { ascending: false }),
-      supabase.from("leaderboard_weekly_ranked").select("*").eq("player", player).order("week_start", { ascending: false }).limit(1).maybeSingle()
+      supabase.from("leaderboard_weekly_ranked").select("*").eq("player", player).order("week_start", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("player_quest_summary").select("*").eq("player", player).order("sort_order", { ascending: true }),
+      supabase.from("player_badge_summary").select("*").eq("player", player).order("sort_order", { ascending: true })
     ]);
 
-    if (statsError || gameStatsError || weeklyError) {
-      console.warn("[BasePlay] Supabase profile query failed", statsError?.message ?? gameStatsError?.message ?? weeklyError?.message);
+    if (statsError || gameStatsError || weeklyError || questsError || badgesError) {
+      console.warn("[BasePlay] Supabase profile query failed", statsError?.message ?? gameStatsError?.message ?? weeklyError?.message ?? questsError?.message ?? badgesError?.message);
     }
 
     if (stats) {
@@ -53,6 +65,8 @@ async function fetchPlayerProfile(address: string): Promise<PlayerProfileData> {
         stats,
         gameStats: games,
         weekly: weeklyRow,
+        quests: (quests ?? []) as PlayerQuest[],
+        badges: (badges ?? []) as PlayerBadge[],
         wins: games.reduce((sum, row) => sum + row.wins, 0),
         losses: games.reduce((sum, row) => sum + row.losses, 0),
         source: "supabase"
@@ -117,6 +131,8 @@ async function fetchPlayerProfile(address: string): Promise<PlayerProfileData> {
     },
     gameStats: Array.from(gameMap.values()).sort((a, b) => b.total_rounds - a.total_rounds),
     weekly: null,
+    quests: [],
+    badges: [],
     wins,
     losses,
     source: "onchain"
@@ -140,6 +156,8 @@ function emptySupabaseProfile(player: string): PlayerProfileData {
     },
     gameStats: [],
     weekly: null,
+    quests: [],
+    badges: [],
     wins: 0,
     losses: 0,
     source: "supabase"

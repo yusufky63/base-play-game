@@ -130,7 +130,7 @@ export function CrashClient() {
                     : `Target ${targetMultiplier.toFixed(2)}x, crashed at ${visibleMultiplier.toFixed(2)}x.`
                   : undefined
             }
-            share={settled && won ? { game: "Crash", detail: `Cashed out at ${targetMultiplier.toFixed(2)}x${crashMultiplier ? ` before ${crashMultiplier.toFixed(2)}x crash point` : ""}.` } : undefined}
+            share={settled && won ? { game: "Crash", detail: `Cashed out at ${targetMultiplier.toFixed(2)}x${crashMultiplier ? ` before ${crashMultiplier.toFixed(2)}x crash point` : ""}.`, txHash: game.txHash } : undefined}
           />
         </div>
       </section>

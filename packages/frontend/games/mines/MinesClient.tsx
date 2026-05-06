@@ -165,7 +165,7 @@ export function MinesClient() {
             variant={isBusy ? "pending" : settled ? (won ? "win" : "loss") : "idle"}
             title={isBusy ? "Mine field is resolving" : won ? "Selected cells were safe" : "A mine was hit"}
             detail={isBusy ? "Waiting for contract settlement" : settled ? `${roundSafeCount} picks, ${roundMineCount} mines` : undefined}
-            share={settled && won ? { game: "Mines", detail: `${roundSafeCount} safe picks with ${roundMineCount} mines.` } : undefined}
+            share={settled && won ? { game: "Mines", detail: `${roundSafeCount} safe picks with ${roundMineCount} mines.`, txHash: game.txHash } : undefined}
           />
         </div>
       </section>

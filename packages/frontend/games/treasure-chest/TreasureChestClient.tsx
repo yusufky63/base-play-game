@@ -76,7 +76,7 @@ export function TreasureChestClient() {
             variant={isBusy ? "pending" : settled ? (won ? "win" : "loss") : "idle"}
             title={isBusy ? "Chests are shuffling" : won ? "Prize found" : "Empty chest"}
             detail={isBusy ? "Waiting for contract settlement" : settled ? `Picked ${roundChoice + 1}, prize was ${Number(winningChest ?? 0) + 1}` : undefined}
-            share={settled && won ? { game: "Treasure Chest", detail: `Opened chest ${roundChoice + 1} and found the prize.` } : undefined}
+            share={settled && won ? { game: "Treasure Chest", detail: `Opened chest ${roundChoice + 1} and found the prize.`, txHash: game.txHash } : undefined}
           />
         </div>
       </section>

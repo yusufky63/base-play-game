@@ -88,7 +88,7 @@ export function LimboClient() {
             variant={isBusy ? "pending" : settled ? (won ? "win" : "loss") : "idle"}
             title={isBusy ? "Limbo roll is running" : won ? "Target cleared" : "Target missed"}
             detail={isBusy ? "Waiting for contract settlement" : settled ? `Target ${(roundTarget / 100).toFixed(2)}x. Roll ${roll ?? "-"} / threshold ${threshold ?? "-"}.` : undefined}
-            share={settled && won ? { game: "Limbo", detail: `Cleared ${(roundTarget / 100).toFixed(2)}x target.` } : undefined}
+            share={settled && won ? { game: "Limbo", detail: `Cleared ${(roundTarget / 100).toFixed(2)}x target.`, txHash: game.txHash } : undefined}
           />
         </div>
       </section>

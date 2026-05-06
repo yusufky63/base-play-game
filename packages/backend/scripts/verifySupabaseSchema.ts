@@ -10,7 +10,17 @@ const requiredPublicObjects = [
   "platform_stats",
   "game_stats",
   "player_game_stats",
-  "leaderboard_weekly_ranked"
+  "leaderboard_weekly_ranked",
+  "referral_codes",
+  "player_referrals",
+  "referral_rewards",
+  "quest_definitions",
+  "player_quest_progress",
+  "badge_definitions",
+  "player_badges",
+  "player_quest_summary",
+  "player_badge_summary",
+  "player_referral_summary"
 ];
 
 const requiredServiceObjects = [...requiredPublicObjects, "indexer_state"];
@@ -106,14 +116,11 @@ async function main() {
 
   if (missingPublic.length > 0 || missingService.length > 0) {
     console.log("\nSchema repair needed");
-    console.log("Apply backend Supabase migrations 005, 006, and 007 to the linked project.");
+    console.log("Apply backend Supabase migrations through 011 to the linked project.");
     console.log("CLI option once SUPABASE_ACCESS_TOKEN is available:");
     console.log("  npx supabase link --project-ref buubouudfeyhltsqryam --workdir packages/backend/supabase");
     console.log("  npx supabase db push --workdir packages/backend/supabase");
-    console.log("Or run the SQL files in Supabase SQL Editor in this order:");
-    console.log("  packages/backend/supabase/migrations/005_profile_stats_and_feed_pagination.sql");
-    console.log("  packages/backend/supabase/migrations/006_production_feed_leaderboard_policies.sql");
-    console.log("  packages/backend/supabase/migrations/007_indexer_state.sql");
+    console.log("Or run the SQL files in packages/backend/supabase/migrations in numeric order through 011_referrals_quests_badges.sql.");
     process.exitCode = 1;
   }
 }

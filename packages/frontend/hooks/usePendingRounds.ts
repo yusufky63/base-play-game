@@ -7,7 +7,8 @@ import { base, baseSepolia } from "wagmi/chains";
 import { useAccount, useSwitchChain, useWriteContract } from "wagmi";
 import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
-import { BASE_MAINNET_RPC_URLS, BASE_SEPOLIA_RPC_URLS, getNetworkByChainId, type NetworkKey } from "@baseplay/shared/config/networks";
+import { BASE_MAINNET_FRONTEND_RPC_URLS, BASE_SEPOLIA_FRONTEND_RPC_URLS, getNetworkByChainId, type NetworkKey } from "@baseplay/shared/config/networks";
+import { fetchBackendJson } from "@/lib/backend";
 import { defaultChainId } from "@/lib/env";
 import { parseContractError } from "@/lib/errors";
 import { useToast } from "@/components/ui/ToastProvider";
@@ -22,11 +23,11 @@ const pendingRoundAbi = parseAbi([
 const clientByChainId = {
   8453: createPublicClient({
     chain: base,
-    transport: fallback(BASE_MAINNET_RPC_URLS.map((url) => http(url, { timeout: 10_000 })))
+    transport: fallback(BASE_MAINNET_FRONTEND_RPC_URLS.map((url) => http(url, { timeout: 10_000 })))
   }),
   84532: createPublicClient({
     chain: baseSepolia,
-    transport: fallback(BASE_SEPOLIA_RPC_URLS.map((url) => http(url, { timeout: 10_000 })))
+    transport: fallback(BASE_SEPOLIA_FRONTEND_RPC_URLS.map((url) => http(url, { timeout: 10_000 })))
   })
 } as const;
 
@@ -49,17 +50,30 @@ export interface PendingRound {
   refundAvailable: boolean;
 }
 
-export function usePendingRounds() {
+type BackendPendingRound = Omit<PendingRound, "blockNumber" | "latestBlock" | "timeoutBlocks" | "eligibleBlock" | "blocksRemaining"> & {
+  blockNumber: string;
+  latestBlock: string;
+  timeoutBlocks: string;
+  eligibleBlock: string;
+  blocksRemaining: string;
+};
+
+type BackendPendingResponse = {
+  status: "ok";
+  rows: BackendPendingRound[];
+};
+
+export function usePendingRounds({ scanAll = false }: { scanAll?: boolean } = {}) {
   const { address } = useAccount();
   const player = useMemo(() => address?.toLowerCase() ?? null, [address]);
 
   return useQuery({
-    queryKey: ["pending-rounds", player ?? "none"],
-    queryFn: () => fetchPendingRounds(address!),
+    queryKey: ["pending-rounds", player ?? "none", scanAll ? "all" : "active"],
+    queryFn: () => fetchPendingRounds(address!, scanAll),
     enabled: Boolean(address),
-    staleTime: 15_000,
-    gcTime: 2 * 60_000,
-    refetchInterval: 30_000,
+    staleTime: 45_000,
+    gcTime: 5 * 60_000,
+    refetchInterval: scanAll ? false : 90_000,
     refetchIntervalInBackground: false
   });
 }
@@ -100,16 +114,25 @@ export function useClaimPendingRound() {
   return { claim, isPending };
 }
 
-export function getPreferredPendingChainIds() {
+export function getPreferredPendingChainIds(scanAll = true) {
   const stored = typeof window === "undefined" ? 0 : Number(window.localStorage.getItem("baseplay:chainId"));
   const preferred = Number.isFinite(stored) && stored > 0 ? stored : defaultChainId;
+  if (!scanAll) return preferred === 8453 ? ([8453] as const) : ([84532] as const);
   return preferred === 8453 ? ([8453, 84532] as const) : ([84532, 8453] as const);
 }
 
-async function fetchPendingRounds(player: `0x${string}`): Promise<PendingRound[]> {
+async function fetchPendingRounds(player: `0x${string}`, scanAll: boolean): Promise<PendingRound[]> {
+  const preferredChainId = getPreferredPendingChainIds(false)[0];
+  const backend = await fetchBackendJson<BackendPendingResponse>(
+    `/api/player/${player}/pending-rounds?chainId=${preferredChainId}&scanAll=${scanAll ? "1" : "0"}`
+  ).catch(() => null);
+  if (backend?.rows) {
+    return backend.rows.map(fromBackendPendingRound);
+  }
+
   const rows: PendingRound[] = [];
 
-  for (const chainId of getPreferredPendingChainIds()) {
+  for (const chainId of getPreferredPendingChainIds(scanAll)) {
     const client = clientByChainId[chainId];
     const networkKey: NetworkKey = chainId === 8453 ? "baseMainnet" : "baseSepolia";
     const network = getNetworkByChainId(chainId);
@@ -175,4 +198,15 @@ async function fetchPendingRounds(player: `0x${string}`): Promise<PendingRound[]
   }
 
   return rows.sort((a, b) => Number(b.blockNumber - a.blockNumber));
+}
+
+function fromBackendPendingRound(row: BackendPendingRound): PendingRound {
+  return {
+    ...row,
+    blockNumber: BigInt(row.blockNumber),
+    latestBlock: BigInt(row.latestBlock),
+    timeoutBlocks: BigInt(row.timeoutBlocks),
+    eligibleBlock: BigInt(row.eligibleBlock),
+    blocksRemaining: BigInt(row.blocksRemaining)
+  };
 }

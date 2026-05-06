@@ -4,27 +4,33 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { isAddress } from "viem";
 import { useAccount } from "wagmi";
-import { Activity, Flame, RefreshCw, Sparkles, Trophy, WalletCards } from "lucide-react";
+import { Activity, BadgeCheck, Clipboard, Flame, Gift, RefreshCw, Sparkles, Trophy, Users, WalletCards } from "lucide-react";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
 import { BasenameLabel } from "@/components/base/BasenameLabel";
 import { useEthUsdPrice } from "@/hooks/useEthUsdPrice";
 import { usePlayerProfile } from "@/hooks/usePlayerProfile";
 import { usePlayerRounds } from "@/hooks/usePlayerRounds";
+import { useClaimReferral, useReferralSummary } from "@/hooks/useReferral";
 import { formatEth, formatUsd, shortenAddress } from "@/lib/formatters";
 import { levelProgress } from "@/lib/progression";
 import { PendingRoundsPanel } from "@/components/wallet/PendingRoundsPanel";
+import { useToast } from "@/components/ui/ToastProvider";
 
 const gameNames = Object.fromEntries(GAMES_REGISTRY.map((game) => [game.id, game.name]));
-type ProfileTab = "games" | "rounds" | "refunds";
+type ProfileTab = "games" | "rounds" | "quests" | "badges" | "referrals" | "refunds";
 
 export function ProfileClient({ address }: { address: string }) {
   const account = useAccount();
   const validAddress = isAddress(address) ? address : null;
   const profile = usePlayerProfile(validAddress);
+  const referralSummary = useReferralSummary(validAddress);
+  const claimReferral = useClaimReferral();
   const rounds = usePlayerRounds(validAddress, 8);
   const ethUsd = useEthUsdPrice();
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState<ProfileTab>("games");
   const [roundPageIndex, setRoundPageIndex] = useState(0);
+  const [manualReferrer, setManualReferrer] = useState("");
   const data = profile.data;
   const stats = data?.stats;
   const roundPages = rounds.data?.pages ?? [];
@@ -38,6 +44,9 @@ export function ProfileClient({ address }: { address: string }) {
   const profileTabs: Array<{ id: ProfileTab; label: string; detail: string }> = [
     { id: "games", label: "Games", detail: `${data?.gameStats.length ?? 0} played` },
     { id: "rounds", label: "Rounds", detail: `${roundPages.reduce((count, page) => count + page.rows.length, 0)} loaded` },
+    { id: "quests", label: "Quests", detail: `${data?.quests.filter((quest) => quest.completed).length ?? 0} done` },
+    { id: "badges", label: "Badges", detail: `${data?.badges.length ?? 0} earned` },
+    { id: "referrals", label: "Referrals", detail: `${referralSummary.data?.totalReferrals ?? 0} invited` },
     ...(isConnectedProfile ? [{ id: "refunds" as const, label: "Refunds", detail: "Active rounds" }] : [])
   ];
 
@@ -61,6 +70,22 @@ export function ProfileClient({ address }: { address: string }) {
       const nextIndex = roundPages.length;
       await rounds.fetchNextPage();
       setRoundPageIndex(nextIndex);
+    }
+  }
+
+  async function copyReferralUrl() {
+    const path = referralSummary.data?.referralUrlPath;
+    if (!path) return;
+    const origin = window.location.origin;
+    await navigator.clipboard?.writeText(`${origin}${path}`);
+    toast({ tone: "success", title: "Referral link copied" });
+  }
+
+  async function claimManualReferral() {
+    const result = await claimReferral.claim(manualReferrer);
+    if (result) {
+      setManualReferrer("");
+      void referralSummary.refetch();
     }
   }
 
@@ -205,6 +230,117 @@ export function ProfileClient({ address }: { address: string }) {
               <button type="button" onClick={() => void goNextRoundPage()} disabled={rounds.isFetchingNextPage || (roundPageIndex + 1 >= roundPages.length && !rounds.hasNextPage)} className="play-button-ghost h-10 rounded-md px-4 text-sm font-bold disabled:opacity-45">
                 {rounds.isFetchingNextPage ? "Loading..." : "Next"}
               </button>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "quests" && (
+          <div className="profile-tab-panel">
+            <div className="profile-panel-heading">
+              <h2 className="display-heading text-lg font-bold text-[var(--text-1)]">Quests</h2>
+              <span>Daily and weekly XP boosts</span>
+            </div>
+            <div className="grid gap-3 p-4 md:grid-cols-2">
+              {(data?.quests ?? []).map((quest) => (
+                <div key={`${quest.quest_id}-${quest.period_start}`} className={`progression-card ${quest.completed ? "progression-card-complete" : ""}`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="font-bold text-[var(--text-1)]">{quest.title}</div>
+                      <p className="mt-1 text-xs leading-5 text-[var(--text-2)]">{quest.description}</p>
+                    </div>
+                    <span className="rounded-md border border-[var(--border)] px-2 py-1 font-mono text-[10px] font-bold uppercase text-[var(--text-3)]">
+                      {quest.period}
+                    </span>
+                  </div>
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--surface-3)]">
+                    <span className="block h-full rounded-full bg-[var(--accent)]" style={{ width: `${Math.min(100, (quest.progress / quest.target) * 100)}%` }} />
+                  </div>
+                  <div className="mt-2 flex items-center justify-between font-mono text-[10px] text-[var(--text-3)]">
+                    <span>{Math.min(quest.progress, quest.target)} / {quest.target}</span>
+                    <span>+{quest.reward_xp} XP</span>
+                  </div>
+                </div>
+              ))}
+              {!profile.isLoading && (data?.quests.length ?? 0) === 0 && <div className="text-sm text-[var(--text-3)]">Quests appear after settled rounds are indexed.</div>}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "badges" && (
+          <div className="profile-tab-panel">
+            <div className="profile-panel-heading">
+              <h2 className="display-heading text-lg font-bold text-[var(--text-1)]">Badges</h2>
+              <span>Off-chain now, mint-ready later</span>
+            </div>
+            <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
+              {(data?.badges ?? []).map((badge) => (
+                <div key={badge.badge_id} className="badge-card">
+                  <div className="badge-card-icon">
+                    <BadgeCheck size={20} />
+                  </div>
+                  <div className="mt-3 font-bold text-[var(--text-1)]">{badge.title}</div>
+                  <p className="mt-1 text-xs leading-5 text-[var(--text-2)]">{badge.description}</p>
+                  <div className="mt-3 font-mono text-[10px] uppercase text-[var(--text-3)]">{new Date(badge.awarded_at).toLocaleDateString()}</div>
+                </div>
+              ))}
+              {!profile.isLoading && (data?.badges.length ?? 0) === 0 && <div className="text-sm text-[var(--text-3)]">No badges earned yet.</div>}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "referrals" && (
+          <div className="profile-tab-panel">
+            <div className="profile-panel-heading">
+              <h2 className="display-heading text-lg font-bold text-[var(--text-1)]">Referrals</h2>
+              <span>{referralSummary.data?.totalXp ?? 0} XP earned</span>
+            </div>
+            <div className="grid gap-4 p-4 lg:grid-cols-[0.9fr_1.1fr]">
+              <div className="progression-card">
+                <div className="flex items-center gap-2 font-mono text-[10px] font-bold uppercase text-[var(--text-3)]">
+                  <Gift size={14} className="text-[var(--accent)]" />
+                  Your invite link
+                </div>
+                <div className="mt-3 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 font-mono text-xs text-[var(--text-1)]">
+                  {referralSummary.data?.referralUrlPath ? `${typeof window === "undefined" ? "" : window.location.origin}${referralSummary.data.referralUrlPath}` : "Loading referral link..."}
+                </div>
+                <button type="button" onClick={() => void copyReferralUrl()} disabled={!referralSummary.data?.referralUrlPath} className="mt-3 primary-action inline-flex h-10 items-center gap-2 rounded-md px-4 text-sm font-bold text-white disabled:opacity-45">
+                  <Clipboard size={14} />
+                  Copy link
+                </button>
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  <Metric label="Invites" value={String(referralSummary.data?.totalReferrals ?? 0)} />
+                  <Metric label="Active" value={String(referralSummary.data?.activeReferrals ?? 0)} />
+                  <Metric label="Today" value={`${referralSummary.data?.dailyXp ?? 0} XP`} />
+                </div>
+              </div>
+
+              <div className="progression-card">
+                <div className="flex items-center gap-2 font-mono text-[10px] font-bold uppercase text-[var(--text-3)]">
+                  <Users size={14} className="text-[var(--accent)]" />
+                  Link a referrer
+                </div>
+                <p className="mt-2 text-xs leading-5 text-[var(--text-2)]">If you opened BasePlay from a referral but skipped the wallet signature, link it here. A wallet can only be linked once.</p>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <input
+                    value={manualReferrer}
+                    onChange={(event) => setManualReferrer(event.target.value)}
+                    placeholder="0x address or referral code"
+                    className="h-10 min-w-0 flex-1 rounded-md border border-[var(--border-2)] bg-[var(--surface)] px-3 font-mono text-sm text-[var(--text-1)] outline-none focus:border-[var(--accent)]"
+                  />
+                  <button type="button" disabled={!isConnectedProfile || claimReferral.isPending || !manualReferrer} onClick={() => void claimManualReferral()} className="play-button-ghost h-10 rounded-md px-4 text-sm font-bold disabled:opacity-45">
+                    {claimReferral.isPending ? "Signing..." : "Link"}
+                  </button>
+                </div>
+                <div className="mt-4 divide-y divide-[var(--border)]">
+                  {(referralSummary.data?.recentRewards ?? []).slice(0, 5).map((reward) => (
+                    <div key={reward.id} className="flex items-center justify-between py-2 text-sm">
+                      <span className="font-mono text-xs text-[var(--text-2)]">{shortenAddress(reward.referred_player, 5)}</span>
+                      <span className="font-mono text-xs font-bold text-[var(--accent)]">+{reward.xp_awarded} XP</span>
+                    </div>
+                  ))}
+                  {!referralSummary.isLoading && (referralSummary.data?.recentRewards.length ?? 0) === 0 && <div className="py-3 text-sm text-[var(--text-3)]">No referral rewards yet.</div>}
+                </div>
+              </div>
             </div>
           </div>
         )}

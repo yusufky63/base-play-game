@@ -11,6 +11,7 @@
     "./config/games.registry": "./dist/config/games.registry.js",
     "./config/addresses": "./dist/config/addresses.js",
     "./utils/payout": "./dist/utils/payout.js",
+    "./utils/referral": "./dist/utils/referral.js",
     "./abis/*.json": "./abis/*.json",
     "./types/game.types": "./dist/types/game.types.js",
     "./types/network.types": "./dist/types/network.types.js",
