@@ -17,7 +17,7 @@ export function PendingRoundsPanel({ compact = false }: { compact?: boolean }) {
       <div className={compact ? "mb-2 flex items-center justify-between gap-3" : "flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3"}>
         <div className="flex items-center gap-2 font-bold text-[var(--text-1)]">
           <Clock3 size={15} className={rows.length ? "text-[var(--pending)]" : "text-[var(--text-3)]"} />
-          Pending rounds
+          {compact ? "Pending / refunds" : "Pending rounds and refunds"}
         </div>
         <button
           type="button"
@@ -32,7 +32,12 @@ export function PendingRoundsPanel({ compact = false }: { compact?: boolean }) {
 
       <div className={compact ? "grid gap-2" : "divide-y divide-[var(--border)]"}>
         {pending.isLoading && <EmptyPending compact={compact} text="Checking active rounds on-chain..." />}
-        {!pending.isLoading && rows.length === 0 && <EmptyPending compact={compact} text="No active on-chain rounds for this wallet." />}
+        {!pending.isLoading && rows.length === 0 && (
+          <EmptyPending
+            compact={compact}
+            text={compact ? "No unresolved rounds." : "No unresolved rounds for this wallet. If a VRF round times out, it appears here again after reconnecting or reopening the app."}
+          />
+        )}
         {rows.map((round) => (
           <PendingRoundRow
             key={`${round.chainId}-${round.contractAddress}-${round.requestId}`}
@@ -61,7 +66,7 @@ function PendingRoundRow({
   const network = getNetworkByChainId(round.chainId);
   const explorer = network?.blockExplorer;
   const requestLabel = `${round.requestId.slice(0, 8)}...${round.requestId.slice(-6)}`;
-  const statusText = round.refundAvailable ? "Refund available" : `${round.blocksRemaining.toString()} blocks left`;
+  const statusText = round.refundAvailable ? "Refund ready" : `${round.blocksRemaining.toString()} blocks left`;
 
   return (
     <div className={compact ? "rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3" : "grid gap-3 px-4 py-3 text-sm md:grid-cols-[1fr_auto] md:items-center"}>
@@ -78,6 +83,7 @@ function PendingRoundRow({
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px] text-[var(--text-3)]">
           <span>{round.betAmountEth} ETH bet</span>
           <span>request {requestLabel}</span>
+          <span>refund after block {round.eligibleBlock.toString()}</span>
           {explorer && (
             <a href={`${explorer}/address/${round.contractAddress}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-[var(--accent)]">
               contract <ExternalLink size={10} />

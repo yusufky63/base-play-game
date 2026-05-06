@@ -17,9 +17,9 @@ const profiles = [
 ] as const;
 
 const wheelLabels = [
-  ["0x", "1x", "1x", "1.5x", "0x", "1x", "1.5x", "2x", "0x", "1x", "1x", "1.5x", "0x", "1x", "1.5x", "2x"],
-  ["0x", "0x", "1.5x", "2.5x", "0x", "0x", "1.5x", "2.5x", "0x", "0x", "1.5x", "2.5x", "0x", "0x", "1.5x", "2.5x"],
-  ["0x", "0x", "0x", "2x", "0x", "0x", "0x", "4x", "0x", "0x", "0x", "2x", "0x", "0x", "4x", "8x"]
+  ["0x", "0x", "0x", "0x", "1x", "1x", "1x", "1x", "1x", "1x", "1.5x", "1.5x", "1.5x", "1.5x", "2x", "2x"],
+  ["0x", "0x", "0x", "0x", "0x", "0x", "0x", "0x", "1.5x", "1.5x", "1.5x", "1.5x", "2.5x", "2.5x", "2.5x", "2.5x"],
+  ["0x", "0x", "0x", "0x", "0x", "0x", "0x", "0x", "0x", "0x", "0x", "0x", "2x", "2x", "4x", "8x"]
 ];
 
 export function WheelClient() {
@@ -34,7 +34,8 @@ export function WheelClient() {
   const won = game.vrfResult?.won === true;
   const isBusy = game.vrfState === "pending_tx" || game.vrfState === "pending_vrf";
   const rotation = settled && segment !== null ? 360 * 5 + segment * 22.5 : isBusy ? 1080 : 0;
-  const labels = wheelLabels[profile];
+  const displayProfile = settled || isBusy ? roundProfile : profile;
+  const labels = wheelLabels[displayProfile];
 
   async function play() {
     setRoundProfile(profile);
@@ -70,14 +71,14 @@ export function WheelClient() {
     >
       <section className={`game-stage min-h-[500px] p-4 md:p-6 ${settled ? (won ? "result-win-effect" : "result-loss-effect") : ""}`}>
         <div className="flex h-full flex-col items-center justify-center gap-7">
-          <div className="wheel-wrap" data-risk={profiles[profile].label}>
+          <div className="wheel-wrap" data-risk={profiles[displayProfile].label}>
             <div className="wheel-pointer" />
-            <div className={`wheel-face wheel-profile-${profile} ${isBusy ? "wheel-spinning" : ""}`} style={{ transform: `rotate(${rotation}deg)` }}>
+            <div className={`wheel-face wheel-profile-${displayProfile} ${isBusy ? "wheel-spinning" : ""}`} style={{ transform: `rotate(${rotation}deg)` }}>
               {labels.map((label, index) => (
                 <span key={index} className={label === "0x" ? "wheel-label-empty" : "wheel-label-pay"} style={{ transform: `rotate(${index * 22.5 + 11.25}deg) translateY(-112px)` }}>{label}</span>
               ))}
               <div className="wheel-hub">
-                <strong>{profiles[profile].label}</strong>
+                <strong>{profiles[displayProfile].label}</strong>
                 <small>VRF spin</small>
               </div>
             </div>

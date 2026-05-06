@@ -44,6 +44,7 @@ export interface PendingRound {
   blockNumber: bigint;
   latestBlock: bigint;
   timeoutBlocks: bigint;
+  eligibleBlock: bigint;
   blocksRemaining: bigint;
   refundAvailable: boolean;
 }
@@ -149,7 +150,8 @@ async function fetchPendingRounds(player: `0x${string}`): Promise<PendingRound[]
       if (settled || roundPlayer.toLowerCase() !== player.toLowerCase()) continue;
 
       const eligibleBlock = blockNumber + timeoutBlocks;
-      const blocksRemaining = eligibleBlock > latestBlock ? eligibleBlock - latestBlock : 0n;
+      const refundAvailable = latestBlock > eligibleBlock;
+      const blocksRemaining = refundAvailable ? 0n : eligibleBlock - latestBlock + 1n;
 
       rows.push({
         gameId: game.id,
@@ -165,8 +167,9 @@ async function fetchPendingRounds(player: `0x${string}`): Promise<PendingRound[]
         blockNumber,
         latestBlock,
         timeoutBlocks,
+        eligibleBlock,
         blocksRemaining,
-        refundAvailable: blocksRemaining === 0n
+        refundAvailable
       });
     }
   }

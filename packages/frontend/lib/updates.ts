@@ -1,6 +1,11 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
     date: "May 6, 2026",
+    title: "XP, refunds, and player docs clarified",
+    body: "XP now follows wager size instead of win luck, pending refund tracking explains reopen/reconnect behavior, Scratch Card now presents one VRF ticket, and the Docs page includes a player-focused FAQ."
+  },
+  {
+    date: "May 6, 2026",
     title: "Refund flow separated from VRF status",
     body: "Claim refund now clears the active game verification state and no longer shows refund transactions as if they were new Chainlink VRF rounds."
   },

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, CircleDollarSign, Radio, ShieldCheck, Sparkles, WalletCards } from "lucide-react";
+import { BookOpen, CircleDollarSign, HelpCircle, Radio, RotateCcw, ShieldCheck, Sparkles, WalletCards } from "lucide-react";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
 import { SITE_UPDATES } from "@/lib/updates";
 
@@ -36,7 +36,7 @@ const playerNotes = [
   {
     icon: <Sparkles size={20} />,
     title: "XP and streaks",
-    body: "Settled rounds grant XP. Playing on active days builds your daily streak and helps your leaderboard position."
+    body: "Settled rounds grant XP mainly from wager size, not from winning luck. Playing on active days builds your daily streak."
   },
   {
     icon: <Radio size={20} />,
@@ -52,6 +52,73 @@ const safetyNotes = [
   "The Chainlink VRF button shows the request ID and the Basescan transaction link used to verify the round.",
   "If a round is delayed beyond the contract window, the refund action appears in the connected wallet menu and your profile page.",
   "Claiming a refund only returns the locked bet. It does not create a new random result."
+];
+
+const refundNotes = [
+  "Refunds are only possible when the contract still has an unresolved active round for your wallet.",
+  "The claim button appears after the contract timeout block has fully passed. The UI does not show it one block early.",
+  "You can close the tab. After reconnecting the same wallet, BasePlay scans active rounds and shows the refund in the wallet menu and your profile page.",
+  "Claim refund is a normal wallet transaction. It returns the locked wager and releases the reserved payout from the vault.",
+  "If the round settles before the timeout, there is no refund because the game already produced its on-chain result."
+];
+
+const faqs = [
+  {
+    question: "Does the website decide whether I win?",
+    answer: "No. The UI only sends your locked choices to the contract. The contract requests Chainlink VRF and settles from the returned random word."
+  },
+  {
+    question: "Can I change my choice after pressing Play?",
+    answer: "No. The game options are encoded into the transaction before the VRF request starts. After signing, the choice is fixed on-chain."
+  },
+  {
+    question: "Where can I verify a round?",
+    answer: "Open the Chainlink VRF button on a game page. It shows the request ID, the wager transaction, and the settlement transaction when available."
+  },
+  {
+    question: "Why can a round be pending?",
+    answer: "The wager transaction can confirm before the VRF callback arrives. During that window the round is locked, and the pending/refund panel tracks it."
+  },
+  {
+    question: "What happens if VRF takes too long?",
+    answer: "After the timeout block window fully passes, the same wallet can claim a refund from the game contract. Refund does not trigger a new VRF request."
+  },
+  {
+    question: "If I close the tab, do I lose the refund button?",
+    answer: "No. The refund state lives on-chain. Reconnect the same wallet and check the wallet menu or Profile page to see unresolved rounds."
+  },
+  {
+    question: "How is XP calculated?",
+    answer: "XP is based on the settled wager amount. Wins and losses at the same bet size earn the same XP, so XP represents play volume rather than lucky outcomes."
+  },
+  {
+    question: "Why are XP and net profit separate rankings?",
+    answer: "XP rewards activity. Net profit ranks actual game performance after wins, losses, and payouts. A high-XP player is active, not necessarily profitable."
+  },
+  {
+    question: "What does gross payout mean?",
+    answer: "Game pages show the gross multiplier from the game rule. The vault applies the configured house edge before sending the final net payout."
+  },
+  {
+    question: "Can direct contract calls cheat the games?",
+    answer: "Direct calls use the same contract validation as the UI. Invalid params revert, active rounds are limited, and the vault reserves max payout before randomness is requested."
+  },
+  {
+    question: "Can bots predict the result?",
+    answer: "Bots can submit transactions like any wallet, but they cannot know the VRF result before the contract receives it. Rate limits and max bet controls reduce spam and vault risk."
+  },
+  {
+    question: "Why is Scratch Card one ticket?",
+    answer: "Scratch Card has no player-side choice. One bet creates one VRF-backed prize tier, so the UI presents it as a single reveal ticket."
+  },
+  {
+    question: "Why can a payout still be a net loss?",
+    answer: "Some games can land below 1x gross, such as low Plinko slots. That is a payout segment, but it can still be less than the wager and therefore a net loss."
+  },
+  {
+    question: "What should I check before playing?",
+    answer: "Check the connected wallet, selected Base network, bet amount, and the game options. BasePlay also checks network and wallet balance before sending the wager."
+  }
 ];
 
 export default function DocsPage() {
@@ -83,6 +150,25 @@ export default function DocsPage() {
               <div className="font-mono text-[11px] font-bold uppercase text-[var(--accent)]">Step {index + 1}</div>
               <h3 className="mt-2 font-bold text-[var(--text-1)]">{item.title}</h3>
               <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">{item.body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-4 panel p-4">
+        <div className="flex items-start gap-3">
+          <div className="mt-1 text-[var(--accent)]"><RotateCcw size={20} /></div>
+          <div>
+            <h2 className="display-heading text-xl font-bold text-[var(--text-1)]">Pending rounds and refunds</h2>
+            <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">
+              Refunds are a fallback for unresolved VRF rounds. They are tracked from the contract, so they survive refreshes and closed tabs.
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 grid gap-2 md:grid-cols-2">
+          {refundNotes.map((item) => (
+            <div key={item} className="rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3 text-sm leading-6 text-[var(--text-2)]">
+              {item}
             </div>
           ))}
         </div>
@@ -129,7 +215,7 @@ export default function DocsPage() {
         <div className="panel p-4">
           <h2 className="display-heading text-xl font-bold text-[var(--text-1)]">XP and leaderboard</h2>
           <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">
-            XP rewards regular play, while leaderboard profit shows net game performance. You can compare players by XP or net profit depending on what you care about.
+            XP rewards regular play volume and scales with wager size. Wins do not add a separate XP bonus. Leaderboard profit stays separate so you can compare actual net game performance.
           </p>
           <div className="mt-3 grid gap-2 md:grid-cols-2">
             <DocLink href="/leaderboard" label="Open leaderboard" />
@@ -153,6 +239,26 @@ export default function DocsPage() {
               Public release notes will appear after production launch.
             </p>
           )}
+        </div>
+      </section>
+
+      <section className="mt-4 panel p-4">
+        <div className="flex items-start gap-3">
+          <div className="mt-1 text-[var(--accent)]"><HelpCircle size={20} /></div>
+          <div>
+            <h2 className="display-heading text-xl font-bold text-[var(--text-1)]">Questions and answers</h2>
+            <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">
+              Common questions about game logic, randomness, refunds, XP, payouts, and account tracking.
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 grid gap-2 md:grid-cols-2">
+          {faqs.map((item) => (
+            <details key={item.question} className="rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3">
+              <summary className="cursor-pointer list-none font-bold text-[var(--text-1)]">{item.question}</summary>
+              <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">{item.answer}</p>
+            </details>
+          ))}
         </div>
       </section>
     </main>

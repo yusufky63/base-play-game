@@ -3012,54 +3012,121 @@ select {
   font-family: var(--font-mono);
 }
 
-.scratch-board {
-  display: grid;
-  width: min(100%, 500px);
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.scratch-tile {
-  display: grid;
-  aspect-ratio: 1.08;
-  place-items: center;
-  border: 2px solid var(--border-2);
-  border-radius: var(--radius-ui);
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--surface-3) 70%, var(--accent)), var(--surface));
-  color: var(--text-3);
-  box-shadow: 7px 7px 0 color-mix(in srgb, var(--accent) 8%, transparent);
-  overflow: hidden;
+.scratch-ticket-stage {
   position: relative;
+  display: grid;
+  width: min(100%, 620px);
+  place-items: center;
 }
 
-.scratch-tile::before {
+.scratch-ticket-stage::before {
+  content: "";
+  position: absolute;
+  inset: 16px 8%;
+  border: 1px dashed color-mix(in srgb, var(--accent) 28%, var(--border));
+  border-radius: calc(var(--radius-ui) + 10px);
+  opacity: 0.65;
+}
+
+.scratch-ticket {
+  position: relative;
+  display: grid;
+  width: min(100%, 520px);
+  min-height: 300px;
+  align-content: space-between;
+  overflow: hidden;
+  border: 2px solid var(--border-2);
+  border-radius: calc(var(--radius-ui) + 8px);
+  background:
+    radial-gradient(circle at 20% 18%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 34%),
+    linear-gradient(135deg, color-mix(in srgb, var(--surface-3) 72%, var(--accent)), var(--surface));
+  box-shadow: var(--card-shadow-3d);
+  padding: clamp(18px, 4vw, 30px);
+}
+
+.scratch-ticket::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(110deg, transparent 0 34%, color-mix(in srgb, white 28%, transparent) 44%, transparent 55% 100%);
+  background:
+    repeating-linear-gradient(135deg, color-mix(in srgb, white 16%, transparent) 0 2px, transparent 2px 9px),
+    linear-gradient(110deg, transparent 0 34%, color-mix(in srgb, white 28%, transparent) 44%, transparent 55% 100%);
   transform: translateX(-120%);
+  opacity: 0.72;
 }
 
-.scratch-board-running .scratch-tile::before,
-.scratch-tile-scan::before {
-  animation: scratch-scan 900ms ease-in-out infinite;
+.scratch-ticket-running::before {
+  animation: scratch-scan 950ms ease-in-out infinite;
 }
 
-.scratch-tile span {
+.scratch-ticket-top,
+.scratch-ticket-prize {
+  position: relative;
+  z-index: 1;
+}
+
+.scratch-ticket-top span,
+.scratch-ticket-prize span {
+  color: var(--text-3);
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
 }
 
-.scratch-tile strong {
+.scratch-ticket-top strong {
+  display: block;
+  margin-top: 8px;
   font-family: var(--font-display);
-  font-size: clamp(22px, 5vw, 42px);
+  font-size: clamp(34px, 8vw, 72px);
+  line-height: 0.95;
   font-weight: 900;
   color: var(--text-1);
 }
 
-.scratch-tile-revealed {
+.scratch-ticket-symbols {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.scratch-ticket-symbols span {
+  display: grid;
+  min-height: 52px;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-ui);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.scratch-ticket-symbols .scratch-ticket-symbol-active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: white;
+}
+
+.scratch-ticket-prize {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.scratch-ticket-prize strong {
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: clamp(42px, 10vw, 82px);
+  line-height: 0.85;
+  font-weight: 900;
+}
+
+.scratch-ticket-revealed {
   border-color: var(--accent);
   background:
     radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 48%),
@@ -3511,7 +3578,11 @@ select {
     display: none;
   }
 
-  .scratch-board {
+  .scratch-ticket {
+    min-height: 270px;
+  }
+
+  .scratch-ticket-symbols {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

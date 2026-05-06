@@ -95,6 +95,9 @@ export function ProfileClient({ address }: { address: string }) {
 
       {isConnectedProfile && (
         <section className="mt-4">
+          <div className="mb-2 rounded-md border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-sm leading-6 text-[var(--text-2)]">
+            Refund center scans your active on-chain rounds after reconnecting. If a VRF round times out while the tab is closed, the claim action appears here and in the wallet menu for the same wallet.
+          </div>
           <PendingRoundsPanel />
         </section>
       )}

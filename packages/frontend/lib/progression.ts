@@ -1,7 +1,7 @@
-export function calculateRoundXp(betAmountEth: number, won: boolean) {
+export function calculateRoundXp(betAmountEth: number, _won: boolean) {
   if (!Number.isFinite(betAmountEth) || betAmountEth <= 0) return 0;
-  const wagerXp = Math.min(Math.floor(betAmountEth / 0.0001) * 2, 20);
-  return 10 + wagerXp + (won ? 5 : 0);
+  const wagerXp = Math.min(Math.floor(betAmountEth / 0.0001) * 3, 60);
+  return 5 + wagerXp;
 }
 
 export function levelFromXp(xp: number) {

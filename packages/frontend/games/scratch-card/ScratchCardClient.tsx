@@ -28,7 +28,8 @@ export function ScratchCardClient() {
   const settled = game.vrfState === "settled" && typeof game.vrfResult?.won === "boolean";
   const won = game.vrfResult?.won === true;
   const isBusy = game.vrfState === "pending_tx" || game.vrfState === "pending_vrf";
-  const activeTier = isBusy ? cursor : tier ?? 0;
+  const displayTier = settled ? tier ?? 0 : isBusy ? cursor : null;
+  const displayPrize = displayTier === null ? null : tiers[displayTier] ?? tiers[0];
 
   useEffect(() => {
     if (!isBusy) return;
@@ -71,17 +72,24 @@ export function ScratchCardClient() {
     >
       <section className={`game-stage min-h-[520px] p-4 md:p-6 ${settled ? (won ? "result-win-effect" : "result-loss-effect") : ""}`}>
         <div className="flex h-full flex-col items-center justify-center gap-7">
-          <div className={`scratch-board ${isBusy ? "scratch-board-running" : ""}`}>
-            {Array.from({ length: 6 }).map((_, index) => {
-              const reveal = settled || isBusy;
-              const active = index === 2;
-              return (
-                <div key={index} className={`scratch-tile ${reveal && active ? "scratch-tile-revealed" : ""} ${isBusy && index === activeTier ? "scratch-tile-scan" : ""}`}>
-                  <span>{reveal && active ? tiers[activeTier]?.label ?? "Prize" : "BasePlay"}</span>
-                  <strong>{reveal && active ? tiers[activeTier]?.payout ?? "0x" : "?"}</strong>
-                </div>
-              );
-            })}
+          <div className={`scratch-ticket-stage ${isBusy ? "scratch-ticket-stage-running" : ""}`}>
+            <div className={`scratch-ticket ${settled ? "scratch-ticket-revealed" : ""} ${isBusy ? "scratch-ticket-running" : ""}`}>
+              <div className="scratch-ticket-top">
+                <span>BasePlay scratch</span>
+                <strong>{displayPrize?.label ?? "Hidden"}</strong>
+              </div>
+              <div className="scratch-ticket-symbols" aria-hidden="true">
+                {tiers.slice(1).map((item) => (
+                  <span key={item.id} className={displayPrize?.id === item.id ? "scratch-ticket-symbol-active" : ""}>
+                    {item.payout}
+                  </span>
+                ))}
+              </div>
+              <div className="scratch-ticket-prize">
+                <span>{isBusy ? "Revealing tier" : settled ? "Final tier" : "One VRF ticket"}</span>
+                <strong>{displayPrize?.payout ?? "?"}</strong>
+              </div>
+            </div>
           </div>
           <RoundSummaryStrip
             items={[

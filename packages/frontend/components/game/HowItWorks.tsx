@@ -25,9 +25,9 @@ const GAME_STEPS: Record<string, { title: string; body: string }[]> = {
     { title: "Avoid mines", body: "A clean reveal path pays by multiplier; hitting a mine settles the round as a loss." }
   ],
   hilo: [
-    { title: "Read the card", body: "Start from a dealt card and choose whether the next card should be higher or lower." },
-    { title: "Draw with VRF", body: "The contract derives card values from the random word for transparent settlement." },
-    { title: "Chain wins", body: "Correct calls pay by odds and can be extended in the full game flow." }
+    { title: "Read the card", body: "Use the visible current card and choose whether the VRF result should be higher or lower." },
+    { title: "Draw with VRF", body: "The contract derives the result card from the random word and compares it with the locked current card." },
+    { title: "Settle the call", body: "A correct call pays by odds. Each wager is still a separate on-chain round, so choices cannot change after signing." }
   ],
   "over-under": [
     { title: "Set a threshold", body: "Choose over or under and lock the target number into the bet transaction." },
