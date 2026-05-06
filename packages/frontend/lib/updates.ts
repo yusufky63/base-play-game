@@ -1,6 +1,11 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
     date: "May 6, 2026",
+    title: "Vercel monorepo build fixed",
+    body: "Production deploys now install build dependencies explicitly and compile the shared workspace before the frontend, so Tailwind and shared contract config resolve correctly on Vercel."
+  },
+  {
+    date: "May 6, 2026",
     title: "Wallet build dependency fixed",
     body: "The frontend now includes the bs58 dependency required by the Base/Coinbase wallet connector chain, preventing production builds from failing during wallet component SSR."
   },

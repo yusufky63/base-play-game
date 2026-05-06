@@ -17,7 +17,7 @@
     "./types/supabase.types": "./dist/types/supabase.types.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -b tsconfig.json --force",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {

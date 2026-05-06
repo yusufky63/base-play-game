@@ -195,7 +195,7 @@ export default function DocsPage() {
       <section className="mt-4 panel p-4">
         <h2 className="display-heading text-xl font-bold text-[var(--text-1)]">Public contracts</h2>
         <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">
-          Game and vault contracts are public. Use the explorer links to inspect transactions, events, code, and balances.
+          Game and vault contracts are public. The same shared contract registry powers game pages, docs, and production deployment. Use the explorer links to inspect transactions, events, code, and balances.
         </p>
         <div className="mt-4 grid gap-3 lg:grid-cols-2">
           {Object.values(NETWORKS).map((network) => (
