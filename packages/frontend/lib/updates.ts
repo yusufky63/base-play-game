@@ -1,6 +1,11 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
     date: "May 6, 2026",
+    title: "Docs categories separated",
+    body: "Docs now renders one selected category at a time instead of stacking every section on one page, and game contract links moved below How it works on game pages."
+  },
+  {
+    date: "May 6, 2026",
     title: "Docs, profile tabs, and mobile cards refined",
     body: "Docs now reads like a structured player manual with a side navigation and separated sections, profile refunds are embedded cleanly inside the Refunds tab, and game cards keep the full desktop layout while using a tighter mobile-only treatment."
   },

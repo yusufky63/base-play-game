@@ -48,10 +48,6 @@ export function GameShell({
         <FairnessButton requestId={requestId} txHash={txHash} />
       </div>
 
-      <div className="mb-5">
-        <GameContractPanel gameId={gameId} />
-      </div>
-
       {showRoundStatus && (
         <div className="mb-5">
           <RoundStatus state={vrfState} requestId={requestId} txHash={txHash} />
@@ -67,6 +63,9 @@ export function GameShell({
         </div>
         <div className="game-how-area lg:col-start-1 lg:row-start-2">
           <HowItWorks gameId={gameId} />
+        </div>
+        <div className="game-contract-area lg:col-start-1 lg:row-start-3">
+          <GameContractPanel gameId={gameId} />
         </div>
       </div>
     </main>

@@ -3,17 +3,18 @@ import { BookOpen, CircleDollarSign, ExternalLink, HelpCircle, Radio, RotateCcw,
 import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
 import { NETWORKS } from "@baseplay/shared/config/networks";
-import { SITE_UPDATES } from "@/lib/updates";
 
 const docNav = [
-  { href: "#essentials", label: "Essentials" },
-  { href: "#rounds", label: "Round flow" },
-  { href: "#refunds", label: "Refunds" },
-  { href: "#games", label: "Games" },
-  { href: "#contracts", label: "Contracts" },
-  { href: "#account", label: "Account" },
-  { href: "#faq", label: "Q&A" }
-];
+  { id: "essentials", label: "Essentials", title: "Player documentation", description: "Core player concepts before placing a wager." },
+  { id: "rounds", label: "Round flow", title: "How a round works", description: "The wager, VRF, settlement, and display flow." },
+  { id: "refunds", label: "Refunds", title: "Pending rounds and refunds", description: "What happens when a VRF round is delayed." },
+  { id: "games", label: "Games", title: "Games", description: "Active games and their player-facing rules." },
+  { id: "contracts", label: "Contracts", title: "Public contracts", description: "Explorer links for game and vault contracts." },
+  { id: "account", label: "Account", title: "Wallet, stats, and safety", description: "Wallet identity, live data, XP, and safety notes." },
+  { id: "faq", label: "Q&A", title: "Questions and answers", description: "Common player questions about results and mechanics." }
+] as const;
+
+type DocSectionId = (typeof docNav)[number]["id"];
 
 const roundSteps = [
   {
@@ -137,7 +138,11 @@ const faqs = [
   }
 ];
 
-export default function DocsPage() {
+export default async function DocsPage({ searchParams }: { searchParams?: Promise<{ section?: string }> }) {
+  const params = await searchParams;
+  const selectedSection = docNav.some((item) => item.id === params?.section) ? (params?.section as DocSectionId) : "essentials";
+  const current = docNav.find((item) => item.id === selectedSection) ?? docNav[0];
+
   return (
     <main className="docs-page mx-auto w-full max-w-7xl px-4 py-10">
       <header className="docs-hero">
@@ -145,25 +150,24 @@ export default function DocsPage() {
           <BookOpen size={16} />
           BasePlay Docs
         </div>
-        <h1 className="display-heading text-4xl font-bold text-[var(--text-1)]">Player documentation</h1>
-        <p>
-          A structured guide to BasePlay games, round settlement, refunds, XP, public contracts, and account data. It is written for players, not for internal deployment work.
-        </p>
+        <h1 className="display-heading text-4xl font-bold text-[var(--text-1)]">{current.title}</h1>
+        <p>{current.description}</p>
       </header>
 
       <div className="docs-layout">
         <aside className="docs-sidebar" aria-label="Docs navigation">
           <nav>
             {docNav.map((item) => (
-              <a key={item.href} href={item.href} className="docs-nav-link">
+              <Link key={item.id} href={`/docs?section=${item.id}`} className={`docs-nav-link ${item.id === selectedSection ? "docs-nav-link-active" : ""}`}>
                 {item.label}
-              </a>
+              </Link>
             ))}
           </nav>
         </aside>
 
         <article className="docs-article">
-          <section id="essentials" className="docs-block">
+          {selectedSection === "essentials" && (
+          <section className="docs-block">
             <SectionHeading eyebrow="Overview" title="Essentials" />
             <p className="docs-lede">
               BasePlay keeps the game result on-chain and uses the connected wallet as the player identity. These are the concepts worth knowing before placing a wager.
@@ -174,8 +178,10 @@ export default function DocsPage() {
               ))}
             </div>
           </section>
+          )}
 
-          <section id="rounds" className="docs-block">
+          {selectedSection === "rounds" && (
+          <section className="docs-block">
             <SectionHeading eyebrow="Round flow" title="How a round works" />
             <ol className="docs-step-list">
               {roundSteps.map((item, index) => (
@@ -189,8 +195,10 @@ export default function DocsPage() {
               ))}
             </ol>
           </section>
+          )}
 
-          <section id="refunds" className="docs-block">
+          {selectedSection === "refunds" && (
+          <section className="docs-block">
             <SectionHeading eyebrow="Fallback" title="Pending rounds and refunds" icon={<RotateCcw size={18} />} />
             <p className="docs-lede">
               Refunds are a fallback for unresolved VRF rounds. They are tracked from the contract, so they survive refreshes and closed tabs.
@@ -201,8 +209,10 @@ export default function DocsPage() {
               ))}
             </ul>
           </section>
+          )}
 
-          <section id="games" className="docs-block">
+          {selectedSection === "games" && (
+          <section className="docs-block">
             <SectionHeading eyebrow="Library" title="Games" />
             <div className="docs-game-list">
               {GAMES_REGISTRY.map((game) => (
@@ -217,8 +227,10 @@ export default function DocsPage() {
               ))}
             </div>
           </section>
+          )}
 
-          <section id="contracts" className="docs-block">
+          {selectedSection === "contracts" && (
+          <section className="docs-block">
             <SectionHeading eyebrow="Public records" title="Public contracts" />
             <p className="docs-lede">
               Game and vault contracts are public. Use the explorer links to inspect transactions, events, code, and balances for each deployed network.
@@ -242,8 +254,10 @@ export default function DocsPage() {
               ))}
             </div>
           </section>
+          )}
 
-          <section id="account" className="docs-block">
+          {selectedSection === "account" && (
+          <section className="docs-block">
             <SectionHeading eyebrow="Account" title="Wallet, stats, and safety" icon={<WalletCards size={18} />} />
             <div className="docs-grid-two">
               <div>
@@ -266,25 +280,10 @@ export default function DocsPage() {
               </div>
             </div>
           </section>
+          )}
 
+          {selectedSection === "faq" && (
           <section className="docs-block">
-            <SectionHeading eyebrow="Changelog" title="Latest updates" />
-            {SITE_UPDATES.length > 0 ? (
-              <div className="docs-update-list">
-                {SITE_UPDATES.slice(0, 3).map((update) => (
-                  <Link key={update.title} href="/updates">
-                    <span>{update.date}</span>
-                    <strong>{update.title}</strong>
-                    <p>{update.body}</p>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <p className="docs-lede">Public release notes will appear after production launch.</p>
-            )}
-          </section>
-
-          <section id="faq" className="docs-block">
             <SectionHeading eyebrow="Questions" title="Questions and answers" icon={<HelpCircle size={18} />} />
             <div className="docs-faq-list">
               {faqs.map((item) => (
@@ -295,6 +294,7 @@ export default function DocsPage() {
               ))}
             </div>
           </section>
+          )}
         </article>
       </div>
     </main>

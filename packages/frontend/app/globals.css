@@ -1479,6 +1479,12 @@ select {
   text-shadow: 0 0 12px color-mix(in srgb, var(--accent) 32%, transparent);
 }
 
+.docs-nav-link-active {
+  border-color: var(--accent);
+  color: var(--accent);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--accent) 32%, transparent);
+}
+
 .docs-article {
   min-width: 0;
 }
