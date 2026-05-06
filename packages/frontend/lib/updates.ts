@@ -1,6 +1,11 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
     date: "May 6, 2026",
+    title: "Dedicated quests page added",
+    body: "Daily, weekly, and completed quests now have a dedicated page, while badges stay profile-focused as a public achievement shelf."
+  },
+  {
+    date: "May 6, 2026",
     title: "Progression panels moved closer to play",
     body: "Quest progress now appears on Home and game pages, while profile badges are presented as a dedicated achievement shelf instead of being buried in tabs."
   },

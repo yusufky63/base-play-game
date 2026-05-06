@@ -79,7 +79,7 @@ const rewardNotes = [
   {
     icon: <Gift size={18} />,
     title: "Daily and weekly quests",
-    body: "Quests reward simple activity such as one round, five rounds, trying different games, getting a win, and keeping streaks. Connected players can see active quest progress on Home and game pages."
+    body: "Quests reward simple activity such as one round, five rounds, trying different games, getting a win, and keeping streaks. Connected players can manage active quest progress on the Quests page, with small summaries on Home and game pages."
   },
   {
     icon: <BadgeCheck size={18} />,
@@ -334,6 +334,10 @@ export default async function DocsPage({ searchParams }: { searchParams?: Promis
               {rewardNotes.map((item) => (
                 <InfoCard key={item.title} icon={item.icon} title={item.title} body={item.body} />
               ))}
+            </div>
+            <div className="docs-link-row mt-4">
+              <DocLink href="/quests" label="Open quests" />
+              <DocLink href="/profile" label="Open profile badges" />
             </div>
             <div className="docs-grid-two mt-4">
               <div>

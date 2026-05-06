@@ -40,6 +40,7 @@ export function Footer() {
           <h2 className="footer-section-title">Project</h2>
           <div className="footer-link-grid">
             <FooterLink href="/docs">Docs</FooterLink>
+            <FooterLink href="/quests">Quests</FooterLink>
             <FooterLink href="/updates">Updates</FooterLink>
             <FooterLink href="/live-feed">Live Feed</FooterLink>
             <FooterLink href="/leaderboard">Leaderboard</FooterLink>

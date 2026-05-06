@@ -1,14 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
 import { BadgeCheck, CheckCircle2, Sparkles, Trophy } from "lucide-react";
-import type { Database } from "@baseplay/shared/types/supabase.types";
 import { useAccount } from "wagmi";
-import { getSupabaseBrowser } from "@/lib/supabase";
 import { usePlayerProfile } from "@/hooks/usePlayerProfile";
-
-type QuestDefinition = Database["public"]["Tables"]["quest_definitions"]["Row"];
+import { mergeQuestRows, useQuestDefinitions } from "@/hooks/useQuestDefinitions";
 
 export function PlayerProgressionWidget({ variant = "home" }: { variant?: "home" | "game" }) {
   const account = useAccount();
@@ -32,8 +28,8 @@ export function PlayerProgressionWidget({ variant = "home" }: { variant?: "home"
           </div>
           <h2>{address ? "Quests and badges" : "Play toward XP rewards"}</h2>
         </div>
-        <Link href={address ? "/profile" : "/docs?section=rewards"} className="progression-widget-link">
-          {address ? "Profile" : "Rewards"}
+        <Link href="/quests" className="progression-widget-link">
+          Quests
         </Link>
       </div>
 
@@ -102,49 +98,4 @@ export function PlayerProgressionWidget({ variant = "home" }: { variant?: "home"
       )}
     </section>
   );
-}
-
-function useQuestDefinitions() {
-  return useQuery({
-    queryKey: ["quest-definitions"],
-    queryFn: async () => {
-      const supabase = getSupabaseBrowser();
-      if (!supabase) return [];
-      const { data, error } = await supabase
-        .from("quest_definitions")
-        .select("*")
-        .eq("active", true)
-        .order("sort_order", { ascending: true });
-      if (error) {
-        console.warn("[BasePlay] Quest definitions query failed", error.message);
-        return [];
-      }
-      return (data ?? []) as QuestDefinition[];
-    },
-    staleTime: 5 * 60_000,
-    gcTime: 15 * 60_000
-  });
-}
-
-function mergeQuestRows(definitions: QuestDefinition[], rows: NonNullable<ReturnType<typeof usePlayerProfile>["data"]>["quests"]) {
-  const rowById = new Map(rows.map((row) => [row.quest_id, row]));
-  return definitions.map((definition) => {
-    const row = rowById.get(definition.id);
-    return {
-      quest_id: definition.id,
-      title: definition.title,
-      description: definition.description,
-      period: definition.period,
-      metric: definition.metric,
-      target: definition.target,
-      reward_xp: definition.reward_xp,
-      badge_id: definition.badge_id,
-      sort_order: definition.sort_order,
-      period_start: row?.period_start ?? "",
-      progress: row?.progress ?? 0,
-      completed: row?.completed ?? false,
-      completed_at: row?.completed_at ?? null,
-      updated_at: row?.updated_at ?? null
-    };
-  });
 }

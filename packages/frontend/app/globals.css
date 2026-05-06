@@ -4737,6 +4737,369 @@ select {
   }
 }
 
+.quests-page {
+  display: grid;
+  gap: 22px;
+}
+
+.quests-hero,
+.quests-badge-note {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 22px;
+}
+
+.quests-badge-note {
+  align-items: center;
+  border: 1.5px solid color-mix(in srgb, var(--border-2) 82%, transparent);
+  border-radius: var(--radius-ui);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 5%, transparent), transparent 52%),
+    var(--surface);
+  box-shadow: var(--card-shadow-3d);
+  padding: 18px;
+}
+
+.quests-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.quests-hero p,
+.quests-badge-note p,
+.quests-connect p {
+  max-width: 720px;
+  margin-top: 10px;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.quests-hero-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.quests-connect {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 16px;
+  padding: 18px;
+}
+
+.quests-connect-icon {
+  display: grid;
+  height: 48px;
+  width: 48px;
+  place-items: center;
+  border: 1.5px solid color-mix(in srgb, var(--accent) 38%, var(--border-2));
+  border-radius: var(--radius-ui);
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.quests-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.quests-summary-card {
+  border: 1.5px solid color-mix(in srgb, var(--border-2) 80%, transparent);
+  border-radius: var(--radius-ui);
+  background: var(--surface);
+  box-shadow: var(--card-shadow-3d);
+  padding: 14px;
+}
+
+.quests-summary-card div {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.quests-summary-card div svg {
+  color: var(--accent);
+}
+
+.quests-summary-card strong {
+  display: block;
+  margin-top: 9px;
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.quests-summary-card small {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.quests-board {
+  display: grid;
+  gap: 12px;
+}
+
+.quests-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.quests-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.quests-tab {
+  display: flex;
+  min-width: 132px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1.5px solid color-mix(in srgb, var(--border-2) 82%, transparent);
+  border-radius: var(--radius-ui);
+  background: var(--surface);
+  box-shadow: var(--card-shadow-3d);
+  padding: 11px 12px;
+}
+
+.quests-tab span {
+  color: var(--text-1);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.quests-tab small {
+  display: grid;
+  min-width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.quests-tab:hover,
+.quests-tab-active {
+  border-color: color-mix(in srgb, var(--accent) 52%, var(--border-2));
+  background: var(--accent-light);
+}
+
+.quests-tab-active span,
+.quests-tab-active small {
+  color: var(--accent);
+}
+
+.quests-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.quest-card,
+.quest-empty {
+  min-height: 192px;
+  border: 1.5px solid color-mix(in srgb, var(--border-2) 82%, transparent);
+  border-radius: var(--radius-ui);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 4%, transparent), transparent 48%),
+    var(--surface);
+  box-shadow: var(--card-shadow-3d);
+  padding: 16px;
+}
+
+.quest-card-complete {
+  border-color: color-mix(in srgb, var(--win) 42%, var(--border-2));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--win) 10%, transparent), transparent 52%),
+    var(--surface);
+}
+
+.quest-card-top,
+.quest-card-meta,
+.quest-card-badge {
+  display: flex;
+  align-items: center;
+}
+
+.quest-card-top {
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.quest-card-icon {
+  display: grid;
+  height: 38px;
+  width: 38px;
+  place-items: center;
+  border: 1.5px solid color-mix(in srgb, var(--accent) 40%, var(--border-2));
+  border-radius: 9px;
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.quest-card-top > span,
+.quest-card-meta,
+.quest-card-badge {
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.quest-card h3 {
+  margin-top: 14px;
+  color: var(--text-1);
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.quest-card p {
+  margin-top: 7px;
+  min-height: 42px;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.quest-card-track {
+  height: 8px;
+  margin-top: 15px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-3);
+}
+
+.quest-card-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--win) 62%, var(--accent)));
+}
+
+.quest-card-meta {
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.quest-card-meta strong {
+  color: var(--accent);
+}
+
+.quest-card-badge {
+  width: fit-content;
+  gap: 6px;
+  margin-top: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--border));
+  border-radius: 999px;
+  background: var(--accent-light);
+  padding: 6px 8px;
+  color: var(--accent);
+}
+
+.quest-empty {
+  grid-column: 1 / -1;
+  display: grid;
+  min-height: 160px;
+  place-items: center;
+  text-align: center;
+}
+
+.quest-empty svg {
+  color: var(--accent);
+}
+
+.quest-empty strong {
+  display: block;
+  margin-top: 8px;
+  color: var(--text-1);
+  font-size: 16px;
+}
+
+.quest-empty span {
+  display: block;
+  margin-top: 5px;
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+.quest-card-loading i,
+.quest-card-loading b {
+  display: block;
+  border-radius: 999px;
+  background: var(--surface-3);
+  animation: skeleton-sheen 1.2s ease-in-out infinite;
+}
+
+.quest-card-loading i {
+  height: 38px;
+  width: 38px;
+  border-radius: 9px;
+}
+
+.quest-card-loading b {
+  height: 12px;
+  margin-top: 16px;
+}
+
+.quest-card-loading b + b {
+  width: 70%;
+}
+
+@media (max-width: 900px) {
+  .quests-hero,
+  .quests-badge-note {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .quests-summary-grid,
+  .quests-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .quests-summary-grid,
+  .quests-grid,
+  .quests-connect {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .quests-tab {
+    min-width: 118px;
+  }
+}
+
 @media (max-width: 640px) {
   .profile-tab {
     min-width: 112px;
