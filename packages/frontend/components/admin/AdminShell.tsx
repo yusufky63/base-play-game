@@ -85,11 +85,11 @@ export function AdminShell({ title, description, children }: { title: string; de
   );
 }
 
-export function AdminMetric({ label, value, detail }: { label: string; value: string; detail: string }) {
+export function AdminMetric({ label, value, detail, tone }: { label: string; value: string; detail: string; tone?: "win" | "loss" | "pending" }) {
   return (
     <div className="admin-metric">
       <div className="font-mono text-[10px] font-semibold uppercase text-[var(--text-3)]">{label}</div>
-      <div className="mt-2 font-mono text-2xl font-semibold text-[var(--text-1)]">{value}</div>
+      <div className={`mt-2 font-mono text-2xl font-semibold ${tone === "win" ? "text-[var(--win)]" : tone === "loss" ? "text-[var(--lose)]" : tone === "pending" ? "text-[var(--pending)]" : "text-[var(--text-1)]"}`}>{value}</div>
       <div className="mt-2 text-xs text-[var(--text-2)]">{detail}</div>
     </div>
   );

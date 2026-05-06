@@ -74,6 +74,7 @@ export function AdminHealthPanel() {
             <div className="mt-2 font-mono text-[11px] text-[var(--text-3)]">
               chain {item.chainId} · block {item.lastIndexedBlock ?? "-"}
             </div>
+            {item.lastLogAt && <div className="mt-1 font-mono text-[10px] text-[var(--text-3)]">last update {new Date(item.lastLogAt).toLocaleString()}</div>}
             {item.lastError && <div className="mt-2 text-xs text-[var(--lose)]">{item.lastError}</div>}
           </div>
         ))}

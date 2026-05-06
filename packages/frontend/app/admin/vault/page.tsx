@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AlertTriangle, ExternalLink, ShieldCheck } from "lucide-react";
 import { createPublicClient, fallback, formatEther, http, parseEther } from "viem";
 import { useWriteContract } from "wagmi";
 import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
+import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
 import type { Database } from "@baseplay/shared/types/supabase.types";
 import { AdminMetric, AdminShell } from "@/components/admin/AdminShell";
 import { getSupabaseBrowser } from "@/lib/supabase";
@@ -26,7 +28,8 @@ const vaultAbi = [
   { type: "function", name: "setMaxBet", stateMutability: "nonpayable", inputs: [{ type: "uint256", name: "newMax" }], outputs: [] },
   { type: "function", name: "setHouseEdge", stateMutability: "nonpayable", inputs: [{ type: "uint256", name: "newBps" }], outputs: [] },
   { type: "function", name: "pause", stateMutability: "nonpayable", inputs: [], outputs: [] },
-  { type: "function", name: "unpause", stateMutability: "nonpayable", inputs: [], outputs: [] }
+  { type: "function", name: "unpause", stateMutability: "nonpayable", inputs: [], outputs: [] },
+  { type: "function", name: "emergencyWithdraw", stateMutability: "nonpayable", inputs: [], outputs: [] }
 ] as const;
 
 type Round = Database["public"]["Tables"]["game_rounds"]["Row"];
@@ -39,11 +42,16 @@ export default function AdminVaultPage() {
   const { writeContractAsync, isPending } = useWriteContract();
   const [state, setState] = useState({
     balance: "",
+    balanceEth: 0,
     minBet: "",
     maxBet: "",
+    maxBetEth: 0,
     houseEdge: "",
+    houseEdgeBps: 300,
     availableLiquidity: "",
+    availableLiquidityEth: 0,
     reserved: "",
+    reservedEth: 0,
     reservationReady: false,
     paused: false
   });
@@ -85,11 +93,16 @@ export default function AdminVaultPage() {
 
       setState({
         balance: `${formatEther(balance)} ETH`,
+        balanceEth: Number(formatEther(balance)),
         minBet: `${formatEther(minBet)} ETH`,
         maxBet: `${formatEther(maxBet)} ETH`,
+        maxBetEth: Number(formatEther(maxBet)),
         houseEdge: `${Number(houseEdgeBps) / 100}%`,
+        houseEdgeBps: Number(houseEdgeBps),
         availableLiquidity: availableLiquidity === null ? "" : `${formatEther(availableLiquidity)} ETH`,
+        availableLiquidityEth: availableLiquidity === null ? Number(formatEther(balance)) : Number(formatEther(availableLiquidity)),
         reserved: reserved === null ? "" : `${formatEther(reserved)} ETH`,
+        reservedEth: reserved === null ? 0 : Number(formatEther(reserved)),
         reservationReady: availableLiquidity !== null && reserved !== null,
         paused
       });
@@ -103,7 +116,7 @@ export default function AdminVaultPage() {
     void load();
   }, [vaultAddress]);
 
-  async function writeVault(functionName: "setMinBet" | "setMaxBet" | "setHouseEdge" | "pause" | "unpause", args: readonly unknown[] = []) {
+  async function writeVault(functionName: "setMinBet" | "setMaxBet" | "setHouseEdge" | "pause" | "unpause" | "emergencyWithdraw", args: readonly unknown[] = []) {
     if (!vaultAddress) return;
     try {
       const hash = await writeContractAsync({
@@ -116,6 +129,24 @@ export default function AdminVaultPage() {
     } catch (error) {
       toast({ tone: "error", title: "Vault transaction failed", description: error instanceof Error ? error.message : undefined });
     }
+  }
+
+  function parseEthControl(value: string) {
+    try {
+      return parseEther(value);
+    } catch {
+      toast({ tone: "error", title: "Invalid ETH amount", description: "Use a numeric ETH value such as 0.0005." });
+      return null;
+    }
+  }
+
+  function parseHouseEdgeControl(value: string) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric) || numeric < 0) {
+      toast({ tone: "error", title: "Invalid house edge", description: "Use a non-negative percentage value." });
+      return null;
+    }
+    return BigInt(Math.round(numeric * 100));
   }
 
   useEffect(() => {
@@ -149,18 +180,59 @@ export default function AdminVaultPage() {
     void loadRisk();
   }, []);
 
+  const maxGrossMultiplier = Math.max(...GAMES_REGISTRY.map((game) => game.maxMultiplier));
+  const maxNetReserve = state.maxBetEth * maxGrossMultiplier * (1 - state.houseEdgeBps / 10_000);
+  const safeRoundCapacity = maxNetReserve > 0 ? state.availableLiquidityEth / maxNetReserve : 0;
+  const liquidityTone = safeRoundCapacity < 3 ? "loss" : safeRoundCapacity < 10 ? "pending" : "win";
+  const liquidityUsd = ethUsd ? formatUsd(state.availableLiquidityEth * ethUsd) : "USD pending";
+
   return (
     <AdminShell title="Vault" description="Vault health, realized P&L, payout ratio, and risk capacity. Payout values are net after house edge.">
       <div className="grid gap-3 md:grid-cols-3">
-        <AdminMetric label="Vault balance" value={state.balance || "Loading"} detail={vaultAddress ?? "No deployed GameVault address"} />
-        <AdminMetric label="Available liquidity" value={state.availableLiquidity || state.balance || "Loading"} detail={state.reservationReady ? `${state.reserved} reserved for active max payouts` : "Legacy deployed vault does not expose payout reserves"} />
+        <AdminMetric label="Vault balance" value={state.balance || "Loading"} detail={ethUsd ? formatUsd(state.balanceEth * ethUsd) : vaultAddress ?? "No deployed GameVault address"} />
+        <AdminMetric label="Available liquidity" value={state.availableLiquidity || state.balance || "Loading"} detail={`${liquidityUsd} · ${state.reservationReady ? `${state.reserved} reserved` : "Legacy reserve view"}`} tone={liquidityTone} />
         <AdminMetric label="House edge" value={state.houseEdge || "Loading"} detail="Read from GameVault" />
+      </div>
+
+      <div className={`mt-4 admin-alert ${liquidityTone === "loss" ? "admin-danger" : ""}`}>
+        <div className="flex items-start gap-3">
+          {liquidityTone === "win" ? <ShieldCheck size={18} className="text-[var(--win)]" /> : <AlertTriangle size={18} className={liquidityTone === "loss" ? "text-[var(--lose)]" : "text-[var(--pending)]"} />}
+          <div>
+            <div className="font-bold text-[var(--text-1)]">
+              {liquidityTone === "win" ? "Liquidity looks healthy" : liquidityTone === "pending" ? "Liquidity buffer is getting thin" : "Critical liquidity buffer"}
+            </div>
+            <p className="mt-1 text-sm leading-6">
+              Available liquidity can cover about {Number.isFinite(safeRoundCapacity) ? safeRoundCapacity.toFixed(1) : "0.0"} max-risk rounds at current max bet. Review max bet, vault funding, and Scratch/Plinko/Slots exposure before increasing limits.
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-3">
         <AdminMetric label="Estimated vault P&L" value={`${risk.vaultProfit >= 0 ? "+" : ""}${formatEth(risk.vaultProfit)} ETH`} detail={ethUsd ? formatUsd(risk.vaultProfit * ethUsd) : "Wagered minus net paid"} />
         <AdminMetric label="Payout ratio" value={`${risk.payoutRatio.toFixed(1)}%`} detail={`${formatEth(risk.paid)} ETH paid / ${formatEth(risk.wagered)} ETH wagered`} />
         <AdminMetric label="Win rate" value={`${risk.winRate.toFixed(1)}%`} detail={`${risk.rounds} settled rounds indexed`} />
+      </div>
+
+      <div className="mt-4 admin-note">
+        <div className="mb-4 flex flex-col gap-2 border-b border-[var(--border)] pb-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="font-semibold text-[var(--text-1)]">Emergency withdraw</h2>
+            <p className="mt-1 text-sm leading-6 text-[var(--text-2)]">
+              Contract supports full emergency withdraw only while the vault is paused. This drains the vault to the owner wallet; use it only for incident response.
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled={isPending || !state.paused}
+            onClick={() => void writeVault("emergencyWithdraw")}
+            className="play-button-ghost h-10 rounded-md px-4 text-sm font-bold text-[var(--lose)] disabled:opacity-45"
+            title={state.paused ? "Withdraw full paused vault balance to owner" : "Pause vault before emergency withdraw"}
+          >
+            Emergency withdraw
+          </button>
+        </div>
+        {!state.paused && <p className="text-sm text-[var(--text-3)]">Pause the vault first to unlock emergency withdraw.</p>}
       </div>
 
       <div className="mt-4 admin-note">
@@ -184,21 +256,30 @@ export default function AdminVaultPage() {
             label="Min bet ETH"
             value={controls.minBetEth}
             onChange={(value) => setControls((current) => ({ ...current, minBetEth: value }))}
-            onSave={() => void writeVault("setMinBet", [parseEther(controls.minBetEth)])}
+            onSave={() => {
+              const value = parseEthControl(controls.minBetEth);
+              if (value !== null) void writeVault("setMinBet", [value]);
+            }}
             disabled={isPending}
           />
           <AdminControlInput
             label="Max bet ETH"
             value={controls.maxBetEth}
             onChange={(value) => setControls((current) => ({ ...current, maxBetEth: value }))}
-            onSave={() => void writeVault("setMaxBet", [parseEther(controls.maxBetEth)])}
+            onSave={() => {
+              const value = parseEthControl(controls.maxBetEth);
+              if (value !== null) void writeVault("setMaxBet", [value]);
+            }}
             disabled={isPending}
           />
           <AdminControlInput
             label="House edge %"
             value={controls.houseEdgePct}
             onChange={(value) => setControls((current) => ({ ...current, houseEdgePct: value }))}
-            onSave={() => void writeVault("setHouseEdge", [BigInt(Math.round(Number(controls.houseEdgePct) * 100))])}
+            onSave={() => {
+              const value = parseHouseEdgeControl(controls.houseEdgePct);
+              if (value !== null) void writeVault("setHouseEdge", [value]);
+            }}
             disabled={isPending}
           />
         </div>
@@ -238,6 +319,12 @@ export default function AdminVaultPage() {
           <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">
             If reserve metrics show legacy mode, redeploy the updated vault and games before increasing max bet or adding mainnet liquidity.
           </p>
+          {vaultAddress && (
+            <a href={`${defaultNetwork.network.blockExplorer}/address/${vaultAddress}`} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 font-mono text-xs font-bold text-[var(--text-1)] hover:text-[var(--accent)]">
+              {vaultAddress}
+              <ExternalLink size={13} />
+            </a>
+          )}
         </div>
       </div>
     </AdminShell>

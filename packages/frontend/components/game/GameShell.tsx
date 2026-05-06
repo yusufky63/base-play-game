@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import { GameContractPanel } from "@/components/game/GameContractPanel";
 import { FairnessButton } from "@/components/game/FairnessModal";
 import { HowItWorks } from "@/components/game/HowItWorks";
 import { RoundStatus } from "@/components/game/RoundStatus";
@@ -45,6 +46,10 @@ export function GameShell({
           </p>
         </div>
         <FairnessButton requestId={requestId} txHash={txHash} />
+      </div>
+
+      <div className="mb-5">
+        <GameContractPanel gameId={gameId} />
       </div>
 
       {showRoundStatus && (

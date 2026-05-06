@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { BookOpen, CircleDollarSign, HelpCircle, Radio, RotateCcw, ShieldCheck, Sparkles, WalletCards } from "lucide-react";
+import { BookOpen, CircleDollarSign, ExternalLink, HelpCircle, Radio, RotateCcw, ShieldCheck, Sparkles, WalletCards } from "lucide-react";
+import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
+import { NETWORKS } from "@baseplay/shared/config/networks";
 import { SITE_UPDATES } from "@/lib/updates";
 
 const roundSteps = [
@@ -190,6 +192,31 @@ export default function DocsPage() {
         </div>
       </section>
 
+      <section className="mt-4 panel p-4">
+        <h2 className="display-heading text-xl font-bold text-[var(--text-1)]">Public contracts</h2>
+        <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">
+          Game and vault contracts are public. Use the explorer links to inspect transactions, events, code, and balances.
+        </p>
+        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+          {Object.values(NETWORKS).map((network) => (
+            <div key={network.chainId} className="rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3">
+              <div className="mb-3 flex items-center justify-between gap-3 border-b border-[var(--border)] pb-3">
+                <h3 className="font-bold text-[var(--text-1)]">{network.name}</h3>
+                <a href={network.blockExplorer} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-bold text-[var(--accent)]">
+                  Explorer <ExternalLink size={12} />
+                </a>
+              </div>
+              <div className="grid gap-2">
+                <ContractDocRow label="GameVault" address={CONTRACT_ADDRESSES[network.chainId]?.GameVault} explorer={network.blockExplorer} />
+                {GAMES_REGISTRY.filter((game) => game.active && game.chains.includes(network.chainId === 8453 ? "baseMainnet" : "baseSepolia")).map((game) => (
+                  <ContractDocRow key={`${network.chainId}-${game.id}`} label={game.name} address={CONTRACT_ADDRESSES[network.chainId]?.[game.contractName]} explorer={network.blockExplorer} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section className="mt-4 grid gap-4 lg:grid-cols-[1fr_0.9fr]">
         <div className="panel p-4">
           <h2 className="display-heading text-xl font-bold text-[var(--text-1)]">Wallet and results</h2>
@@ -289,5 +316,19 @@ function DocLink({ href, label }: { href: string; label: string }) {
     <Link href={href} className="rounded-md border border-[var(--border)] bg-[var(--surface-2)] px-3 py-3 text-sm font-semibold text-[var(--text-1)] hover:border-[var(--accent)]">
       {label}
     </Link>
+  );
+}
+
+function ContractDocRow({ label, address, explorer }: { label: string; address?: string; explorer: string }) {
+  return (
+    <div className="grid gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] p-2 text-sm md:grid-cols-[130px_1fr_auto] md:items-center">
+      <span className="font-bold text-[var(--text-1)]">{label}</span>
+      <code className="break-all font-mono text-[11px] text-[var(--text-2)]">{address ?? "Not deployed"}</code>
+      {address && (
+        <a href={`${explorer}/address/${address}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-mono text-[10px] font-bold uppercase text-[var(--accent)]">
+          View <ExternalLink size={11} />
+        </a>
+      )}
+    </div>
   );
 }
