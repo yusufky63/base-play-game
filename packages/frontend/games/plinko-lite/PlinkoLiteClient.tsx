@@ -62,7 +62,7 @@ export function PlinkoLiteClient() {
               ))}
             </div>
           </section>
-          <BetPanel amount={amount} loading={game.isTxPending} disabled={!game.contractAddress} vrfState={game.vrfState} onAmountChange={setAmount} onPlay={play} onRefund={game.claimRefund} />
+          <BetPanel amount={amount} loading={game.isTxPending} disabled={game.isPlayDisabled} disabledReason={game.playDisabledReason} vrfState={game.vrfState} onAmountChange={setAmount} onPlay={play} onRefund={game.claimRefund} />
           <LiveFeed gameId="plinko-lite" title="Plinko feed" limit={5} showAllLink />
         </div>
       }

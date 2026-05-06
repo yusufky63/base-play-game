@@ -63,6 +63,7 @@ const safetyNotes = [
   "Small games can still lose real ETH. Play with amounts you are comfortable risking.",
   "A pending round may take time while the transaction and randomness settle.",
   "The Chainlink VRF button shows the request ID and the Basescan transaction link used to verify the round.",
+  "If Play is disabled, the selected game may be paused, the vault may be paused, or vault liquidity may be unavailable.",
   "If a round is delayed beyond the contract window, the refund action appears in the connected wallet menu and your profile page.",
   "Claiming a refund only returns the locked bet. It does not create a new random result."
 ];
@@ -135,6 +136,10 @@ const faqs = [
   {
     question: "What should I check before playing?",
     answer: "Check the connected wallet, selected Base network, bet amount, and the game options. BasePlay also checks network and wallet balance before sending the wager."
+  },
+  {
+    question: "Why is the Play button disabled?",
+    answer: "The game page reads the game pause state, vault pause state, bet limits, and available vault liquidity. New wagers are blocked if a game is paused, the vault is paused, or the vault cannot reserve payouts safely."
   }
 ];
 

@@ -75,7 +75,7 @@ export function SlotsClient() {
               <PayoutRow label="Any pair" value="1.45x" />
             </div>
           </section>
-          <BetPanel amount={amount} loading={game.isTxPending} disabled={!game.contractAddress} vrfState={game.vrfState} onAmountChange={setAmount} onPlay={play} onRefund={game.claimRefund} />
+          <BetPanel amount={amount} loading={game.isTxPending} disabled={game.isPlayDisabled} disabledReason={game.playDisabledReason} vrfState={game.vrfState} onAmountChange={setAmount} onPlay={play} onRefund={game.claimRefund} />
           <LiveFeed gameId="slots" title="Slots feed" limit={5} showAllLink />
         </div>
       }

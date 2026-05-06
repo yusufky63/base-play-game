@@ -1,10 +1,14 @@
+"use client";
+
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import { getGame } from "@baseplay/shared/config/games.registry";
 import { GameContractPanel } from "@/components/game/GameContractPanel";
 import { FairnessButton } from "@/components/game/FairnessModal";
 import { HowItWorks } from "@/components/game/HowItWorks";
 import { RoundStatus } from "@/components/game/RoundStatus";
 import type { VRFState } from "@/hooks/useVRF";
+import { useOperationalStatus } from "@/hooks/useOperationalStatus";
 
 export function GameShell({
   gameId,
@@ -26,6 +30,9 @@ export function GameShell({
   side: React.ReactNode;
 }) {
   const showRoundStatus = vrfState !== "idle" || Boolean(requestId || txHash);
+  const game = getGame(gameId);
+  const operationalStatus = useOperationalStatus(game?.contractName);
+  const showOperationalBanner = operationalStatus.status !== "live" && operationalStatus.status !== "loading";
 
   return (
     <main className="mx-auto w-full max-w-7xl p-4 md:py-10">
@@ -47,6 +54,29 @@ export function GameShell({
         </div>
         <FairnessButton requestId={requestId} txHash={txHash} />
       </div>
+
+      {showOperationalBanner && (
+        <section className={`game-operational-banner game-operational-${operationalStatus.status}`}>
+          <div>
+            <h2>{operationalStatus.title}</h2>
+            <p>{operationalStatus.description}</p>
+          </div>
+          <dl>
+            <div>
+              <dt>Network</dt>
+              <dd>{operationalStatus.networkName}</dd>
+            </div>
+            <div>
+              <dt>Min / Max</dt>
+              <dd>{operationalStatus.minBetEth} / {operationalStatus.maxBetEth} ETH</dd>
+            </div>
+            <div>
+              <dt>Liquidity</dt>
+              <dd>{operationalStatus.availableLiquidityEth} ETH</dd>
+            </div>
+          </dl>
+        </section>
+      )}
 
       {showRoundStatus && (
         <div className="mb-5">

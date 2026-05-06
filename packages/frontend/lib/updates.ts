@@ -1,6 +1,11 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
     date: "May 6, 2026",
+    title: "Pause and vault states surfaced",
+    body: "Game pages now read game pause, vault pause, bet limits, and vault liquidity before allowing Play, while Admin explains full emergency withdraw, unavailable partial withdraw, and practical liquidity guardrails."
+  },
+  {
+    date: "May 6, 2026",
     title: "Docs categories separated",
     body: "Docs now renders one selected category at a time instead of stacking every section on one page, and game contract links moved below How it works on game pages."
   },

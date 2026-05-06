@@ -219,7 +219,7 @@ export default function AdminVaultPage() {
           <div>
             <h2 className="font-semibold text-[var(--text-1)]">Emergency withdraw</h2>
             <p className="mt-1 text-sm leading-6 text-[var(--text-2)]">
-              Contract supports full emergency withdraw only while the vault is paused. This drains the vault to the owner wallet; use it only for incident response.
+              Current GameVault supports full emergency withdraw only while the vault is paused. It does not support an amount input or partial withdraw in this deployed contract.
             </p>
           </div>
           <button
@@ -232,7 +232,23 @@ export default function AdminVaultPage() {
             Emergency withdraw
           </button>
         </div>
-        {!state.paused && <p className="text-sm text-[var(--text-3)]">Pause the vault first to unlock emergency withdraw.</p>}
+        <div className="grid gap-3 md:grid-cols-[0.9fr_1.1fr]">
+          <label className="grid gap-2 rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3">
+            <span className="font-mono text-[10px] font-semibold uppercase text-[var(--text-3)]">Partial withdraw amount</span>
+            <input
+              value=""
+              disabled
+              placeholder="Not supported by current vault"
+              className="h-10 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text-3)]"
+              aria-label="Partial withdraw amount unavailable"
+            />
+            <span className="text-xs leading-5 text-[var(--text-3)]">To withdraw a specific amount, the vault contract needs a separate owner-only withdraw(amount) function with reserve checks.</span>
+          </label>
+          <div className="rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3 text-sm leading-6 text-[var(--text-2)]">
+            {!state.paused ? "Pause the vault first to unlock emergency withdraw. " : "Vault is paused, so full emergency withdraw is available. "}
+            Before draining funds, resolve or refund active rounds where possible. A full emergency withdraw can leave pending payout/refund paths without liquidity.
+          </div>
+        </div>
       </div>
 
       <div className="mt-4 admin-note">
@@ -291,12 +307,18 @@ export default function AdminVaultPage() {
           <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">
             New contract code reserves the maximum net payout for every round before accepting the bet. This prevents multiple active rounds from promising more than the vault can safely pay.
           </p>
+          <div className="mt-3 rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3 text-xs leading-5 text-[var(--text-2)]">
+            Practical minimum liquidity should stay above reserved payouts plus several max-risk rounds. At current limits, one max-risk reserve is about {formatEth(maxNetReserve)} ETH; the current buffer covers about {Number.isFinite(safeRoundCapacity) ? safeRoundCapacity.toFixed(1) : "0.0"} such rounds.
+          </div>
         </div>
         <div className="admin-note">
           <h2 className="font-semibold text-[var(--text-1)]">Payout policy</h2>
           <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">
             House edge is deducted only from winning gross payouts. Losing bets stay in the vault as vault profit; there is no extra loss-side fee.
           </p>
+          <div className="mt-3 rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3 text-xs leading-5 text-[var(--text-2)]">
+            Contract guardrails: min bet cannot go below 0.00001 ETH, max bet cannot exceed 0.01 ETH, and house edge cannot exceed 5%. House edge changes are blocked while payouts are reserved.
+          </div>
         </div>
       </div>
 

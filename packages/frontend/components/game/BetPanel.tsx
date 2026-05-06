@@ -9,6 +9,7 @@ import { betPresetAmounts } from "@/lib/env";
 interface BetPanelProps {
   amount: string;
   disabled?: boolean;
+  disabledReason?: string;
   loading?: boolean;
   vrfState?: VRFState;
   actionLabel?: string;
@@ -18,7 +19,7 @@ interface BetPanelProps {
   onRefund?: () => void;
 }
 
-export function BetPanel({ amount, disabled = false, loading = false, vrfState = "idle", actionLabel = "Play", hideAction = false, onAmountChange, onPlay, onRefund }: BetPanelProps) {
+export function BetPanel({ amount, disabled = false, disabledReason, loading = false, vrfState = "idle", actionLabel = "Play", hideAction = false, onAmountChange, onPlay, onRefund }: BetPanelProps) {
   const ethUsd = useEthUsdPrice();
   const isBusy = loading || vrfState === "pending_tx" || vrfState === "pending_vrf";
 
@@ -49,7 +50,7 @@ export function BetPanel({ amount, disabled = false, loading = false, vrfState =
           className="primary-action mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-md px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-45"
         >
           {isBusy && <Loader2 size={16} className="animate-spin" />}
-          {isBusy ? VRF_MESSAGES[vrfState] : actionLabel}
+          {isBusy ? VRF_MESSAGES[vrfState] : disabled && disabledReason ? disabledReason : actionLabel}
         </button>
       )}
 

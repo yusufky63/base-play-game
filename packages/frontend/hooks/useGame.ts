@@ -9,12 +9,15 @@ import { getNetworkByChainId } from "@baseplay/shared/config/networks";
 import { parseContractError } from "@/lib/errors";
 import { defaultChainId } from "@/lib/env";
 import { useContractAddress } from "@/hooks/useContractAddress";
+import { useOperationalStatus } from "@/hooks/useOperationalStatus";
 import { useVRF } from "@/hooks/useVRF";
 import { useToast } from "@/components/ui/ToastProvider";
+import { getPreferredChainId } from "@/lib/preferredChain";
 
 export function useGame(gameId: string, contractName: string, abi: Abi | null) {
   const { address, chain } = useAccount();
   const contractAddress = useContractAddress(contractName);
+  const operationalStatus = useOperationalStatus(contractName);
   const vrf = useVRF();
   const toast = useToast();
   const publicClient = usePublicClient();
@@ -32,6 +35,10 @@ export function useGame(gameId: string, contractName: string, abi: Abi | null) {
   }, [vrf.state]);
 
   async function placeBet(amountEth: string, params: `0x${string}`) {
+    if (operationalStatus.status !== "live") {
+      toast({ tone: "error", title: operationalStatus.title, description: operationalStatus.description });
+      throw new Error(operationalStatus.title);
+    }
     if (!address) {
       toast({ tone: "error", title: "Wallet not connected", description: "Connect a wallet before placing a wager." });
       throw new Error("Wallet not connected");
@@ -67,7 +74,21 @@ export function useGame(gameId: string, contractName: string, abi: Abi | null) {
       toast({ tone: "error", title: "Contract unavailable", description: `${contractName} is not configured for this chain.` });
       throw new Error(`${contractName} is not configured for this chain`);
     }
-    const wagerValue = parseEther(amountEth);
+    let wagerValue: bigint;
+    try {
+      wagerValue = parseEther(amountEth);
+    } catch {
+      toast({ tone: "error", title: "Invalid bet amount", description: "Select a valid ETH preset before placing a wager." });
+      throw new Error("Invalid bet amount");
+    }
+    if (operationalStatus.minBetWei !== null && wagerValue < operationalStatus.minBetWei) {
+      toast({ tone: "error", title: "Bet below minimum", description: `Minimum bet is ${operationalStatus.minBetEth} ETH on ${operationalStatus.networkName}.` });
+      throw new Error("Bet below minimum");
+    }
+    if (operationalStatus.maxBetWei !== null && wagerValue > operationalStatus.maxBetWei) {
+      toast({ tone: "error", title: "Bet above maximum", description: `Maximum bet is ${operationalStatus.maxBetEth} ETH on ${operationalStatus.networkName}.` });
+      throw new Error("Bet above maximum");
+    }
     const balance = await publicClient.getBalance({ address });
     if (balance <= wagerValue) {
       toast({
@@ -206,15 +227,12 @@ export function useGame(gameId: string, contractName: string, abi: Abi | null) {
     isTxPending: isPending,
     isConnected: Boolean(address),
     contractAddress,
+    operationalStatus,
+    isPlayDisabled: !contractAddress || operationalStatus.status !== "live",
+    playDisabledReason: operationalStatus.status === "live" ? undefined : operationalStatus.playDisabledLabel,
     reset,
     setRequestId: vrf.setRequestId
   };
-}
-
-function getPreferredChainId() {
-  if (typeof window === "undefined") return undefined;
-  const stored = Number(window.localStorage.getItem("baseplay:chainId"));
-  return Number.isFinite(stored) && stored > 0 ? stored : undefined;
 }
 
 async function waitForRoundSettled({

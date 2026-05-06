@@ -873,6 +873,75 @@ select {
   gap: 7px;
 }
 
+.game-operational-banner {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 20px;
+  border: 1.5px solid color-mix(in srgb, var(--pending) 44%, var(--border-2));
+  border-radius: var(--radius-ui);
+  background: color-mix(in srgb, var(--pending) 9%, var(--surface));
+  padding: 14px;
+  box-shadow: var(--card-shadow-3d);
+}
+
+.game-operational-banner h2 {
+  color: var(--text-1);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.game-operational-banner p {
+  margin-top: 5px;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.game-operational-banner dl {
+  display: grid;
+  gap: 8px;
+}
+
+.game-operational-banner dl > div {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-ui);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  padding: 9px;
+}
+
+.game-operational-banner dt {
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.game-operational-banner dd {
+  margin-top: 3px;
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.game-operational-vault_paused,
+.game-operational-no_liquidity {
+  border-color: color-mix(in srgb, var(--lose) 38%, var(--border-2));
+  background: color-mix(in srgb, var(--lose) 7%, var(--surface));
+}
+
+@media (min-width: 768px) {
+  .game-operational-banner {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr);
+    align-items: center;
+  }
+
+  .game-operational-banner dl {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 640px) {
   .game-library-grid {
     gap: 9px;

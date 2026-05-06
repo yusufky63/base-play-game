@@ -45,7 +45,7 @@ export function TreasureChestClient() {
             </div>
             <p className="text-xs leading-5 text-[var(--text-3)]">One prize chest is selected by VRF. Your pick is locked before randomness is requested.</p>
           </section>
-          <BetPanel amount={amount} loading={game.isTxPending} disabled={!game.contractAddress} vrfState={game.vrfState} onAmountChange={setAmount} onPlay={play} onRefund={game.claimRefund} />
+          <BetPanel amount={amount} loading={game.isTxPending} disabled={game.isPlayDisabled} disabledReason={game.playDisabledReason} vrfState={game.vrfState} onAmountChange={setAmount} onPlay={play} onRefund={game.claimRefund} />
           <LiveFeed gameId="treasure-chest" title="Treasure feed" limit={5} showAllLink />
         </div>
       }

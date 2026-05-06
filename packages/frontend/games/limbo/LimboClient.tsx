@@ -61,7 +61,7 @@ export function LimboClient() {
               <Metric label="Win chance" value={`${chance.toFixed(2)}%`} />
             </div>
           </section>
-          <BetPanel amount={amount} loading={game.isTxPending} disabled={!game.contractAddress} vrfState={game.vrfState} onAmountChange={setAmount} onPlay={play} onRefund={game.claimRefund} />
+          <BetPanel amount={amount} loading={game.isTxPending} disabled={game.isPlayDisabled} disabledReason={game.playDisabledReason} vrfState={game.vrfState} onAmountChange={setAmount} onPlay={play} onRefund={game.claimRefund} />
           <LiveFeed gameId="limbo" title="Limbo feed" limit={5} showAllLink />
         </div>
       }

@@ -58,7 +58,7 @@ export function DiceClient() {
       txHash={game.txHash}
       side={
         <div className="space-y-4">
-          <BetPanel amount={amount} loading={game.isTxPending} disabled={!game.contractAddress} vrfState={game.vrfState} onAmountChange={setAmount} onPlay={play} onRefund={game.claimRefund} />
+          <BetPanel amount={amount} loading={game.isTxPending} disabled={game.isPlayDisabled} disabledReason={game.playDisabledReason} vrfState={game.vrfState} onAmountChange={setAmount} onPlay={play} onRefund={game.claimRefund} />
           <LiveFeed gameId="dice" title="Dice feed" limit={5} showAllLink />
         </div>
       }

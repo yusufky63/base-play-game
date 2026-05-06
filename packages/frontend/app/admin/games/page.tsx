@@ -81,6 +81,13 @@ export default function AdminGamesPage() {
 
   return (
     <AdminShell title="Game Controls" description="Configured games, deployment state, and bet limits.">
+      <div className="mb-4 admin-note">
+        <h2 className="font-semibold text-[var(--text-1)]">Pause behavior</h2>
+        <p className="mt-2 text-sm leading-6 text-[var(--text-2)]">
+          Game pause disables new wagers only for that game. Existing pending VRF rounds can still settle, and timed-out rounds can still be claimed as refunds. Vault pause is broader: it disables new wagers across every approved game and is required before full emergency withdraw.
+        </p>
+      </div>
+
       <div className="mb-3 flex justify-end">
         <select
           value={status}

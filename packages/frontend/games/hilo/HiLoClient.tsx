@@ -73,16 +73,16 @@ export function HiLoClient() {
               <span className="font-mono text-[var(--text-1)]">Current {current}</span>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <ChoiceButton label="Higher" payout={higherPayout} icon="up" loading={isBusy} disabled={higherPayout === null} onClick={() => pick("higher")} />
-              <ChoiceButton label="Lower" payout={lowerPayout} icon="down" loading={isBusy} disabled={lowerPayout === null} onClick={() => pick("lower")} />
+              <ChoiceButton label="Higher" payout={higherPayout} icon="up" loading={isBusy} disabled={game.isPlayDisabled || higherPayout === null} onClick={() => pick("higher")} />
+              <ChoiceButton label="Lower" payout={lowerPayout} icon="down" loading={isBusy} disabled={game.isPlayDisabled || lowerPayout === null} onClick={() => pick("lower")} />
             </div>
             <p className="mt-3 text-xs leading-5 text-[var(--text-3)]">Payout is based on the current card odds. The vault applies house edge after gross payout.</p>
           </section>
           <BetPanel
             amount={amount}
             loading={game.isTxPending}
-            disabled={!game.contractAddress || isBusy}
-            vrfState={game.vrfState}
+            disabled={game.isPlayDisabled || isBusy}
+            disabledReason={game.playDisabledReason} vrfState={game.vrfState}
             hideAction
             actionLabel="Choose direction"
             onAmountChange={setAmount}

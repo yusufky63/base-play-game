@@ -73,7 +73,7 @@ export function OverUnderClient() {
               <Metric label="Win numbers" value={String(choice === "under" ? target - 1 : 100 - target)} />
             </div>
           </section>
-          <BetPanel amount={amount} loading={game.isTxPending} disabled={!game.contractAddress} vrfState={game.vrfState} onAmountChange={setAmount} onPlay={play} onRefund={game.claimRefund} />
+          <BetPanel amount={amount} loading={game.isTxPending} disabled={game.isPlayDisabled} disabledReason={game.playDisabledReason} vrfState={game.vrfState} onAmountChange={setAmount} onPlay={play} onRefund={game.claimRefund} />
           <LiveFeed gameId="over-under" title="Over / Under feed" limit={5} showAllLink />
         </div>
       }

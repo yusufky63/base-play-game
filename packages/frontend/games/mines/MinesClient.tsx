@@ -104,8 +104,8 @@ export function MinesClient() {
           <BetPanel
             amount={amount}
             loading={game.isTxPending}
-            disabled={!game.contractAddress || running || !canPlay}
-            vrfState={game.vrfState}
+            disabled={game.isPlayDisabled || running || !canPlay}
+            disabledReason={game.playDisabledReason} vrfState={game.vrfState}
             actionLabel={safeCount === 0 ? "Select cells first" : "Play selected cells"}
             onAmountChange={setAmount}
             onPlay={play}
