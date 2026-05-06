@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { ethers, network, run } from "hardhat";
+import { network, run } from "hardhat";
 
 const GAME_CONTRACTS = [
   "CoinFlipGame",
@@ -21,70 +21,64 @@ const GAME_CONTRACTS = [
   "SlotsGame"
 ];
 
-const gameConstructorAbi = [
-  "function vault() view returns (address)",
-  "function coordinator() view returns (address)",
-  "function keyHash() view returns (bytes32)",
-  "function subscriptionId() view returns (uint256)",
-  "function callbackGasLimit() view returns (uint32)",
-  "function requestConfirmations() view returns (uint16)"
-];
-
 async function main() {
   const chainId = Number(network.config.chainId);
   const addresses = readSharedAddresses()[chainId];
   const vaultContractName = process.env.VAULT_CONTRACT_NAME || "GameVault";
+  const failures: Array<{ contractName: string; address: string; message: string }> = [];
+
   if (!addresses?.GameVault) {
     throw new Error(`No deployed addresses found for ${network.name} (${chainId}).`);
   }
-  if (!process.env.ETHERSCAN_API_KEY && !process.env.BASESCAN_API_KEY) {
-    throw new Error("Set ETHERSCAN_API_KEY before running Etherscan/Basescan verification. BASESCAN_API_KEY is still accepted as a fallback.");
-  }
 
   if (process.env.SKIP_VAULT_VERIFY === "true") {
-    console.log(`[Verify] Skipping vault verification for ${addresses.GameVault}`);
+    console.log(`[Blockscout] Skipping vault verification for ${addresses.GameVault}`);
   } else {
-    await verifyContract(vaultContractName, addresses.GameVault, []);
+    const error = await verifyContract(vaultContractName, addresses.GameVault);
+    if (error) failures.push({ contractName: vaultContractName, address: addresses.GameVault, message: error });
   }
 
   for (const contractName of GAME_CONTRACTS) {
     const address = addresses[contractName];
     if (!address) continue;
-    const deployedGame = new ethers.Contract(address, gameConstructorAbi, ethers.provider);
-    const constructorArguments = [
-      await deployedGame.vault(),
-      await deployedGame.coordinator(),
-      await deployedGame.keyHash(),
-      await deployedGame.subscriptionId(),
-      await deployedGame.callbackGasLimit(),
-      await deployedGame.requestConfirmations()
-    ];
-    await verifyContract(contractName, address, constructorArguments);
+    const error = await verifyContract(contractName, address);
+    if (error) failures.push({ contractName, address, message: error });
+  }
+
+  if (failures.length > 0) {
+    console.error("[Blockscout] Verification completed with failures:");
+    for (const failure of failures) {
+      console.error(`- ${failure.contractName} ${failure.address}: ${failure.message}`);
+    }
+    process.exitCode = 1;
   }
 }
 
-async function verifyContract(contractName: string, address: string, constructorArguments: unknown[]) {
+async function verifyContract(contractName: string, address: string): Promise<string | null> {
   const contract = contractName === "GameVault"
     ? "contracts/core/GameVault.sol:GameVault"
     : contractName === "GameVaultV2"
       ? "contracts/core/GameVaultV2.sol:GameVaultV2"
-    : `contracts/games/${contractName}.sol:${contractName}`;
+      : `contracts/games/${contractName}.sol:${contractName}`;
 
   try {
-    console.log(`[Verify] ${contractName}: ${address}`);
-    await run("verify:verify", {
+    console.log(`[Blockscout] ${contractName}: ${address}`);
+    await run("verify:blockscout", {
       address,
-      constructorArguments,
-      contract
+      contract,
+      force: process.env.BLOCKSCOUT_FORCE === "true"
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error ?? "");
-    if (message.toLowerCase().includes("already verified")) {
-      console.log(`[Verify] ${contractName} already verified.`);
-      return;
+    if (message.toLowerCase().includes("already been verified") || message.toLowerCase().includes("already verified")) {
+      console.log(`[Blockscout] ${contractName} already verified.`);
+      return null;
     }
-    throw error;
+    console.error(`[Blockscout] ${contractName} failed: ${message}`);
+    return message;
   }
+
+  return null;
 }
 
 function readSharedAddresses() {

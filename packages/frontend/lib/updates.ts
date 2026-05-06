@@ -1,6 +1,11 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
     date: "May 6, 2026",
+    title: "Explorer verification flow updated",
+    body: "Contract verification now uses the Etherscan V2 API path for Base explorers and includes separate Blockscout verification commands for public source-code checks."
+  },
+  {
+    date: "May 6, 2026",
     title: "Vault funding and safer controls prepared",
     body: "Admin Vault now includes wallet-based vault funding, player pause messages are simpler, verification scripts are ready for Basescan, and the next vault source includes a safer paused partial withdraw path."
   },

@@ -10,6 +10,8 @@
     "deploy:missing:base": "hardhat run scripts/deploy-missing-games.ts --network base",
     "verify:base-sepolia": "hardhat run scripts/verify-all.ts --network baseSepolia",
     "verify:base": "hardhat run scripts/verify-all.ts --network base",
+    "verify:blockscout:base-sepolia": "hardhat run scripts/verify-all-blockscout.ts --network baseSepolia",
+    "verify:blockscout:base": "hardhat run scripts/verify-all-blockscout.ts --network base",
     "test": "hardhat test",
     "coverage": "hardhat coverage"
   },
