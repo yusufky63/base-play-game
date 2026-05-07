@@ -55,7 +55,12 @@ const playerNotes = [
   {
     icon: <Radio size={18} />,
     title: "Fast activity views",
-    body: "Live feed, profile tabs, and leaderboard data are indexed from settled Base events, cached briefly, and refreshed in the background."
+    body: "Live feed, profile tabs, and leaderboard data are indexed from settled Base events, cached briefly, and refreshed in the background. Leaderboard can be viewed by weekly XP or wager volume, and ENS fallback display names only resolve when a server-side Ethereum mainnet RPC is configured."
+  },
+  {
+    icon: <Sparkles size={18} />,
+    title: "Clean Home hero",
+    body: "The Home hero uses a static full-width band without an animated Pixel Blast background, while tabs, game cards, buttons, filters, and mobile help sections stay compact with thinner neutral borders and consistent card shadows."
   }
 ];
 
@@ -74,12 +79,12 @@ const rewardNotes = [
   {
     icon: <Sparkles size={18} />,
     title: "XP",
-    body: "Settled rounds grant XP from wager size. Quest and referral XP are bonus progression only and never change game payouts."
+    body: "Settled rounds grant XP from wager size. Quest rewards are intentionally smaller than the main round activity curve, and referral XP stays capped and cosmetic."
   },
   {
     icon: <Gift size={18} />,
     title: "Daily and weekly quests",
-    body: "Quests reward simple activity such as one round, five rounds, trying different games, getting a win, and keeping streaks. Connected players can manage active quest progress on the Quests page, with small summaries on Home and game pages."
+    body: "Quests reward simple activity such as round counts, wins, trying different games, and keeping streaks. Connected players manage active quest and badge progress from the Quests page."
   },
   {
     icon: <BadgeCheck size={18} />,
@@ -140,15 +145,15 @@ const faqs = [
   },
   {
     question: "When do quests complete?",
-    answer: "Daily and weekly quests update after a settled on-chain round is indexed. Pending, failed, or refunded rounds do not count."
+    answer: "Daily and weekly quests update after a settled on-chain round is indexed. They can track rounds, wins, distinct games, and streaks. Pending, failed, or refunded rounds do not count."
   },
   {
     question: "Can badges be minted?",
     answer: "Not in the first version. Badges are profile achievements now, with mint-ready metadata fields prepared for a future contract if it is added."
   },
   {
-    question: "Why are XP and net profit separate rankings?",
-    answer: "XP rewards activity. Net profit ranks actual game performance after wins, losses, and payouts. A high-XP player is active, not necessarily profitable."
+    question: "Why are XP and volume separate rankings?",
+    answer: "XP rewards activity and quest progress. Volume ranks how much was wagered during the week, so active players can be compared without turning leaderboard order into a lucky profit race."
   },
   {
     question: "What does gross payout mean?",
@@ -275,7 +280,7 @@ export default async function DocsPage({ searchParams }: { searchParams?: Promis
           <section className="docs-block">
             <SectionHeading eyebrow="Public records" title="Public contracts" />
             <p className="docs-lede">
-              Game and vault contracts are public. Use the explorer links to inspect transactions, events, verified source code, balances, and owner-only vault actions for each deployed network. Base mainnet now uses the V2 vault source for amount-based withdraw controls.
+              Game and vault contracts are public. Use the explorer links to inspect transactions, events, verified source code, balances, and owner-only vault actions for each deployed network. Base mainnet now uses the V2 vault source for amount-based withdraw controls, and vault settlement rejects zero-player lock, payout, loss, and refund requests.
             </p>
             <div className="docs-network-list">
               {Object.values(NETWORKS).map((network) => (
@@ -305,7 +310,7 @@ export default async function DocsPage({ searchParams }: { searchParams?: Promis
               <div>
                 <h3>Wallet and results</h3>
                 <p>
-                  Your connected wallet is your player identity. Game pages show the latest results for that game, while the full live feed shows recent activity across games.
+                  Your connected browser wallet or Coinbase Wallet session is your player identity through wagmi. Game pages show the latest results for that game, while the full live feed shows recent activity across games.
                 </p>
                 <div className="docs-link-row">
                   <DocLink href="/leaderboard" label="Open leaderboard" />
@@ -343,13 +348,10 @@ export default async function DocsPage({ searchParams }: { searchParams?: Promis
               <div>
                 <h3>Current quest rewards</h3>
                 <ul className="docs-note-list docs-note-list-compact">
-                  <li>Daily: 1 round gives 20 XP.</li>
-                  <li>Daily: 5 rounds gives 50 XP.</li>
-                  <li>Daily: 3 different games gives 40 XP.</li>
-                  <li>Daily: 1 win gives 25 XP.</li>
-                  <li>Weekly: 10 rounds gives 100 XP and a badge.</li>
-                  <li>Weekly: 5 different games gives 100 XP.</li>
-                  <li>Weekly: 7-day streak gives 150 XP and a badge.</li>
+                  <li>Daily quests currently reward 8-30 XP depending on effort.</li>
+                  <li>Weekly quests currently reward 45-85 XP depending on effort.</li>
+                  <li>Badge quests still unlock profile badges, but badge rewards do not affect payouts.</li>
+                  <li>Quest XP is bonus progress. Round XP remains the main activity signal.</li>
                 </ul>
               </div>
               <div>

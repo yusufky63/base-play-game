@@ -41,6 +41,7 @@ contract GameVault is Ownable2Step, Pausable, ReentrancyGuard {
     error InvalidConfiguration();
     error ExceedsMaxBetCeiling(uint256 value);
     error ActivePayoutsReserved(uint256 reserved);
+    error InvalidPlayer();
 
     modifier onlyApprovedGame() {
         if (!approvedGames[msg.sender]) revert NotApprovedGame(msg.sender);
@@ -70,6 +71,7 @@ contract GameVault is Ownable2Step, Pausable, ReentrancyGuard {
         whenNotPaused
         nonReentrant
     {
+        _requireValidPlayer(player);
         if (msg.value != amount) revert InvalidBetAmount(msg.value, amount, amount);
         if (amount < minBet || amount > maxBet) revert InvalidBetAmount(amount, minBet, maxBet);
         _checkLiquidity(maxNetPayout);
@@ -85,12 +87,14 @@ contract GameVault is Ownable2Step, Pausable, ReentrancyGuard {
         onlyApprovedGame
         nonReentrant
     {
+        _requireValidPlayer(player);
         _decreaseLocked(player, betAmount);
         _decreaseReserved(player, reservedAmount);
 
         uint256 fee = (grossAmount * houseEdgeBps) / 10_000;
         uint256 net = grossAmount - fee;
 
+        // slither-disable-next-line arbitrary-send-eth
         (bool ok,) = payable(player).call{value: net}("");
         if (!ok) revert TransferFailed(player, net);
 
@@ -98,15 +102,18 @@ contract GameVault is Ownable2Step, Pausable, ReentrancyGuard {
     }
 
     function settleLoss(address player, uint256 betAmount, uint256 reservedAmount) external onlyApprovedGame nonReentrant {
+        _requireValidPlayer(player);
         _decreaseLocked(player, betAmount);
         _decreaseReserved(player, reservedAmount);
         emit BetLost(player, betAmount);
     }
 
     function refundBet(address player, uint256 amount, uint256 reservedAmount) external onlyApprovedGame nonReentrant {
+        _requireValidPlayer(player);
         _decreaseLocked(player, amount);
         _decreaseReserved(player, reservedAmount);
 
+        // slither-disable-next-line arbitrary-send-eth
         (bool ok,) = payable(player).call{value: amount}("");
         if (!ok) revert TransferFailed(player, amount);
 
@@ -169,6 +176,10 @@ contract GameVault is Ownable2Step, Pausable, ReentrancyGuard {
         uint256 balance = address(this).balance;
         if (balance <= totalReservedPayout) return 0;
         return balance - totalReservedPayout;
+    }
+
+    function _requireValidPlayer(address player) internal pure {
+        if (player == address(0)) revert InvalidPlayer();
     }
 
     function _decreaseLocked(address player, uint256 amount) internal {

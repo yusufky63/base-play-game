@@ -23,7 +23,7 @@ const slotLabelsByProfile = [
 ];
 
 export function PlinkoLiteClient() {
-  const [amount, setAmount] = useState("0.0005");
+  const [amount, setAmount] = useState("0.00023");
   const [profile, setProfile] = useState(1);
   const [roundProfile, setRoundProfile] = useState(1);
   const game = useGame("plinko-lite", "PlinkoLiteGame", plinkoAbi as Abi);

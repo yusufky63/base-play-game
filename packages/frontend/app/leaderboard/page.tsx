@@ -13,7 +13,7 @@ import { calculateRoundXp, currentDailyStreak, levelFromXp } from "@/lib/progres
 import { readSessionCache, writeSessionCache } from "@/lib/clientCache";
 
 type Leader = Database["public"]["Views"]["leaderboard_weekly_ranked"]["Row"];
-type SortMode = "xp" | "profit";
+type SortMode = "xp" | "volume";
 const PAGE_SIZE = 50;
 const CACHE_TTL = 90_000;
 type LeaderboardCache = { leaders: Leader[]; hasMore: boolean; source: "supabase" | "onchain" };
@@ -60,7 +60,7 @@ export default function LeaderboardPage() {
         .from("leaderboard_weekly_ranked")
         .select("*")
         .eq("week_start", weekStart)
-        .order(sort === "xp" ? "xp_rank" : "profit_rank", { ascending: true })
+        .order(sort === "xp" ? "xp_rank" : "total_wagered", { ascending: sort === "xp" })
         .range(from, to);
 
       if (error) {
@@ -111,7 +111,7 @@ export default function LeaderboardPage() {
           </div>
           <div>
             <h1 className="display-heading text-3xl font-bold text-[var(--text-1)]">Leaderboard</h1>
-            <p className="mt-1 text-sm text-[var(--text-2)]">Weekly XP and net profit rankings. Top rows load first; larger seasons are paginated.</p>
+            <p className="mt-1 text-sm text-[var(--text-2)]">Weekly XP and wager volume rankings. Top rows load first; larger seasons are paginated.</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -120,45 +120,45 @@ export default function LeaderboardPage() {
               <Sparkles size={13} />
               XP
             </button>
-            <button type="button" onClick={() => changeSort("profit")} className={sort === "profit" ? "segmented-active" : ""}>
+            <button type="button" onClick={() => changeSort("volume")} className={sort === "volume" ? "segmented-active" : ""}>
               <Trophy size={13} />
-              Profit
+              Volume
             </button>
           </div>
         </div>
       </div>
 
       <section className="panel overflow-hidden">
-        <div className="grid grid-cols-[48px_1fr_64px_72px_72px] gap-3 border-b border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-xs font-semibold uppercase text-[var(--text-3)] md:grid-cols-[48px_1fr_76px_90px_76px_120px_120px]">
+        <div className="leaderboard-row leaderboard-row-head">
           <span>Rank</span>
           <span>Player</span>
-          <span className="text-right">Level</span>
+          <span className="hidden text-right md:block">Level</span>
           <span className="text-right">XP</span>
-          <span className="text-right">Games</span>
-          <span className="hidden text-right md:block">Volume</span>
+          <span className="hidden text-right sm:block">Games</span>
+          <span className="text-right">Volume</span>
           <span className="hidden text-right md:block">Profit</span>
         </div>
         {!ready && Array.from({ length: 8 }).map((_, index) => (
           <div
             key={index}
-            className="grid grid-cols-[48px_1fr_64px_72px_72px] gap-3 border-b border-[var(--border)] px-4 py-4 last:border-b-0 md:grid-cols-[48px_1fr_76px_90px_76px_120px_120px]"
+            className="leaderboard-row border-b border-[var(--border)] last:border-b-0"
           >
             <span className="feed-skeleton h-4 w-6" />
             <span className="feed-skeleton h-4 w-44" />
+            <span className="ml-auto hidden feed-skeleton h-4 w-12 md:block" />
             <span className="ml-auto feed-skeleton h-4 w-12" />
-            <span className="ml-auto feed-skeleton h-4 w-12" />
-            <span className="ml-auto feed-skeleton h-4 w-12" />
-            <span className="ml-auto hidden feed-skeleton h-4 w-20 md:block" />
+            <span className="ml-auto hidden feed-skeleton h-4 w-12 sm:block" />
+            <span className="ml-auto feed-skeleton h-4 w-16" />
             <span className="ml-auto hidden feed-skeleton h-4 w-20 md:block" />
           </div>
         ))}
         {ready && leaders.map((leader, index) => (
           <div
             key={`${leader.player}-${leader.week_start}`}
-            className="grid grid-cols-[48px_1fr_64px_72px_72px] gap-3 border-b border-[var(--border)] px-4 py-4 text-sm transition-colors last:border-b-0 hover:bg-[var(--surface-2)] md:grid-cols-[48px_1fr_76px_90px_76px_120px_120px]"
+            className="leaderboard-row border-b border-[var(--border)] text-sm transition-colors last:border-b-0 hover:bg-[var(--surface-2)]"
           >
             <span className="font-mono text-[var(--text-3)]">
-              {source === "supabase" ? (sort === "xp" ? leader.xp_rank : leader.profit_rank) : index + 1}
+              {source === "supabase" && sort === "xp" ? leader.xp_rank : index + 1}
             </span>
             <Link href={`/profile/${leader.player}`} className="min-w-0 hover:text-[var(--accent)]">
               <span className="block truncate font-mono text-[var(--text-1)]">
@@ -169,10 +169,10 @@ export default function LeaderboardPage() {
                 {leader.current_streak}d streak
               </span>
             </Link>
-            <span className="text-right font-mono text-[var(--text-2)]">Lv {leader.level}</span>
+            <span className="hidden text-right font-mono text-[var(--text-2)] md:block">Lv {leader.level}</span>
             <span className="text-right font-mono font-semibold text-[var(--accent)]">{leader.xp}</span>
-            <span className="text-right font-mono text-[var(--text-2)]">{leader.game_count}</span>
-            <span className="hidden text-right font-mono text-[var(--text-2)] md:block">
+            <span className="hidden text-right font-mono text-[var(--text-2)] sm:block">{leader.game_count}</span>
+            <span className="text-right font-mono text-[var(--text-2)]">
               {formatEth(leader.total_wagered)} ETH
               {ethUsd && <span className="mt-1 block text-[10px] text-[var(--text-3)]">{formatUsd(leader.total_wagered * ethUsd)}</span>}
             </span>
@@ -231,7 +231,7 @@ async function loadOnchainLeaders(sort: SortMode): Promise<Leader[]> {
 
   const weekStart = getWeekStart();
   return Array.from(grouped.values())
-    .sort((a, b) => sort === "xp" ? b.xp - a.xp || b.net_profit - a.net_profit : b.net_profit - a.net_profit || b.biggest_win - a.biggest_win)
+    .sort((a, b) => sort === "xp" ? b.xp - a.xp || b.total_wagered - a.total_wagered : b.total_wagered - a.total_wagered || b.xp - a.xp)
     .map((leader) => ({
       id: `${leader.player}-${weekStart}`,
       week_start: weekStart,
@@ -244,7 +244,7 @@ async function loadOnchainLeaders(sort: SortMode): Promise<Leader[]> {
     .map((leader, index) => ({
       ...leader,
       xp_rank: sort === "xp" ? index + 1 : leader.xp_rank,
-      profit_rank: sort === "profit" ? index + 1 : leader.profit_rank
+      profit_rank: leader.profit_rank
     }));
 }
 

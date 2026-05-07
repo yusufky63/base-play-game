@@ -11,7 +11,7 @@ import { RoundSummaryStrip } from "@/components/game/RoundSummaryStrip";
 import { useGame } from "@/hooks/useGame";
 
 export function CrashClient() {
-  const [amount, setAmount] = useState("0.0005");
+  const [amount, setAmount] = useState("0.00023");
   const [target, setTarget] = useState(250);
   const [roundTarget, setRoundTarget] = useState(250);
   const [animatedMultiplier, setAnimatedMultiplier] = useState(1);

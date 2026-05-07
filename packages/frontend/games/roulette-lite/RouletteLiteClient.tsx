@@ -27,7 +27,7 @@ const ranges = [
 ] as const;
 
 export function RouletteLiteClient() {
-  const [amount, setAmount] = useState("0.0005");
+  const [amount, setAmount] = useState("0.00023");
   const [betType, setBetType] = useState(0);
   const [choice, setChoice] = useState(7);
   const [round, setRound] = useState({ betType: 0, choice: 7 });

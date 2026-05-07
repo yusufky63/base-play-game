@@ -12,7 +12,7 @@ import { RoundSummaryStrip } from "@/components/game/RoundSummaryStrip";
 import { useGame } from "@/hooks/useGame";
 
 export function TreasureChestClient() {
-  const [amount, setAmount] = useState("0.0005");
+  const [amount, setAmount] = useState("0.00023");
   const [choice, setChoice] = useState(4);
   const [roundChoice, setRoundChoice] = useState(4);
   const game = useGame("treasure-chest", "TreasureChestGame", treasureAbi as Abi);

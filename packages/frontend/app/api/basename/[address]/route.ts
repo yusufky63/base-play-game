@@ -12,10 +12,13 @@ const baseClient = createPublicClient({
   transport: fallback(BASE_MAINNET_FRONTEND_RPC_URLS.map((url) => http(url, { timeout: 8_000, retryCount: 1, retryDelay: 250 })))
 });
 
-const mainnetClient = createPublicClient({
-  chain: mainnet,
-  transport: http(undefined, { timeout: 8_000, retryCount: 1, retryDelay: 250 })
-});
+const mainnetRpcUrl = process.env.MAINNET_RPC_URL || process.env.ETHEREUM_RPC_URL || "";
+const mainnetClient = mainnetRpcUrl
+  ? createPublicClient({
+      chain: mainnet,
+      transport: http(mainnetRpcUrl, { timeout: 8_000, retryCount: 1, retryDelay: 250 })
+    })
+  : null;
 
 export async function GET(_request: Request, { params }: { params: Promise<{ address: string }> }) {
   const { address } = await params;
@@ -51,6 +54,8 @@ async function getBasename(address: `0x${string}`) {
 }
 
 async function getEnsName(address: `0x${string}`) {
+  if (!mainnetClient) return null;
+
   try {
     return await mainnetClient.getEnsName({ address });
   } catch {

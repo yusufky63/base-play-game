@@ -17,7 +17,7 @@ import { PendingRoundsPanel } from "@/components/wallet/PendingRoundsPanel";
 import { useToast } from "@/components/ui/ToastProvider";
 
 const gameNames = Object.fromEntries(GAMES_REGISTRY.map((game) => [game.id, game.name]));
-type ProfileTab = "games" | "rounds" | "quests" | "badges" | "referrals" | "refunds";
+type ProfileTab = "profile" | "games" | "rounds" | "badges" | "referrals" | "refunds";
 
 export function ProfileClient({ address }: { address: string }) {
   const account = useAccount();
@@ -28,7 +28,7 @@ export function ProfileClient({ address }: { address: string }) {
   const rounds = usePlayerRounds(validAddress, 8);
   const ethUsd = useEthUsdPrice();
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<ProfileTab>("games");
+  const [activeTab, setActiveTab] = useState<ProfileTab>("profile");
   const [roundPageIndex, setRoundPageIndex] = useState(0);
   const [manualReferrer, setManualReferrer] = useState("");
   const data = profile.data;
@@ -42,8 +42,10 @@ export function ProfileClient({ address }: { address: string }) {
   const winRate = totalRounds > 0 && data ? (data.wins / totalRounds) * 100 : 0;
   const isConnectedProfile = Boolean(account.address && validAddress && account.address.toLowerCase() === validAddress.toLowerCase());
   const profileTabs: Array<{ id: ProfileTab; label: string; detail: string }> = [
+    { id: "profile", label: "Profile", detail: `Lv ${level}` },
     { id: "games", label: "Games", detail: `${data?.gameStats.length ?? 0} played` },
     { id: "rounds", label: "Rounds", detail: `${roundPages.reduce((count, page) => count + page.rows.length, 0)} loaded` },
+    { id: "badges", label: "Badges", detail: `${data?.badges.length ?? 0} earned` },
     { id: "referrals", label: "Referrals", detail: `${referralSummary.data?.totalReferrals ?? 0} invited` },
     ...(isConnectedProfile ? [{ id: "refunds" as const, label: "Refunds", detail: "Active rounds" }] : [])
   ];
@@ -54,7 +56,7 @@ export function ProfileClient({ address }: { address: string }) {
 
   useEffect(() => {
     if (!isConnectedProfile && activeTab === "refunds") {
-      setActiveTab("games");
+      setActiveTab("profile");
     }
   }, [activeTab, isConnectedProfile]);
 
@@ -114,44 +116,7 @@ export function ProfileClient({ address }: { address: string }) {
         </button>
       </div>
 
-      <section className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="profile-hero panel p-5">
-          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-            <div>
-              <div className="flex items-center gap-2 font-mono text-[11px] font-bold uppercase text-[var(--text-3)]">
-                <Sparkles size={14} className="text-[var(--accent)]" />
-                Level {level}
-              </div>
-              <div className="mt-2 display-heading text-5xl font-bold text-[var(--text-1)]">{xp} XP</div>
-              <div className="mt-4 h-3 overflow-hidden rounded-full bg-[var(--surface-3)]">
-                <span className="block h-full rounded-full bg-[var(--accent)]" style={{ width: `${progress.percent}%` }} />
-              </div>
-              <div className="mt-2 flex justify-between font-mono text-[11px] text-[var(--text-3)]">
-                <span>{progress.current} current</span>
-                <span>{progress.required} to next level band</span>
-              </div>
-            </div>
-            <div className="profile-streak">
-              <Flame size={22} />
-              <strong>{stats?.current_streak ?? 0}d</strong>
-              <span>current streak</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Metric icon={<Activity size={17} />} label="Rounds" value={String(totalRounds)} />
-          <Metric icon={<Trophy size={17} />} label="Win rate" value={`${winRate.toFixed(1)}%`} />
-          <Metric label="Net profit" value={`${(stats?.net_profit ?? 0) >= 0 ? "+" : ""}${formatEth(stats?.net_profit ?? 0)} ETH`} tone={(stats?.net_profit ?? 0) >= 0 ? "win" : "loss"} />
-          <Metric label="Volume" value={`${formatEth(stats?.total_wagered ?? 0)} ETH`} detail={ethUsd ? formatUsd((stats?.total_wagered ?? 0) * ethUsd) : undefined} />
-          <Metric label="XP rank" value={data?.weekly?.xp_rank ? `#${data.weekly.xp_rank}` : "-"} />
-          <Metric label="Profit rank" value={data?.weekly?.profit_rank ? `#${data.weekly.profit_rank}` : "-"} />
-        </div>
-      </section>
-
-      <ProfileBadgeShelf badges={data?.badges ?? []} loading={profile.isLoading} />
-
-      <section className="profile-tab-shell mt-8">
+      <section className="profile-tab-shell">
         <div className="profile-tabs" role="tablist" aria-label="Profile sections">
           {profileTabs.map((tab) => (
             <button
@@ -167,6 +132,45 @@ export function ProfileClient({ address }: { address: string }) {
             </button>
           ))}
         </div>
+
+        {activeTab === "profile" && (
+          <div className="profile-tab-panel profile-tab-panel-flat">
+            <section className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+              <div className="profile-hero panel p-5">
+                <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 font-mono text-[11px] font-bold uppercase text-[var(--text-3)]">
+                      <Sparkles size={14} className="text-[var(--accent)]" />
+                      Level {level}
+                    </div>
+                    <div className="mt-2 display-heading text-5xl font-bold text-[var(--text-1)]">{xp} XP</div>
+                    <div className="mt-4 h-3 overflow-hidden rounded-full bg-[var(--surface-3)]">
+                      <span className="block h-full rounded-full bg-[var(--accent)]" style={{ width: `${progress.percent}%` }} />
+                    </div>
+                    <div className="mt-2 flex justify-between font-mono text-[11px] text-[var(--text-3)]">
+                      <span>{progress.current} current</span>
+                      <span>{progress.required} to next level band</span>
+                    </div>
+                  </div>
+                  <div className="profile-streak">
+                    <Flame size={22} />
+                    <strong>{stats?.current_streak ?? 0}d</strong>
+                    <span>current streak</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Metric icon={<Activity size={17} />} label="Rounds" value={String(totalRounds)} />
+                <Metric icon={<Trophy size={17} />} label="Win rate" value={`${winRate.toFixed(1)}%`} />
+                <Metric label="Net profit" value={`${(stats?.net_profit ?? 0) >= 0 ? "+" : ""}${formatEth(stats?.net_profit ?? 0)} ETH`} tone={(stats?.net_profit ?? 0) >= 0 ? "win" : "loss"} />
+                <Metric label="Volume" value={`${formatEth(stats?.total_wagered ?? 0)} ETH`} detail={ethUsd ? formatUsd((stats?.total_wagered ?? 0) * ethUsd) : undefined} />
+                <Metric label="XP rank" value={data?.weekly?.xp_rank ? `#${data.weekly.xp_rank}` : "-"} />
+                <Metric label="Profit rank" value={data?.weekly?.profit_rank ? `#${data.weekly.profit_rank}` : "-"} />
+              </div>
+            </section>
+          </div>
+        )}
 
         {activeTab === "games" && (
           <div className="profile-tab-panel">
@@ -230,38 +234,6 @@ export function ProfileClient({ address }: { address: string }) {
               <button type="button" onClick={() => void goNextRoundPage()} disabled={rounds.isFetchingNextPage || (roundPageIndex + 1 >= roundPages.length && !rounds.hasNextPage)} className="play-button-ghost h-10 rounded-md px-4 text-sm font-bold disabled:opacity-45">
                 {rounds.isFetchingNextPage ? "Loading..." : "Next"}
               </button>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "quests" && (
-          <div className="profile-tab-panel">
-            <div className="profile-panel-heading">
-              <h2 className="display-heading text-lg font-bold text-[var(--text-1)]">Quests</h2>
-              <span>Daily and weekly XP boosts</span>
-            </div>
-            <div className="grid gap-3 p-4 md:grid-cols-2">
-              {(data?.quests ?? []).map((quest) => (
-                <div key={`${quest.quest_id}-${quest.period_start}`} className={`progression-card ${quest.completed ? "progression-card-complete" : ""}`}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="font-bold text-[var(--text-1)]">{quest.title}</div>
-                      <p className="mt-1 text-xs leading-5 text-[var(--text-2)]">{quest.description}</p>
-                    </div>
-                    <span className="rounded-md border border-[var(--border)] px-2 py-1 font-mono text-[10px] font-bold uppercase text-[var(--text-3)]">
-                      {quest.period}
-                    </span>
-                  </div>
-                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--surface-3)]">
-                    <span className="block h-full rounded-full bg-[var(--accent)]" style={{ width: `${Math.min(100, (quest.progress / quest.target) * 100)}%` }} />
-                  </div>
-                  <div className="mt-2 flex items-center justify-between font-mono text-[10px] text-[var(--text-3)]">
-                    <span>{Math.min(quest.progress, quest.target)} / {quest.target}</span>
-                    <span>+{quest.reward_xp} XP</span>
-                  </div>
-                </div>
-              ))}
-              {!profile.isLoading && (data?.quests.length ?? 0) === 0 && <div className="text-sm text-[var(--text-3)]">Quests appear after settled rounds are indexed.</div>}
             </div>
           </div>
         )}
@@ -372,61 +344,5 @@ function Metric({ label, value, detail, icon, tone }: { label: string; value: st
       <div className={`mt-2 font-mono text-sm font-bold ${tone === "win" ? "text-[var(--win)]" : tone === "loss" ? "text-[var(--lose)]" : "text-[var(--text-1)]"}`}>{value}</div>
       {detail && <div className="mt-1 font-mono text-[10px] text-[var(--text-3)]">{detail}</div>}
     </div>
-  );
-}
-
-function ProfileBadgeShelf({
-  badges,
-  loading
-}: {
-  badges: NonNullable<ReturnType<typeof usePlayerProfile>["data"]>["badges"];
-  loading: boolean;
-}) {
-  return (
-    <section className="profile-badge-shelf mt-5">
-      <div className="profile-badge-shelf-head">
-        <div>
-          <div className="flex items-center gap-2 font-mono text-[10px] font-bold uppercase text-[var(--text-3)]">
-            <BadgeCheck size={14} className="text-[var(--accent)]" />
-            Badge shelf
-          </div>
-          <h2 className="display-heading text-xl font-bold text-[var(--text-1)]">Earned achievements</h2>
-        </div>
-        <span>{badges.length} earned</span>
-      </div>
-      <div className="profile-badge-shelf-grid">
-        {badges.slice(0, 6).map((badge) => (
-          <div key={badge.badge_id} className="profile-badge-token">
-            <div className="profile-badge-token-icon">
-              <BadgeCheck size={18} />
-            </div>
-            <div>
-              <strong>{badge.title}</strong>
-              <span>{new Date(badge.awarded_at).toLocaleDateString()}</span>
-            </div>
-          </div>
-        ))}
-        {loading && badges.length === 0 && Array.from({ length: 3 }).map((_, index) => (
-          <div key={index} className="profile-badge-token profile-badge-token-loading">
-            <i />
-            <div>
-              <b />
-              <b />
-            </div>
-          </div>
-        ))}
-        {!loading && badges.length === 0 && (
-          <div className="profile-badge-token profile-badge-token-empty">
-            <div className="profile-badge-token-icon">
-              <Trophy size={18} />
-            </div>
-            <div>
-              <strong>No badges yet</strong>
-              <span>Play settled rounds to unlock the first one.</span>
-            </div>
-          </div>
-        )}
-      </div>
-    </section>
   );
 }

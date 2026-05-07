@@ -11,7 +11,7 @@ import { RoundSummaryStrip } from "@/components/game/RoundSummaryStrip";
 import { useGame } from "@/hooks/useGame";
 
 export function DiceClient() {
-  const [amount, setAmount] = useState("0.0005");
+  const [amount, setAmount] = useState("0.00023");
   const [guess, setGuess] = useState(3);
   const [roundGuess, setRoundGuess] = useState(3);
   const [rollingFace, setRollingFace] = useState(3);

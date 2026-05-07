@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { ChevronDown, CircleDollarSign, Dice5, RadioTower } from "lucide-react";
 
 const GAME_STEPS: Record<string, { title: string; body: string }[]> = {
@@ -128,6 +129,10 @@ export function HowItWorks({ gameId }: { gameId: string }) {
           </li>
         ))}
       </ol>
+      <div className="how-more">
+        <span>Still have questions?</span>
+        <Link href="/docs?section=faq">Open the player Q&amp;A</Link>
+      </div>
     </details>
   );
 }

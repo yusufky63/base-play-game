@@ -12,7 +12,7 @@ import { RoundSummaryStrip } from "@/components/game/RoundSummaryStrip";
 import { useGame } from "@/hooks/useGame";
 
 export function OverUnderClient() {
-  const [amount, setAmount] = useState("0.0005");
+  const [amount, setAmount] = useState("0.00023");
   const [choice, setChoice] = useState<"over" | "under">("over");
   const [target, setTarget] = useState(60);
   const [roundChoice, setRoundChoice] = useState<"over" | "under">("over");

@@ -5,7 +5,6 @@ import { ChevronDown, Circle, Flame, LogOut, Sparkles, Wallet } from "lucide-rea
 import { useAccount, useDisconnect } from "wagmi";
 import { BasenameLabel } from "@/components/base/BasenameLabel";
 import { ChainSwitcher } from "@/components/wallet/ChainSwitcher";
-import { SiweButton } from "@/components/wallet/SiweButton";
 import { WalletStatus } from "@/components/wallet/WalletStatus";
 import { PendingRoundsPanel } from "@/components/wallet/PendingRoundsPanel";
 import { useBalance } from "@/hooks/useBalance";
@@ -100,18 +99,16 @@ export function HeaderAccountMenu() {
               <span>{xp} XP</span>
               <span>{bar.current}/{bar.required}</span>
             </div>
-            {address && (
-              <div className="mt-3 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2">
-                <div className="font-mono text-[10px] font-bold uppercase text-[var(--text-3)]">Player</div>
-                <div className="mt-1 truncate font-mono text-xs font-bold text-[var(--text-1)]">
-                  <BasenameLabel address={address as `0x${string}`} />
+            <div className="header-account-compact-meta">
+              {address && (
+                <div>
+                  <span>Player</span>
+                  <strong><BasenameLabel address={address as `0x${string}`} /></strong>
                 </div>
-              </div>
-            )}
-            <div className="mt-3 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2">
-              <div className="font-mono text-[10px] font-bold uppercase text-[var(--text-3)]">Wallet balance</div>
-              <div className="mt-1 font-mono text-xs font-bold text-[var(--text-1)]">
-                {formatted} {symbol}
+              )}
+              <div>
+                <span>Balance</span>
+                <strong>{formatted} {symbol}</strong>
               </div>
             </div>
           </section>
@@ -122,11 +119,6 @@ export function HeaderAccountMenu() {
               Network
             </span>
             <ChainSwitcher />
-          </section>
-
-          <section className="header-account-row">
-            <span className="text-xs font-bold text-[var(--text-2)]">SIWE</span>
-            <SiweButton />
           </section>
 
           <PendingRoundsPanel compact />

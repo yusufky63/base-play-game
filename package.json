@@ -24,11 +24,9 @@
     "node": ">=20.9"
   },
   "overrides": {
-    "axios": "$axios",
-    "lodash": "$lodash",
-    "@coinbase/cdp-sdk": {
-      "axios": "$axios"
-    }
+    "axios": "1.16.0",
+    "lodash": "4.18.1",
+    "postcss": "8.5.14"
   },
   "devDependencies": {
     "playwright": "^1.59.1"

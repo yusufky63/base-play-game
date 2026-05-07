@@ -18,7 +18,7 @@ const colors = [
 ] as const;
 
 export function ColorPickClient() {
-  const [amount, setAmount] = useState("0.0005");
+  const [amount, setAmount] = useState("0.00023");
   const [choice, setChoice] = useState(0);
   const [roundChoice, setRoundChoice] = useState(0);
   const [cursor, setCursor] = useState(0);

@@ -12,7 +12,7 @@ import { RoundSummaryStrip } from "@/components/game/RoundSummaryStrip";
 import { useGame } from "@/hooks/useGame";
 
 export function HiLoClient() {
-  const [amount, setAmount] = useState("0.0005");
+  const [amount, setAmount] = useState("0.00023");
   const [currentCardValue, setCurrentCardValue] = useState(7);
   const [roundCardValue, setRoundCardValue] = useState(7);
   const [roundDirection, setRoundDirection] = useState<"higher" | "lower" | null>(null);

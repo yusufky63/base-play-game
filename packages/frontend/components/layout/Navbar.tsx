@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Gamepad2, LogOut, Menu, Trophy, UserRound, Wallet, X } from "lucide-react";
+import { Gamepad2, LogOut, Menu, Sparkles, Trophy, UserRound, Wallet, X } from "lucide-react";
 import { useAccount, useDisconnect } from "wagmi";
 import { BasenameLabel } from "@/components/base/BasenameLabel";
 import { Logo } from "@/components/ui/Logo";
@@ -11,10 +11,12 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LiveFeed } from "@/components/game/LiveFeed";
 import { HeaderAccountMenu } from "@/components/layout/HeaderAccountMenu";
 import { WalletStatus } from "@/components/wallet/WalletStatus";
+import { ChainSwitcher } from "@/components/wallet/ChainSwitcher";
 import { useBalance } from "@/hooks/useBalance";
 
 const navItems = [
   { href: "/", label: "Games", icon: Gamepad2 },
+  { href: "/quests", label: "Quests", icon: Sparkles },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/profile", label: "Profile", icon: UserRound }
 ];
@@ -103,7 +105,17 @@ function MobileHeaderMenu({ pathname }: { pathname: string }) {
 
       {open && (
         <div className="header-mobile-menu">
-          <nav className="grid gap-1">
+          <div className="mobile-menu-head">
+            <div>
+              <span>BasePlay</span>
+              <strong>{isConnected ? "Player menu" : "Navigation"}</strong>
+            </div>
+            <button type="button" onClick={() => setOpen(false)} aria-label="Close menu">
+              <X size={15} />
+            </button>
+          </div>
+
+          <nav className="mobile-menu-grid">
             {navItems.map((item) => {
               const active = pathname === item.href;
               const Icon = item.icon;
@@ -115,6 +127,10 @@ function MobileHeaderMenu({ pathname }: { pathname: string }) {
               );
             })}
           </nav>
+
+          <div className="mobile-menu-network">
+            <ChainSwitcher />
+          </div>
 
           <div className="mt-3 border-t border-[var(--border)] pt-3">
             {!isConnected ? (

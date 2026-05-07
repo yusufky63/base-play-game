@@ -17,7 +17,7 @@ const choices = [
 ] as const;
 
 export function LuckySevenClient() {
-  const [amount, setAmount] = useState("0.0005");
+  const [amount, setAmount] = useState("0.00023");
   const [choice, setChoice] = useState(1);
   const [roundChoice, setRoundChoice] = useState(1);
   const game = useGame("lucky-seven", "LuckySevenGame", luckyAbi as Abi);

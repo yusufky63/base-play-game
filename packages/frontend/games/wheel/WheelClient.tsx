@@ -23,7 +23,7 @@ const wheelLabels = [
 ];
 
 export function WheelClient() {
-  const [amount, setAmount] = useState("0.0005");
+  const [amount, setAmount] = useState("0.00023");
   const [profile, setProfile] = useState(0);
   const [roundProfile, setRoundProfile] = useState(0);
   const game = useGame("wheel", "WheelGame", wheelAbi as Abi);

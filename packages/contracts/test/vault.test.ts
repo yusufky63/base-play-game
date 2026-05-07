@@ -47,6 +47,23 @@ describe("GameVault controls", function () {
     await expect(vault.refundBet(ethers.ZeroAddress, BET, BET)).to.be.revertedWithCustomError(vault, "NotApprovedGame");
   });
 
+  it("rejects zero-player settlement calls from approved games", async function () {
+    const { game, vault } = await deployFixture();
+    const gameAddress = await game.getAddress();
+    const gameSigner = await ethers.getImpersonatedSigner(gameAddress);
+
+    await ethers.provider.send("hardhat_setBalance", [gameAddress, "0x3635c9adc5dea00000"]);
+
+    await expect(vault.connect(gameSigner).lockFunds(ethers.ZeroAddress, BET, BET, { value: BET }))
+      .to.be.revertedWithCustomError(vault, "InvalidPlayer");
+    await expect(vault.connect(gameSigner).payout(ethers.ZeroAddress, 0, 0, 0))
+      .to.be.revertedWithCustomError(vault, "InvalidPlayer");
+    await expect(vault.connect(gameSigner).settleLoss(ethers.ZeroAddress, 0, 0))
+      .to.be.revertedWithCustomError(vault, "InvalidPlayer");
+    await expect(vault.connect(gameSigner).refundBet(ethers.ZeroAddress, 0, 0))
+      .to.be.revertedWithCustomError(vault, "InvalidPlayer");
+  });
+
   it("blocks house edge changes while payouts are reserved", async function () {
     const { game, player, vault } = await deployFixture();
     const params = ethers.AbiCoder.defaultAbiCoder().encode(["uint8"], [1]);

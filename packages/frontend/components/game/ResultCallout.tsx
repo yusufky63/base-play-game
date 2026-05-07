@@ -29,7 +29,7 @@ export function ResultCallout({
   const label = variant === "win" ? "Won" : variant === "loss" ? "Lost" : "Running";
   const explorer = getNetworkByChainId(chain?.id ?? 8453)?.blockExplorer;
   const txUrl = share?.txHash && explorer ? `${explorer}/tx/${share.txHash}` : null;
-  const shareText = share ? `I won on ${share.game} at BasePlay. ${share.detail}${txUrl ? ` ${txUrl}` : ""}` : "";
+  const shareText = share ? `I won a verified ${share.game} round on BasePlay. ${share.detail}${txUrl ? ` ${txUrl}` : ""}` : "";
 
   return (
     <div className={`result-callout result-callout-${variant} ${share && variant === "win" ? "result-callout-shareable" : ""}`} role="status" aria-live="polite">
@@ -41,11 +41,11 @@ export function ResultCallout({
         <div className="result-callout-title">{title}</div>
         {detail && <div className="result-callout-detail">{detail}</div>}
         {share && variant === "win" && (
-          <div className="win-share-card">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 font-mono text-[10px] font-bold uppercase text-[var(--text-3)]">
+          <div className="win-share-panel">
+            <div className="win-share-head">
+              <div className="win-share-kicker">
                 <Trophy size={13} className="text-[var(--win)]" />
-                Win card
+                Verified win
               </div>
               {txUrl && (
                 <a href={txUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-mono text-[10px] font-bold text-[var(--text-3)] hover:text-[var(--accent)]">
@@ -53,8 +53,11 @@ export function ResultCallout({
                 </a>
               )}
             </div>
-            <div className="mt-2 font-mono text-xs font-bold text-[var(--text-1)]">{share.detail}</div>
-            <div className="mt-3">
+            <p className="win-share-copy">
+              This round settled on-chain. Share the verified result or open the transaction to inspect the payout.
+            </p>
+            <div className="win-share-result">{share.detail}</div>
+            <div className="win-share-actions">
               <SharePanel compact text={shareText} />
             </div>
           </div>

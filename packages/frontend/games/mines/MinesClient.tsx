@@ -14,7 +14,7 @@ import { useGame } from "@/hooks/useGame";
 const GRID_SIZE = 25;
 
 export function MinesClient() {
-  const [amount, setAmount] = useState("0.0005");
+  const [amount, setAmount] = useState("0.00023");
   const [mineCount, setMineCount] = useState(3);
   const [roundMineCount, setRoundMineCount] = useState(3);
   const [roundSafeCount, setRoundSafeCount] = useState(0);

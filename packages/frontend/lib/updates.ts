@@ -1,5 +1,80 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
+    date: "May 7, 2026",
+    title: "Vault settlement guards tightened",
+    body: "GameVault settlement entrypoints now reject zero-player payout, loss, refund, and lock requests, while Slither CI keeps the intentional approved-game payout path documented without globally disabling the detector."
+  },
+  {
+    date: "May 7, 2026",
+    title: "Production dependency cleanup prepared",
+    body: "Unused WebGL packages were removed after Pixel Blast was dropped, wallet connections now use the standard wagmi injected and Coinbase Wallet stack without the extra Base Account/RainbowKit/WalletConnect dependency chain, Next was moved to a PostCSS-patched release, and ENS fallback now requires an explicit server-side mainnet RPC."
+  },
+  {
+    date: "May 7, 2026",
+    title: "Pixel Blast removed from Home",
+    body: "The animated Pixel Blast hero background was removed, leaving a cleaner static Home hero band."
+  },
+  {
+    date: "May 7, 2026",
+    title: "Home hero composition filled out",
+    body: "The Home hero now uses a full-width top band with larger, denser Pixel Blast squares and less unused vertical space above the content."
+  },
+  {
+    date: "May 7, 2026",
+    title: "Home hero Pixel Blast tuned",
+    body: "The Home hero effect now uses calmer larger squares with lower density, softer motion, and a bottom fade so the shader sits behind the hero content more cleanly."
+  },
+  {
+    date: "May 7, 2026",
+    title: "Home hero Pixel Blast simplified",
+    body: "The Home hero Pixel Blast now uses larger shader squares and removes the separate static grid overlay so only the animated effect remains."
+  },
+  {
+    date: "May 7, 2026",
+    title: "Pixel background moved into Home hero",
+    body: "The Pixel Blast effect now fills only the top Home hero instead of sitting behind every page in the app."
+  },
+  {
+    date: "May 7, 2026",
+    title: "Pixel background motion gate removed",
+    body: "The Pixel Blast background now stays visible on desktop even when the browser reports reduced motion, matching the mobile visual layer behavior."
+  },
+  {
+    date: "May 7, 2026",
+    title: "Pixel canvas and tab styling refined",
+    body: "The pixel background now has a visible page-level fallback layer, spotlight hover effects were removed, tabs and game filters now use consistent bordered groups with card shadows, quest sections are grouped inside one cleaner panel, and mobile How it works rows are more compact."
+  },
+  {
+    date: "May 7, 2026",
+    title: "Home visual effects expanded",
+    body: "The ReactBits-style Pixel Blast shader now sits behind the full app shell instead of only the Home hero, and border weights were reduced across the interface including game cards and Play buttons."
+  },
+  {
+    date: "May 7, 2026",
+    title: "Home hero visual effects trial added",
+    body: "The Home hero now tests a desktop-only pixel blast style background and the global stats card has a restrained blue spotlight hover matched to the BasePlay visual system."
+  },
+  {
+    date: "May 7, 2026",
+    title: "Progression balance and mobile rewards UI refined",
+    body: "Quest XP rewards were reduced so wager-based round XP stays the main progression signal, while the Quests page, profile tabs, leaderboard, and dark theme card borders were tightened for mobile readability."
+  },
+  {
+    date: "May 6, 2026",
+    title: "Quest board, badges, and mobile polish expanded",
+    body: "New daily and weekly quest goals plus additional badges were added, the Quests page now shows badges directly, mobile global stats and game filters are cleaner, and game help panels link to the player Q&A."
+  },
+  {
+    date: "May 6, 2026",
+    title: "Win sharing, profile tabs, and leaderboard sorting refined",
+    body: "Win cards now explain verified on-chain results more clearly, profile sections moved into a cleaner tab bar with Profile and Badges tabs, and leaderboard sorting now compares XP or weekly wager volume instead of profit."
+  },
+  {
+    date: "May 6, 2026",
+    title: "Quest navigation and game layout refined",
+    body: "Quests moved into the header as a dedicated page with badge progress, game pages were cleaned up, contract links are now more compact above the play area, wallet menus are simpler, and default wagers now select the middle preset."
+  },
+  {
     date: "May 6, 2026",
     title: "Dedicated quests page added",
     body: "Daily, weekly, and completed quests now have a dedicated page, while badges stay profile-focused as a public achievement shelf."

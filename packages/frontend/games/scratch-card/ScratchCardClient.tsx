@@ -19,7 +19,7 @@ const tiers = [
 ] as const;
 
 export function ScratchCardClient() {
-  const [amount, setAmount] = useState("0.0005");
+  const [amount, setAmount] = useState("0.00023");
   const [cursor, setCursor] = useState(0);
   const game = useGame("scratch-card", "ScratchCardGame", scratchAbi as Abi);
   const event = findEventArgs(game.vrfResult, "ScratchCardResult");

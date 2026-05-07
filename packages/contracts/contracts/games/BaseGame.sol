@@ -6,6 +6,7 @@ import {GameVault} from "../core/GameVault.sol";
 import {VRFConsumer} from "../core/VRFConsumer.sol";
 
 abstract contract BaseGame is VRFConsumer, ReentrancyGuard {
+    /// @custom:security non-reentrant
     GameVault public immutable vault;
 
     uint256 public constant VRF_TIMEOUT_BLOCKS = 60;

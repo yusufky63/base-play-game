@@ -11,7 +11,7 @@ import { RoundSummaryStrip } from "@/components/game/RoundSummaryStrip";
 import { useGame } from "@/hooks/useGame";
 
 export function CoinFlipClient() {
-  const [amount, setAmount] = useState("0.0005");
+  const [amount, setAmount] = useState("0.00023");
   const [choice, setChoice] = useState<"Heads" | "Tails">("Heads");
   const [roundChoice, setRoundChoice] = useState<"Heads" | "Tails">("Heads");
   const game = useGame("coin-flip", "CoinFlipGame", coinFlipAbi as Abi);

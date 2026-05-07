@@ -9,7 +9,7 @@ export function NetworkStatusPanel({ activeCount }: { activeCount: number }) {
   const stats = data ?? { plays: 0, players: 0, volume: 0 };
 
   const metrics = [
-    { label: "Games", value: `${activeCount} playable` },
+    { label: "Games", value: String(activeCount) },
     { label: "Rounds", value: String(stats.plays) },
     { label: "Players", value: String(stats.players) },
     { label: "Volume", value: `${formatEth(stats.volume)} ETH` }
@@ -22,7 +22,7 @@ export function NetworkStatusPanel({ activeCount }: { activeCount: number }) {
         <button
           type="button"
           onClick={() => void refetch()}
-          className="inline-flex items-center gap-2 font-mono text-[11px] text-[var(--text-3)] hover:text-[var(--text-1)]"
+          className="status-refresh-button"
         >
           <RefreshCw size={12} className={isFetching ? "animate-spin text-[var(--accent)]" : ""} />
           {isLoading ? "Loading" : "Refresh"}

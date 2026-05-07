@@ -21,20 +21,25 @@ const symbols = [
 ] as const;
 
 export function SlotsClient() {
-  const [amount, setAmount] = useState("0.0005");
+  const [amount, setAmount] = useState("0.00023");
   const [tick, setTick] = useState(0);
   const game = useGame("slots", "SlotsGame", slotsAbi as Abi);
   const event = findEventArgs(game.vrfResult, "SlotsResult");
   const reels = useMemo(() => [toNumber(event?.reelA), toNumber(event?.reelB), toNumber(event?.reelC)], [event?.reelA, event?.reelB, event?.reelC]);
-  const multiplierBps = toNumber(event?.multiplierBps) ?? 0;
+  const eventMultiplierBps = toNumber(event?.multiplierBps);
+  const roundBetAmount = toNumber(game.vrfResult?.betAmount);
+  const roundPayout = toNumber(game.vrfResult?.payout);
+  const derivedMultiplierBps = roundBetAmount && roundPayout !== null ? Math.round((roundPayout / roundBetAmount) * 10_000) : null;
+  const multiplierBps = eventMultiplierBps ?? derivedMultiplierBps ?? 0;
   const settled = game.vrfState === "settled" && typeof game.vrfResult?.won === "boolean";
   const won = game.vrfResult?.won === true;
+  const hasReelResult = reels.every((value) => value !== null);
   const isBusy = game.vrfState === "pending_tx" || game.vrfState === "pending_vrf";
   const visibleReels = useMemo(() => {
-    if (settled && reels.every((value) => value !== null)) return reels as number[];
+    if (settled && hasReelResult) return reels as number[];
     if (!isBusy) return [0, 1, 4];
     return [tick % symbols.length, (tick + 2) % symbols.length, (tick + 4) % symbols.length];
-  }, [isBusy, reels, settled, tick]);
+  }, [hasReelResult, isBusy, reels, settled, tick]);
 
   useEffect(() => {
     if (!isBusy) return;
@@ -53,6 +58,8 @@ export function SlotsClient() {
       : multiplierBps > 0
         ? "Pair match"
         : "No match";
+  const reelLine = hasReelResult ? visibleReels.map((value) => symbols[value]?.label ?? "BASE").join(" / ") : won ? "Winning line confirmed" : "No matching line";
+  const grossMultiplier = `${(multiplierBps / 10_000).toFixed(2)}x`;
 
   return (
     <GameShell
@@ -120,8 +127,8 @@ export function SlotsClient() {
           <RoundSummaryStrip
             items={[
               { label: "State", value: isBusy ? "Spinning" : settled ? (won ? "Won" : "Lost") : "Ready" },
-              { label: "Line", value: settled ? visibleReels.map((value) => symbols[value]?.label ?? "BASE").join(" / ") : "Hidden" },
-              { label: "Pays", value: settled ? `${(multiplierBps / 10_000).toFixed(2)}x` : "up to 25x" }
+              { label: "Line", value: settled ? reelLine : "Hidden" },
+              { label: "Pays", value: settled ? grossMultiplier : "up to 25x" }
             ]}
             status={settled ? (won ? "win" : "loss") : isBusy ? "running" : "idle"}
           />
@@ -129,8 +136,8 @@ export function SlotsClient() {
           <ResultCallout
             variant={isBusy ? "pending" : settled ? (won ? "win" : "loss") : "idle"}
             title={isBusy ? "Reels are spinning" : won ? resultLabel : "No matching line"}
-            detail={isBusy ? "Waiting for contract settlement" : settled ? `${visibleReels.map((value) => symbols[value]?.label ?? "BASE").join(" / ")} - ${(multiplierBps / 10_000).toFixed(2)}x gross` : undefined}
-            share={settled && won ? { game: "Slots", detail: `${resultLabel} for ${(multiplierBps / 10_000).toFixed(2)}x.`, txHash: game.txHash } : undefined}
+            detail={isBusy ? "Waiting for contract settlement" : settled ? `${reelLine} - ${grossMultiplier} gross` : undefined}
+            share={settled && won ? { game: "Slots", detail: `${resultLabel} for ${grossMultiplier}.`, txHash: game.txHash } : undefined}
           />
         </div>
       </section>

@@ -6,6 +6,7 @@ import {IVRFCoordinatorV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/inter
 import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 
 abstract contract VRFConsumer is VRFConsumerBaseV2Plus {
+    /// @custom:security non-reentrant
     IVRFCoordinatorV2Plus public immutable coordinator;
     bytes32 public immutable keyHash;
     uint256 public immutable subscriptionId;
