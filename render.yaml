@@ -11,7 +11,7 @@ services:
       - key: PORT
         value: 4000
       - key: FRONTEND_URL
-        value: https://baseplaygame.vercel.app
+        value: https://baseplay.games
       - key: SUPABASE_URL
         value: https://buubouudfeyhltsqryam.supabase.co
       - key: SUPABASE_SERVICE_KEY

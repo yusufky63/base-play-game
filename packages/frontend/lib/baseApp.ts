@@ -2,7 +2,7 @@ import { env } from "@/lib/env";
 
 export const BASE_APP_APP_ID = "69f93e9942d4fe010f1c28e7";
 
-const appUrl = env.NEXT_PUBLIC_APP_URL || "https://baseplaygame.vercel.app";
+const appUrl = env.NEXT_PUBLIC_APP_URL || "https://baseplay.games";
 
 export const BASE_APP_METADATA = {
   appId: BASE_APP_APP_ID,

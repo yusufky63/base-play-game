@@ -62,7 +62,7 @@ SUPABASE_URL=https://buubouudfeyhltsqryam.supabase.co
 SUPABASE_SERVICE_KEY=<server-only service role key>
 VRF_SUB_ID_SEPOLIA=<base sepolia vrf subscription id>
 VRF_SUB_ID_MAINNET=<base mainnet vrf subscription id>
-FRONTEND_URL=https://baseplaygame.vercel.app
+FRONTEND_URL=https://baseplay.games
 ```
 
 Verify the live Supabase REST schema after migrations:

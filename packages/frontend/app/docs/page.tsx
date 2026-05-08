@@ -130,7 +130,7 @@ const faqs = [
   },
   {
     question: "How is Base App support handled?",
-    answer: "BasePlay uses standard wagmi and viem wallet flows with Base Account, injected wallet, and Coinbase Wallet connectors. Wallet transactions include the BasePlay Builder Code attribution suffix, and fallback contract status reads are batched with multicall to reduce RPC load."
+    answer: "BasePlay uses standard wagmi and viem wallet flows with Base Account, injected wallet, and Coinbase Wallet connectors. The canonical app URL is https://baseplay.games, wallet transactions include the BasePlay Builder Code attribution suffix, and fallback contract status reads are batched with multicall to reduce RPC load."
   },
   {
     question: "Why do profile tabs not show counts in the tab label?",
