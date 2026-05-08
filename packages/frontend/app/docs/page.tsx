@@ -130,7 +130,7 @@ const faqs = [
   },
   {
     question: "How is Base App support handled?",
-    answer: "BasePlay uses standard wagmi and viem wallet flows with an explicit wallet picker for injected wallets, WalletConnect, Coinbase Wallet, and Base Account. Base Account is available as a choice but is not selected automatically from the Connect button. The canonical app URL is https://baseplay.games, Base mainnet is the default chain, game actions open the wallet picker first and then request Base mainnet switching when the wallet is on an unsupported network, wallet transactions include the BasePlay Builder Code attribution suffix, fallback contract status reads are batched with multicall to reduce RPC load, and the listing copy uses Play. Compete. Win on Base."
+    answer: "BasePlay uses standard wagmi and viem wallet flows with a global explicit wallet picker for injected wallets, WalletConnect, Coinbase Wallet, and Base Account. The picker renders at app-provider level, so header, mobile menu, and game-page connect actions all open the same centered modal. Base Account is available as a choice but is not selected automatically from the Connect button. The canonical app URL is https://baseplay.games, Base mainnet is the default chain, game actions open the wallet picker first and then request Base mainnet switching when the wallet is on an unsupported network, wallet transactions include the BasePlay Builder Code attribution suffix, fallback contract status reads are batched with multicall to reduce RPC load, and the listing copy uses Play. Compete. Win on Base."
   },
   {
     question: "How is Farcaster support handled?",

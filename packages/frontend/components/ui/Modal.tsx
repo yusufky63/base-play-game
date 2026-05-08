@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 
 export function Modal({
   open,
@@ -27,7 +28,7 @@ export function Modal({
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
       <div className="w-full max-w-md rounded-lg border border-[var(--border-2)] bg-[var(--surface)]">
         <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
@@ -43,6 +44,7 @@ export function Modal({
         </div>
         <div className="p-4">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
