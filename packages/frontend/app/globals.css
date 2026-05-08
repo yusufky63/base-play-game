@@ -574,6 +574,63 @@ select {
   background: var(--accent-light);
 }
 
+.wallet-modal-options {
+  display: grid;
+  gap: 8px;
+}
+
+.wallet-modal-option {
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-ui);
+  background: var(--surface);
+  padding: 10px;
+  text-align: left;
+  transition: 150ms ease;
+}
+
+.wallet-modal-option:hover,
+.wallet-modal-option:focus-visible {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border-2));
+  background: var(--accent-light);
+  outline: none;
+}
+
+.wallet-modal-option:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.wallet-modal-option-icon {
+  display: grid;
+  height: 38px;
+  width: 38px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
+  border-radius: var(--radius-ui);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent-light) 72%, var(--surface));
+}
+
+.wallet-modal-option-title {
+  display: block;
+  color: var(--text-1);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.wallet-modal-option-detail {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-3);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
 .header-progress {
   height: 38px;
   border: 1px solid var(--border-2);

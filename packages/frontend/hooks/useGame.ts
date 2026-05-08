@@ -3,9 +3,8 @@
 import type { Abi } from "viem";
 import { formatEther, parseEther, parseEventLogs } from "viem";
 import { useEffect, useRef, useState } from "react";
-import miniAppSdk from "@farcaster/miniapp-sdk";
 import { base } from "wagmi/chains";
-import { useAccount, useConnect, usePublicClient, useSwitchChain, useWriteContract } from "wagmi";
+import { useAccount, usePublicClient, useSwitchChain, useWriteContract } from "wagmi";
 import { getContractAddress } from "@baseplay/shared/config/addresses";
 import { getNetworkByChainId } from "@baseplay/shared/config/networks";
 import { parseContractError } from "@/lib/errors";
@@ -16,7 +15,7 @@ import { useVRF } from "@/hooks/useVRF";
 import { useToast } from "@/components/ui/ToastProvider";
 import { getPreferredChainId } from "@/lib/preferredChain";
 import { BASEPLAY_BUILDER_CODE_SUFFIX } from "@/lib/builderCode";
-import { getPreferredWalletConnector } from "@/lib/walletConnectors";
+import { openWalletModal } from "@/lib/walletConnectors";
 
 export function useGame(gameId: string, contractName: string, abi: Abi | null) {
   const { address, chain } = useAccount();
@@ -25,11 +24,9 @@ export function useGame(gameId: string, contractName: string, abi: Abi | null) {
   const vrf = useVRF();
   const toast = useToast();
   const publicClient = usePublicClient();
-  const { connectAsync, connectors, isPending: isConnectPending } = useConnect();
   const { switchChainAsync, isPending: isSwitchPending } = useSwitchChain();
   const { writeContractAsync, isPending } = useWriteContract();
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
-  const [isInFarcaster, setIsInFarcaster] = useState(false);
   const activeRoundRef = useRef(0);
   const pollAbortRef = useRef<AbortController | null>(null);
 
@@ -40,54 +37,14 @@ export function useGame(gameId: string, contractName: string, abi: Abi | null) {
     }
   }, [vrf.state]);
 
-  useEffect(() => {
-    let active = true;
-    miniAppSdk
-      .isInMiniApp()
-      .then((value) => {
-        if (active) setIsInFarcaster(value);
-      })
-      .catch(() => {
-        if (active) setIsInFarcaster(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-
   async function placeBet(amountEth: string, params: `0x${string}`) {
     if (operationalStatus.status !== "live") {
       toast({ tone: "error", title: operationalStatus.title, description: operationalStatus.description });
       throw new Error(operationalStatus.title);
     }
     if (!address) {
-      const connector = getPreferredWalletConnector(connectors, isInFarcaster);
-      if (!connector) {
-        toast({ tone: "error", title: "Wallet unavailable", description: "Open BasePlay in a wallet browser or install a wallet connector." });
-        throw new Error("Wallet unavailable");
-      }
-      let connectedChainId: number | undefined;
-      try {
-        const result = await connectAsync({ connector, chainId: base.id });
-        connectedChainId = result.chainId;
-      } catch (error) {
-        toast({
-          tone: "error",
-          title: getWalletConnectErrorTitle(error),
-          description: getWalletConnectErrorDescription(error)
-        });
-        throw new Error("Wallet not connected");
-      }
-      if (connectedChainId && !getNetworkByChainId(connectedChainId)) {
-        try {
-          await switchChainAsync({ chainId: base.id });
-        } catch {
-          toast({ tone: "error", title: "Wrong network", description: "Switch your wallet to Base mainnet before placing a wager." });
-          throw new Error("Wrong network");
-        }
-      }
-      rememberPreferredChain(base.id);
-      toast({ tone: "info", title: "Wallet connected", description: "Base mainnet is ready. Press Play again to place the wager." });
+      openWalletModal();
+      toast({ tone: "info", title: "Connect wallet", description: "Choose MetaMask, WalletConnect, Coinbase, or Base Account from the wallet modal." });
       throw new Error("Wallet not connected");
     }
     const selectedChainId = getPreferredChainId();
@@ -284,7 +241,7 @@ export function useGame(gameId: string, contractName: string, abi: Abi | null) {
     vrfResult: vrf.result,
     requestId: vrf.requestId,
     txHash,
-    isTxPending: isPending || isConnectPending || isSwitchPending,
+    isTxPending: isPending || isSwitchPending,
     isConnected: Boolean(address),
     contractAddress,
     operationalStatus,
@@ -436,28 +393,4 @@ function rememberPreferredChain(chainId: number) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem("baseplay:chainId", String(chainId));
   window.dispatchEvent(new CustomEvent("baseplay:chain-change", { detail: chainId }));
-}
-
-function getWalletConnectErrorTitle(error: unknown) {
-  const message = getErrorMessage(error);
-  if (/origin|domain|unauthori[sz]ed|project/i.test(message)) return "Wallet setup blocked";
-  if (/reject|denied|cancel|closed/i.test(message)) return "Wallet connection cancelled";
-  return "Wallet connection failed";
-}
-
-function getWalletConnectErrorDescription(error: unknown) {
-  const message = getErrorMessage(error);
-  if (/origin|domain|unauthori[sz]ed|project/i.test(message)) {
-    return "Check the Reown project domain allowlist for baseplay.games and www.baseplay.games.";
-  }
-  if (/reject|denied|cancel|closed/i.test(message)) {
-    return "Choose a wallet and approve the connection before placing a wager.";
-  }
-  return message ? message.slice(0, 160) : "Try another wallet option or open BasePlay inside your wallet browser.";
-}
-
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error) return error.message;
-  if (typeof error === "string") return error;
-  return "";
 }
