@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { REFERRAL_STORAGE_KEY, normalizeReferralInput } from "@baseplay/shared/utils/referral";
+import miniAppSdk from "@farcaster/miniapp-sdk";
 import { useAccount } from "wagmi";
 import { useClaimReferral } from "@/hooks/useReferral";
 
@@ -19,6 +20,7 @@ export function ReferralAttribution() {
 
   useEffect(() => {
     if (!isConnected || !address) return;
+    let active = true;
     const ref = normalizeReferralInput(window.localStorage.getItem(REFERRAL_STORAGE_KEY));
     if (!ref) return;
 
@@ -26,16 +28,26 @@ export function ReferralAttribution() {
     const claimedKey = `${REFERRAL_STORAGE_KEY}:claimed:${address.toLowerCase()}:${ref.toLowerCase()}`;
     if (window.localStorage.getItem(promptedKey) || window.localStorage.getItem(claimedKey)) return;
 
-    window.localStorage.setItem(promptedKey, new Date().toISOString());
-    const timer = window.setTimeout(() => {
-      void claim(ref).then((result) => {
-        if (result?.status === "claimed" || result?.status === "existing") {
-          window.localStorage.setItem(claimedKey, new Date().toISOString());
-        }
-      });
-    }, 1_200);
+    let timer: number | undefined;
+    miniAppSdk
+      .isInMiniApp()
+      .then((isInMiniApp) => {
+        if (!active || isInMiniApp) return;
+        window.localStorage.setItem(promptedKey, new Date().toISOString());
+        timer = window.setTimeout(() => {
+          void claim(ref).then((result) => {
+            if (result?.status === "claimed" || result?.status === "existing") {
+              window.localStorage.setItem(claimedKey, new Date().toISOString());
+            }
+          });
+        }, 1_200);
+      })
+      .catch(() => undefined);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      active = false;
+      if (timer) window.clearTimeout(timer);
+    };
   }, [address, claim, isConnected]);
 
   return null;

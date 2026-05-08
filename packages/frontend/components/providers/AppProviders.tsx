@@ -25,7 +25,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeProvider attribute="data-theme" defaultTheme="light" enableSystem={false}>
-      <WagmiProvider config={wagmiConfig}>
+      <WagmiProvider config={wagmiConfig} reconnectOnMount={false}>
         <QueryClientProvider client={queryClient}>
           <ToastProvider>
             <FarcasterMiniAppReady />
