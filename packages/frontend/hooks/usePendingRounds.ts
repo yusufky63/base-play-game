@@ -12,6 +12,7 @@ import { fetchBackendJson } from "@/lib/backend";
 import { defaultChainId } from "@/lib/env";
 import { parseContractError } from "@/lib/errors";
 import { useToast } from "@/components/ui/ToastProvider";
+import { BASEPLAY_BUILDER_CODE_SUFFIX } from "@/lib/builderCode";
 
 const pendingRoundAbi = parseAbi([
   "function activeRound(address player) view returns (uint256)",
@@ -23,10 +24,12 @@ const pendingRoundAbi = parseAbi([
 const clientByChainId = {
   8453: createPublicClient({
     chain: base,
+    batch: { multicall: true },
     transport: fallback(BASE_MAINNET_FRONTEND_RPC_URLS.map((url) => http(url, { timeout: 10_000 })))
   }),
   84532: createPublicClient({
     chain: baseSepolia,
+    batch: { multicall: true },
     transport: fallback(BASE_SEPOLIA_FRONTEND_RPC_URLS.map((url) => http(url, { timeout: 10_000 })))
   })
 } as const;
@@ -99,7 +102,8 @@ export function useClaimPendingRound() {
       const hash = await writeContractAsync({
         address: round.contractAddress,
         abi: pendingRoundAbi,
-        functionName: "claimRefund"
+        functionName: "claimRefund",
+        dataSuffix: BASEPLAY_BUILDER_CODE_SUFFIX
       });
       toast({ tone: "success", title: "Refund submitted", description: hash });
       return hash;
@@ -136,37 +140,56 @@ async function fetchPendingRounds(player: `0x${string}`, scanAll: boolean): Prom
     const networkKey: NetworkKey = chainId === 8453 ? "baseMainnet" : "baseSepolia";
     const network = getNetworkByChainId(chainId);
     const latestBlock = await client.getBlockNumber();
+    const deployedGames = GAMES_REGISTRY.filter((entry) => entry.active && entry.chains.includes(networkKey))
+      .map((game) => ({
+        game,
+        contractAddress: CONTRACT_ADDRESSES[chainId]?.[game.contractName]
+      }))
+      .filter((entry): entry is { game: (typeof GAMES_REGISTRY)[number]; contractAddress: `0x${string}` } => Boolean(entry.contractAddress));
 
-    for (const game of GAMES_REGISTRY.filter((entry) => entry.active && entry.chains.includes(networkKey))) {
-      const contractAddress = CONTRACT_ADDRESSES[chainId]?.[game.contractName];
-      if (!contractAddress) continue;
-
-      const activeRound = await client
-        .readContract({
+    const activeRoundReads = await client
+      .multicall({
+        allowFailure: true,
+        contracts: deployedGames.map(({ contractAddress }) => ({
           address: contractAddress,
           abi: pendingRoundAbi,
           functionName: "activeRound",
           args: [player]
-        })
-        .catch(() => 0n);
+        }))
+      })
+      .catch(() => []);
+    const activeGames = deployedGames
+      .map((entry, index) => ({
+        ...entry,
+        activeRound: activeRoundReads[index]?.status === "success" ? (activeRoundReads[index].result as bigint) : 0n
+      }))
+      .filter((entry) => entry.activeRound > 0n);
 
-      if (activeRound === 0n) continue;
-
-      const [round, timeoutBlocks] = await Promise.all([
-        client.readContract({
-          address: contractAddress,
-          abi: pendingRoundAbi,
-          functionName: "rounds",
-          args: [activeRound]
-        }),
-        client
-          .readContract({
+    const detailReads = await client
+      .multicall({
+        allowFailure: true,
+        contracts: activeGames.flatMap(({ contractAddress, activeRound }) => [
+          {
+            address: contractAddress,
+            abi: pendingRoundAbi,
+            functionName: "rounds",
+            args: [activeRound]
+          },
+          {
             address: contractAddress,
             abi: pendingRoundAbi,
             functionName: "VRF_TIMEOUT_BLOCKS"
-          })
-          .catch(() => 60n)
-      ]);
+          }
+        ])
+      })
+      .catch(() => []);
+
+    for (const [index, { game, contractAddress }] of activeGames.entries()) {
+      const roundRead = detailReads[index * 2];
+      const timeoutRead = detailReads[index * 2 + 1];
+      if (roundRead?.status !== "success") continue;
+      const round = roundRead.result as unknown as readonly [`0x${string}`, bigint, bigint, bigint, `0x${string}`, boolean, bigint];
+      const timeoutBlocks = timeoutRead?.status === "success" ? (timeoutRead.result as bigint) : 60n;
 
       const [roundPlayer, betAmount, reservedPayout, requestId, , settled, blockNumber] = round;
       if (settled || roundPlayer.toLowerCase() !== player.toLowerCase()) continue;

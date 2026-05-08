@@ -130,19 +130,34 @@ async function loadOperationalStatusDirect(chainId: SupportedChainId, contractNa
 
   const client = createPublicClient({
     chain: networkConfig.viemChain,
+    batch: { multicall: true },
     transport: fallback(networkConfig.rpcUrls.map((url) => http(url, { timeout: 10_000 })))
   });
 
-  const [gamePaused, vaultPaused, minBetWei, maxBetWei, houseEdgeBps, availableLiquidityWei, totalReservedPayoutWei, vaultBalanceWei] = await Promise.all([
-    client.readContract({ address: gameAddress, abi: gameStatusAbi, functionName: "gamePaused" }).catch(() => null),
-    client.readContract({ address: vaultAddress, abi: vaultStatusAbi, functionName: "paused" }).catch(() => null),
-    client.readContract({ address: vaultAddress, abi: vaultStatusAbi, functionName: "minBet" }).catch(() => null),
-    client.readContract({ address: vaultAddress, abi: vaultStatusAbi, functionName: "maxBet" }).catch(() => null),
-    client.readContract({ address: vaultAddress, abi: vaultStatusAbi, functionName: "houseEdgeBps" }).catch(() => null),
-    client.readContract({ address: vaultAddress, abi: vaultStatusAbi, functionName: "availableLiquidity" }).catch(() => null),
-    client.readContract({ address: vaultAddress, abi: vaultStatusAbi, functionName: "totalReservedPayout" }).catch(() => null),
-    client.readContract({ address: vaultAddress, abi: vaultStatusAbi, functionName: "vaultBalance" }).catch(() => null)
-  ]);
+  const statusReads = await client
+    .multicall({
+      allowFailure: true,
+      contracts: [
+        { address: gameAddress, abi: gameStatusAbi, functionName: "gamePaused" },
+        { address: vaultAddress, abi: vaultStatusAbi, functionName: "paused" },
+        { address: vaultAddress, abi: vaultStatusAbi, functionName: "minBet" },
+        { address: vaultAddress, abi: vaultStatusAbi, functionName: "maxBet" },
+        { address: vaultAddress, abi: vaultStatusAbi, functionName: "houseEdgeBps" },
+        { address: vaultAddress, abi: vaultStatusAbi, functionName: "availableLiquidity" },
+        { address: vaultAddress, abi: vaultStatusAbi, functionName: "totalReservedPayout" },
+        { address: vaultAddress, abi: vaultStatusAbi, functionName: "vaultBalance" }
+      ]
+    })
+    .catch(() => null);
+
+  const gamePaused = readMulticallResult<boolean>(statusReads, 0);
+  const vaultPaused = readMulticallResult<boolean>(statusReads, 1);
+  const minBetWei = readMulticallResult<bigint>(statusReads, 2);
+  const maxBetWei = readMulticallResult<bigint>(statusReads, 3);
+  const houseEdgeBps = readMulticallResult<bigint>(statusReads, 4);
+  const availableLiquidityWei = readMulticallResult<bigint>(statusReads, 5);
+  const totalReservedPayoutWei = readMulticallResult<bigint>(statusReads, 6);
+  const vaultBalanceWei = readMulticallResult<bigint>(statusReads, 7);
 
   const status: OperationalStatus =
     gamePaused === null || vaultPaused === null || availableLiquidityWei === null
@@ -183,6 +198,11 @@ function parseOptionalBigInt(value: string | null) {
   } catch {
     return null;
   }
+}
+
+function readMulticallResult<T>(results: readonly { status: "success" | "failure"; result?: unknown }[] | null, index: number): T | null {
+  const entry = results?.[index];
+  return entry?.status === "success" ? (entry.result as T) : null;
 }
 
 function buildFallbackStatus(chainId: number, status: OperationalStatus): OperationalState {

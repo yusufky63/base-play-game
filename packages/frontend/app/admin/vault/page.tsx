@@ -15,6 +15,7 @@ import { useEthUsdPrice } from "@/hooks/useEthUsdPrice";
 import { useToast } from "@/components/ui/ToastProvider";
 import { betPresetAmounts } from "@/lib/env";
 import { getDefaultNetworkConfig } from "@/lib/networkConfig";
+import { BASEPLAY_BUILDER_CODE_SUFFIX } from "@/lib/builderCode";
 
 const vaultAbi = [
   { type: "function", name: "vaultBalance", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
@@ -89,22 +90,36 @@ export default function AdminVaultPage() {
 
     const client = createPublicClient({
       chain: defaultNetwork.viemChain,
+      batch: { multicall: true },
       transport: fallback(defaultNetwork.rpcUrls.map((url) => http(url, { timeout: 10_000 })))
     });
 
     async function load() {
-      const [balance, minBet, maxBet, houseEdgeBps, paused] = await Promise.all([
-        client.readContract({ address: vaultAddress, abi: vaultAbi, functionName: "vaultBalance" }),
-        client.readContract({ address: vaultAddress, abi: vaultAbi, functionName: "minBet" }),
-        client.readContract({ address: vaultAddress, abi: vaultAbi, functionName: "maxBet" }),
-        client.readContract({ address: vaultAddress, abi: vaultAbi, functionName: "houseEdgeBps" }),
-        client.readContract({ address: vaultAddress, abi: vaultAbi, functionName: "paused" })
-      ]);
-      const [availableLiquidity, reserved, withdrawSupported] = await Promise.all([
-        client.readContract({ address: vaultAddress, abi: vaultAbi, functionName: "availableLiquidity" }).catch(() => null),
-        client.readContract({ address: vaultAddress, abi: vaultAbi, functionName: "totalReservedPayout" }).catch(() => null),
+      const [vaultReads, withdrawSupported] = await Promise.all([
+        client.multicall({
+          allowFailure: true,
+          contracts: [
+            { address: vaultAddress, abi: vaultAbi, functionName: "vaultBalance" },
+            { address: vaultAddress, abi: vaultAbi, functionName: "minBet" },
+            { address: vaultAddress, abi: vaultAbi, functionName: "maxBet" },
+            { address: vaultAddress, abi: vaultAbi, functionName: "houseEdgeBps" },
+            { address: vaultAddress, abi: vaultAbi, functionName: "paused" },
+            { address: vaultAddress, abi: vaultAbi, functionName: "availableLiquidity" },
+            { address: vaultAddress, abi: vaultAbi, functionName: "totalReservedPayout" }
+          ]
+        }),
         probeWithdrawSupport(client, vaultAddress)
       ]);
+      const balance = readMulticallResult<bigint>(vaultReads, 0);
+      const minBet = readMulticallResult<bigint>(vaultReads, 1);
+      const maxBet = readMulticallResult<bigint>(vaultReads, 2);
+      const houseEdgeBps = readMulticallResult<bigint>(vaultReads, 3);
+      const paused = readMulticallResult<boolean>(vaultReads, 4);
+      const availableLiquidity = readMulticallResult<bigint>(vaultReads, 5);
+      const reserved = readMulticallResult<bigint>(vaultReads, 6);
+      if (balance === null || minBet === null || maxBet === null || houseEdgeBps === null || paused === null) {
+        throw new Error("Unable to read deployed vault state.");
+      }
       const knownV2Vault = v2VaultAddress?.toLowerCase() === vaultAddress.toLowerCase();
 
       setState({
@@ -146,7 +161,8 @@ export default function AdminVaultPage() {
         address: vaultAddress,
         abi: vaultAbi,
         functionName,
-        args: args as never
+        args: args as never,
+        dataSuffix: BASEPLAY_BUILDER_CODE_SUFFIX
       });
       toast({ tone: "success", title: "Vault transaction sent", description: hash });
       await publicClient?.waitForTransactionReceipt({ hash });
@@ -551,4 +567,9 @@ function extractRevertData(error: unknown): string | undefined {
   const third = second?.cause as { data?: unknown } | undefined;
   if (typeof third?.data === "string") return third.data;
   return undefined;
+}
+
+function readMulticallResult<T>(results: readonly { status: "success" | "failure"; result?: unknown }[], index: number): T | null {
+  const entry = results[index];
+  return entry?.status === "success" ? (entry.result as T) : null;
 }

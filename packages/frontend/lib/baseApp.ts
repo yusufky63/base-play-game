@@ -21,8 +21,10 @@ export function baseProfileUrl(address: string) {
 
 export function baseAppChecklist() {
   return [
-    "Wallet connection and contract writes use wagmi/viem with injected wallet and Coinbase Wallet connectors, with wallet address as the canonical identity.",
+    "Wallet connection and contract writes use wagmi/viem with Base Account, injected wallet, and Coinbase Wallet connectors, with wallet address as the canonical identity.",
     "The Base App ID meta tag is present in the root Next.js metadata.",
+    "Wallet transactions include the registered BasePlay Builder Code attribution suffix.",
+    "Shared contract status and pending-round fallback reads use multicall batching to reduce RPC pressure.",
     "Connected wallet address is the user identity in Base App.",
     "Basename display is resolved as a display layer and never replaces wallet-address identity.",
     "No Farcaster-only SDK method is required for core auth, wallet, sharing, or navigation.",

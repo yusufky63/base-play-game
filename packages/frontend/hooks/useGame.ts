@@ -13,6 +13,7 @@ import { useOperationalStatus } from "@/hooks/useOperationalStatus";
 import { useVRF } from "@/hooks/useVRF";
 import { useToast } from "@/components/ui/ToastProvider";
 import { getPreferredChainId } from "@/lib/preferredChain";
+import { BASEPLAY_BUILDER_CODE_SUFFIX } from "@/lib/builderCode";
 
 export function useGame(gameId: string, contractName: string, abi: Abi | null) {
   const { address, chain } = useAccount();
@@ -113,7 +114,8 @@ export function useGame(gameId: string, contractName: string, abi: Abi | null) {
         abi,
         functionName: "placeBet",
         args: [params],
-        value: wagerValue
+        value: wagerValue,
+        dataSuffix: BASEPLAY_BUILDER_CODE_SUFFIX
       });
       setTxHash(hash);
       const receipt = await publicClient?.waitForTransactionReceipt({ hash });
@@ -194,7 +196,8 @@ export function useGame(gameId: string, contractName: string, abi: Abi | null) {
       const hash = await writeContractAsync({
         address: contractAddress,
         abi,
-        functionName: "claimRefund"
+        functionName: "claimRefund",
+        dataSuffix: BASEPLAY_BUILDER_CODE_SUFFIX
       });
       toast({
         tone: "success",

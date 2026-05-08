@@ -8,6 +8,7 @@ import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { useToast } from "@/components/ui/ToastProvider";
 import { getDefaultNetworkConfig } from "@/lib/networkConfig";
+import { BASEPLAY_BUILDER_CODE_SUFFIX } from "@/lib/builderCode";
 
 const defaultNetwork = getDefaultNetworkConfig();
 const deployedGameNames = new Set(Object.keys(CONTRACT_ADDRESSES[defaultNetwork.chainId] ?? {}));
@@ -38,18 +39,31 @@ export default function AdminGamesPage() {
     let mounted = true;
     const client = createPublicClient({
       chain: defaultNetwork.viemChain,
+      batch: { multicall: true },
       transport: fallback(defaultNetwork.rpcUrls.map((url) => http(url, { timeout: 10_000 })))
     });
 
     async function loadPausedStates() {
-      const entries = await Promise.all(
-        GAMES_REGISTRY.map(async (game) => {
-          const address = CONTRACT_ADDRESSES[defaultNetwork.chainId]?.[game.contractName];
-          if (!address) return [game.id, false] as const;
-          const paused = await client.readContract({ address, abi: gameAdminAbi, functionName: "gamePaused" }).catch(() => false);
-          return [game.id, Boolean(paused)] as const;
+      const deployedGames = GAMES_REGISTRY.map((game, index) => ({
+        game,
+        index,
+        address: CONTRACT_ADDRESSES[defaultNetwork.chainId]?.[game.contractName]
+      })).filter((entry): entry is { game: (typeof GAMES_REGISTRY)[number]; index: number; address: `0x${string}` } => Boolean(entry.address));
+      const reads = await client
+        .multicall({
+          allowFailure: true,
+          contracts: deployedGames.map((entry) => ({
+            address: entry.address,
+            abi: gameAdminAbi,
+            functionName: "gamePaused"
+          }))
         })
-      );
+        .catch(() => []);
+      const entries: Array<readonly [string, boolean]> = GAMES_REGISTRY.map((game) => [game.id, false] as const);
+      for (const [readIndex, entry] of deployedGames.entries()) {
+        const read = reads[readIndex];
+        entries[entry.index] = [entry.game.id, read?.status === "success" ? Boolean(read.result) : false] as const;
+      }
 
       if (mounted) setPausedByGame(Object.fromEntries(entries));
     }
@@ -70,7 +84,8 @@ export default function AdminGamesPage() {
         address,
         abi: gameAdminAbi,
         functionName: "setGamePaused",
-        args: [paused]
+        args: [paused],
+        dataSuffix: BASEPLAY_BUILDER_CODE_SUFFIX
       });
       setPausedByGame((current) => ({ ...current, [gameId]: paused }));
       toast({ tone: "success", title: paused ? "Game paused" : "Game unpaused", description: hash });
