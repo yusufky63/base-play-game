@@ -8,18 +8,19 @@ Mini onchain games on Base L2. Provably fair, instant payouts. $0.50-$3 bets.
 
 | # | Document | Contents |
 |---|----------|----------|
-| 01 | [Architecture](./01-architecture.md) | Stack, folder structure, network config, game registry |
-| 02 | [Smart Contracts](./02-contracts.md) | Solidity contracts and comments |
-| 03 | [Deploy Guide](./03-deploy.md) | Remix deploy, VRF setup, Basescan verify |
-| 04 | [Frontend](./04-frontend.md) | Next.js, Wagmi, Basename, chain switch, components |
-| 05 | [Backend](./05-backend.md) | Node.js, event listener, Crash engine, WebSocket |
-| 06 | [Database](./06-database.md) | Supabase schema, migrations, RLS, Realtime |
-| 07 | [UI & Design](./07-ui-design.md) | Design tokens, light/dark, icons, animations |
-| 08 | [Security](./08-security.md) | Attack vectors, audit checklist, hardening |
-| 09 | [Tests](./09-tests.md) | Hardhat test suite, mock contracts, coverage |
-| 10 | [Integrations](./10-integrations.md) | Basename, Farcaster, Mini-app, Base Account |
-| 11 | [Roadmap](./11-roadmap.md) | Phase checklist, pre-deploy checklist |
-| 12 | [Current Status](./12-status.md) | Implemented scope, open gaps, deploy status |
+| 01 | [Architecture](./docs/01-architecture.md) | Stack, folder structure, network config, game registry |
+| 02 | [Smart Contracts](./docs/02-contracts.md) | Solidity contracts and comments |
+| 03 | [Deploy Guide](./docs/03-deploy.md) | Remix deploy, VRF setup, Basescan verify |
+| 04 | [Frontend](./docs/04-frontend.md) | Next.js, Wagmi, Basename, chain switch, components |
+| 05 | [Backend](./docs/05-backend.md) | Node.js, event listener, Crash engine, WebSocket |
+| 06 | [Database](./docs/06-database.md) | Supabase schema, migrations, RLS, Realtime |
+| 07 | [UI & Design](./docs/07-ui-design.md) | Design tokens, light/dark, icons, animations |
+| 08 | [Security](./docs/08-security.md) | Attack vectors, audit checklist, hardening |
+| 09 | [Tests](./docs/09-tests.md) | Hardhat test suite, mock contracts, coverage |
+| 10 | [Integrations](./docs/10-integrations.md) | Basename, Farcaster, Mini-app, Base Account |
+| 11 | [Roadmap](./docs/11-roadmap.md) | Phase checklist, pre-deploy checklist |
+| 12 | [Current Status](./docs/12-status.md) | Implemented scope, open gaps, deploy status |
+| 13 | [AI Icon Prompts](./docs/13-ai-icon-prompts.md) | Brand and icon prompt references |
 
 ## Quick Start
 
@@ -85,9 +86,9 @@ npm run dev:frontend
 |---|---|
 | Chain | Base Sepolia, then Base Mainnet |
 | Currency | ETH only |
-| Min bet | 0.0002 ETH |
-| Max bet | 0.001 ETH |
-| House edge | 3% |
+| Min bet | 0.000055 ETH |
+| Max bet | 0.0005 ETH |
+| House edge | 5% |
 | Randomness | Chainlink VRF v2.5 |
 | Database | Supabase PostgreSQL + Realtime |
 | Backend | Node.js + Express + Socket.io |
