@@ -3,6 +3,7 @@ import { base, baseSepolia } from "wagmi/chains";
 import type { NetworkKey } from "@baseplay/shared/config/networks";
 
 const cleanEnv = (value: string | undefined) => value?.trim();
+const DEFAULT_WALLETCONNECT_PROJECT_ID = "3ddd8bf9659a483a93bc4a63846f729c";
 
 const publicEnvSchema = z.object({
   NEXT_PUBLIC_DEFAULT_CHAIN: z.enum(["baseSepolia", "baseMainnet"]).default("baseMainnet"),
@@ -29,7 +30,7 @@ export const env = publicEnvSchema.parse({
 });
 
 export const walletConnectProjectId =
-  env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || env.NEXT_PUBLIC_WALLETCONNECT_ID;
+  env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || env.NEXT_PUBLIC_WALLETCONNECT_ID || DEFAULT_WALLETCONNECT_PROJECT_ID;
 
 export const frontendEnvStatus = {
   walletConnectReady: Boolean(walletConnectProjectId),

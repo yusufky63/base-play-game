@@ -1,6 +1,8 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import { useAccount } from "wagmi";
+import { getNetworkByChainId } from "@baseplay/shared/config/networks";
 import { useEthUsdPrice } from "@/hooks/useEthUsdPrice";
 import { formatUsd } from "@/lib/formatters";
 import { type VRFState, VRF_MESSAGES } from "@/hooks/useVRF";
@@ -21,7 +23,10 @@ interface BetPanelProps {
 
 export function BetPanel({ amount, disabled = false, disabledReason, loading = false, vrfState = "idle", actionLabel = "Play", hideAction = false, onAmountChange, onPlay, onRefund }: BetPanelProps) {
   const ethUsd = useEthUsdPrice();
+  const { address, chain } = useAccount();
   const isBusy = loading || vrfState === "pending_tx" || vrfState === "pending_vrf";
+  const isUnsupportedChain = Boolean(address) && (!chain?.id || !getNetworkByChainId(chain.id));
+  const walletActionLabel = !address ? "Connect wallet" : isUnsupportedChain ? "Switch to Base" : actionLabel;
 
   return (
     <aside className="panel bet-panel p-4">
@@ -50,7 +55,7 @@ export function BetPanel({ amount, disabled = false, disabledReason, loading = f
           className="primary-action mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-md px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-45"
         >
           {isBusy && <Loader2 size={16} className="animate-spin" />}
-          {isBusy ? VRF_MESSAGES[vrfState] : disabled && disabledReason ? disabledReason : actionLabel}
+          {isBusy ? VRF_MESSAGES[vrfState] : disabled && disabledReason ? disabledReason : walletActionLabel}
         </button>
       )}
 

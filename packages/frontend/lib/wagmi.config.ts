@@ -2,9 +2,10 @@ import { fallback, http } from "viem";
 import { createConfig } from "wagmi";
 import { base, baseSepolia } from "wagmi/chains";
 import { farcasterMiniApp } from "@farcaster/miniapp-wagmi-connector";
-import { baseAccount, coinbaseWallet, injected } from "wagmi/connectors";
+import { baseAccount, coinbaseWallet, injected, walletConnect } from "wagmi/connectors";
 import { BASE_MAINNET_FRONTEND_RPC_URLS, BASE_SEPOLIA_FRONTEND_RPC_URLS } from "@baseplay/shared/config/networks";
 import { BASEPLAY_BUILDER_CODE_SUFFIX } from "@/lib/builderCode";
+import { walletConnectProjectId } from "@/lib/env";
 
 const baseSepoliaTransports = BASE_SEPOLIA_FRONTEND_RPC_URLS.map((url) => http(url, { timeout: 8_000, retryCount: 1, retryDelay: 250 }));
 
@@ -20,7 +21,18 @@ export const wagmiConfig = createConfig({
     baseAccount({ appName: "BasePlay", preference: { options: "all" } }),
     injected({ target: "metaMask" }),
     injected(),
-    coinbaseWallet({ appName: "BasePlay" })
+    coinbaseWallet({ appName: "BasePlay" }),
+    walletConnect({
+      projectId: walletConnectProjectId,
+      showQrModal: true,
+      metadata: {
+        name: "BasePlay",
+        description:
+          "Provably fair mini games on Base with on-chain settlement, Chainlink VRF randomness, instant payouts, XP, quests, referrals, and weekly plus all-time leaderboards.",
+        url: "https://baseplay.games",
+        icons: ["https://baseplay.games/brand/baseplay-mark-transparent.png"]
+      }
+    })
   ],
   batch: {
     multicall: {
