@@ -134,7 +134,7 @@ const faqs = [
   },
   {
     question: "How is Farcaster support handled?",
-    answer: "BasePlay publishes Farcaster Mini App discovery metadata at /.well-known/farcaster.json and emits feed embed metadata for launch cards. Core wallet, game, and Base App flows remain standard browser wagmi/viem flows."
+    answer: "BasePlay publishes Farcaster Mini App discovery metadata at /.well-known/farcaster.json and emits feed embed metadata with a branded 3:2 launch image. Core wallet, game, and Base App flows remain standard browser wagmi/viem flows."
   },
   {
     question: "Why do profile tabs not show counts in the tab label?",
