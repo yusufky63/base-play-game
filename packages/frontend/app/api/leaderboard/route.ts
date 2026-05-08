@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import type { Database } from "@baseplay/shared/types/supabase.types";
-import { env } from "@/lib/env";
 
 type Leader = Database["public"]["Views"]["leaderboard_weekly_ranked"]["Row"];
 type SortMode = "xp" | "volume";
@@ -11,53 +10,82 @@ const CACHE_TTL_SECONDS = 30 * 60;
 const CACHE_CONTROL = `public, s-maxage=${CACHE_TTL_SECONDS}, stale-while-revalidate=${3 * 60 * 60}`;
 
 export async function GET(request: Request) {
-  const url = new URL(request.url);
-  const sort = normalizeSort(url.searchParams.get("sort"));
-  const page = normalizeInteger(url.searchParams.get("page"), 0, 0, 200);
-  const pageSize = normalizeInteger(url.searchParams.get("pageSize"), DEFAULT_PAGE_SIZE, 1, MAX_PAGE_SIZE);
-  const weekStart = url.searchParams.get("weekStart") || getWeekStart();
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  try {
+    const url = new URL(request.url);
+    const sort = normalizeSort(url.searchParams.get("sort"));
+    const page = normalizeInteger(url.searchParams.get("page"), 0, 0, 200);
+    const pageSize = normalizeInteger(url.searchParams.get("pageSize"), DEFAULT_PAGE_SIZE, 1, MAX_PAGE_SIZE);
+    const weekStart = url.searchParams.get("weekStart") || getWeekStart();
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const apiKey = process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !anonKey) {
-    return NextResponse.json(
-      { leaders: [], hasMore: false, source: "unconfigured", cachedAt: new Date().toISOString(), cacheTtlSeconds: CACHE_TTL_SECONDS },
-      { headers: { "Cache-Control": CACHE_CONTROL } }
-    );
+    if (!supabaseUrl || !apiKey) {
+      return leaderboardResponse([], false, "unconfigured");
+    }
+
+    const from = page * pageSize;
+    const headers = {
+      apikey: apiKey,
+      authorization: `Bearer ${apiKey}`
+    };
+    const baseUrl = supabaseUrl.replace(/\/$/, "");
+    const rows = await fetchLeaderboardRows({ baseUrl, headers, sort, pageSize, offset: from, weekStart });
+
+    if (rows.length > 0 || url.searchParams.has("weekStart")) {
+      return leaderboardResponse(rows, rows.length === pageSize, "supabase");
+    }
+
+    const latestRows = await fetchLeaderboardRows({ baseUrl, headers, sort, pageSize, offset: from });
+    return leaderboardResponse(latestRows, latestRows.length === pageSize, "supabase");
+  } catch {
+    return leaderboardResponse([], false, "supabase");
   }
+}
 
-  const from = page * pageSize;
-  const to = from + pageSize - 1;
+async function fetchLeaderboardRows({
+  baseUrl,
+  headers,
+  sort,
+  pageSize,
+  offset,
+  weekStart
+}: {
+  baseUrl: string;
+  headers: Record<string, string>;
+  sort: SortMode;
+  pageSize: number;
+  offset: number;
+  weekStart?: string;
+}) {
   const orderColumn = sort === "xp" ? "xp_rank" : "total_wagered";
   const params = new URLSearchParams({
     select: "*",
-    week_start: `eq.${weekStart}`,
     order: `${orderColumn}.${sort === "xp" ? "asc" : "desc"}`,
-    offset: String(from),
+    offset: String(offset),
     limit: String(pageSize)
   });
 
-  const response = await fetch(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/leaderboard_weekly_ranked?${params.toString()}`, {
-    headers: {
-      apikey: anonKey,
-      authorization: `Bearer ${anonKey}`
-    },
+  if (weekStart) {
+    params.set("week_start", `eq.${weekStart}`);
+  } else {
+    params.set("order", `week_start.desc,${orderColumn}.${sort === "xp" ? "asc" : "desc"}`);
+  }
+
+  const response = await fetch(`${baseUrl}/rest/v1/leaderboard_weekly_ranked?${params.toString()}`, {
+    headers,
     next: { revalidate: CACHE_TTL_SECONDS }
   });
 
-  if (!response.ok) {
-    return NextResponse.json(
-      { leaders: [], hasMore: false, source: "supabase", cachedAt: new Date().toISOString(), cacheTtlSeconds: CACHE_TTL_SECONDS },
-      { status: 200, headers: { "Cache-Control": CACHE_CONTROL } }
-    );
-  }
+  if (!response.ok) return [];
+  return (await response.json()) as Leader[];
+}
 
-  const rows = (await response.json()) as Leader[];
+function leaderboardResponse(leaders: Leader[], hasMore: boolean, source: "supabase" | "unconfigured") {
   return NextResponse.json(
     {
-      leaders: rows,
-      hasMore: rows.length === pageSize,
-      source: "supabase",
+      leaders,
+      hasMore,
+      source,
       cachedAt: new Date().toISOString(),
       cacheTtlSeconds: CACHE_TTL_SECONDS
     },

@@ -138,7 +138,7 @@ const faqs = [
   },
   {
     question: "Why does the leaderboard not update every second?",
-    answer: "Leaderboard data is not used to settle games, so it is served through a shared 30 minute cache. A player opening it later can reuse the same cached ranking instead of making another database query."
+    answer: "Leaderboard data is not used to settle games, so it is served through a shared 30 minute cache. A player opening it later can reuse the same cached ranking instead of making another database query, and the API falls back to the latest indexed week if the current week has no rows yet."
   },
   {
     question: "Why can a round be pending?",
