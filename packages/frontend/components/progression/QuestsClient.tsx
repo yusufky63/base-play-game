@@ -39,7 +39,7 @@ export function QuestsClient() {
   const address = account.address?.toLowerCase() ?? null;
   const definitions = useQuestDefinitions();
   const badgeDefinitions = useBadgeDefinitions();
-  const profile = usePlayerProfile(address);
+  const profile = usePlayerProfile(address, { includeQuests: true, includeBadges: true });
   const [view, setView] = useState<QuestView>("daily");
   const [board, setBoard] = useState<QuestBoard>("quests");
   const quests = useMemo(
@@ -277,7 +277,8 @@ function useBadgeDefinitions() {
       }
       return data?.length ? (data as BadgeDefinition[]) : DEFAULT_BADGE_DEFINITIONS;
     },
-    staleTime: 5 * 60_000,
-    gcTime: 15 * 60_000
+    staleTime: 30 * 60_000,
+    gcTime: 3 * 60 * 60_000,
+    refetchOnWindowFocus: false
   });
 }

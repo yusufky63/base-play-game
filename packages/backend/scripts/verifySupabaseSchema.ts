@@ -11,19 +11,23 @@ const requiredPublicObjects = [
   "game_stats",
   "player_game_stats",
   "leaderboard_weekly_ranked",
-  "referral_codes",
-  "player_referrals",
-  "referral_rewards",
   "quest_definitions",
   "player_quest_progress",
   "badge_definitions",
   "player_badges",
   "player_quest_summary",
-  "player_badge_summary",
-  "player_referral_summary"
+  "player_badge_summary"
 ];
 
-const requiredServiceObjects = [...requiredPublicObjects, "indexer_state"];
+const requiredPrivateServiceObjects = [
+  "referral_codes",
+  "player_referrals",
+  "referral_rewards",
+  "player_referral_summary",
+  "indexer_state"
+];
+
+const requiredServiceObjects = [...requiredPublicObjects, ...requiredPrivateServiceObjects];
 
 function loadDotEnv(path: string): EnvMap {
   if (!existsSync(path)) return {};
@@ -97,11 +101,13 @@ async function main() {
   }
 
   const publicResults = anonKey ? await Promise.all(requiredPublicObjects.map((name) => checkObject(name, anonKey))) : [];
+  const privatePublicResults = anonKey ? await Promise.all(requiredPrivateServiceObjects.map((name) => checkObject(name, anonKey))) : [];
   const serviceResults = serviceKey
     ? await Promise.all(requiredServiceObjects.map((name) => checkObject(name, serviceKey)))
     : [];
 
   const missingPublic = publicResults.filter((result) => !result.ok);
+  const exposedPrivate = privatePublicResults.filter((result) => result.ok);
   const missingService = serviceResults.filter((result) => !result.ok);
 
   console.log("\nPublic REST objects");
@@ -109,18 +115,23 @@ async function main() {
     console.log(`${result.ok ? "OK" : "MISSING"} ${result.name} (${result.status}) ${result.message}`);
   }
 
+  console.log("\nPrivate REST objects with anon key");
+  for (const result of privatePublicResults) {
+    console.log(`${result.ok ? "EXPOSED" : "PRIVATE"} ${result.name} (${result.status}) ${result.message}`);
+  }
+
   console.log("\nService-role REST objects");
   for (const result of serviceResults) {
     console.log(`${result.ok ? "OK" : "MISSING"} ${result.name} (${result.status}) ${result.message}`);
   }
 
-  if (missingPublic.length > 0 || missingService.length > 0) {
+  if (missingPublic.length > 0 || exposedPrivate.length > 0 || missingService.length > 0) {
     console.log("\nSchema repair needed");
-    console.log("Apply backend Supabase migrations through 011 to the linked project.");
+    console.log("Apply backend Supabase migrations through 014 to the linked project.");
     console.log("CLI option once SUPABASE_ACCESS_TOKEN is available:");
     console.log("  npx supabase link --project-ref buubouudfeyhltsqryam --workdir packages/backend/supabase");
     console.log("  npx supabase db push --workdir packages/backend/supabase");
-    console.log("Or run the SQL files in packages/backend/supabase/migrations in numeric order through 011_referrals_quests_badges.sql.");
+    console.log("Or run the SQL files in packages/backend/supabase/migrations in numeric order through 014_private_referral_tables.sql.");
     process.exitCode = 1;
   }
 }

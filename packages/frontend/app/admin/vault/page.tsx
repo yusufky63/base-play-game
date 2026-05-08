@@ -56,7 +56,7 @@ export default function AdminVaultPage() {
     maxBet: "",
     maxBetEth: 0,
     houseEdge: "",
-    houseEdgeBps: 300,
+    houseEdgeBps: 500,
     availableLiquidity: "",
     availableLiquidityEth: 0,
     reserved: "",
@@ -68,7 +68,7 @@ export default function AdminVaultPage() {
   const [controls, setControls] = useState({
     minBetEth: "0.000055",
     maxBetEth: "0.0005",
-    houseEdgePct: "3"
+    houseEdgePct: "5"
   });
   const [fundAmountEth, setFundAmountEth] = useState("0.01");
   const [withdrawAmountEth, setWithdrawAmountEth] = useState("0.001");

@@ -36,6 +36,26 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["game_rounds"]["Row"]>;
         Relationships: [];
       };
+      round_events: {
+        Row: {
+          id: string;
+          vrf_request_id: string;
+          event_name: string;
+          tx_hash: string | null;
+          block_number: number | null;
+          log_index: number;
+          player: string | null;
+          game_id: string;
+          chain_id: number;
+          contract_address: string;
+          args: Json;
+          observed_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["round_events"]["Row"]> &
+          Pick<Database["public"]["Tables"]["round_events"]["Row"], "vrf_request_id" | "event_name" | "game_id" | "chain_id" | "contract_address">;
+        Update: Partial<Database["public"]["Tables"]["round_events"]["Row"]>;
+        Relationships: [];
+      };
       leaderboard_weekly: {
         Row: {
           id: string;

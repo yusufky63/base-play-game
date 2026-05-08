@@ -61,21 +61,33 @@ export function useRecentRounds({ gameId, limit = 8, winsOnly = false }: { gameI
   return useQuery({
     queryKey: ["recent-rounds", gameId ?? "all", limit, winsOnly ? "wins" : "all"],
     queryFn: () => fetchRoundPage({ gameId, limit, winsOnly }),
-    staleTime: 20_000,
-    gcTime: 5 * 60_000,
-    refetchInterval: 30_000,
-    refetchIntervalInBackground: false
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
+    refetchOnWindowFocus: false
   });
 }
 
-export function useRoundPages({ gameId, player, limit = 50, winsOnly = false }: { gameId?: string; player?: string; limit?: number; winsOnly?: boolean } = {}) {
+export function useRoundPages({
+  gameId,
+  player,
+  limit = 50,
+  winsOnly = false,
+  enabled = true
+}: {
+  gameId?: string;
+  player?: string;
+  limit?: number;
+  winsOnly?: boolean;
+  enabled?: boolean;
+} = {}) {
   return useInfiniteQuery({
     queryKey: ["round-pages", gameId ?? "all", player?.toLowerCase() ?? "all", limit, winsOnly ? "wins" : "all"],
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam }) => fetchRoundPage({ gameId, player, limit, before: pageParam, winsOnly }),
     getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.nextCursor ?? undefined : undefined),
-    staleTime: 60_000,
-    gcTime: 10 * 60_000,
+    enabled,
+    staleTime: 15 * 60_000,
+    gcTime: 60 * 60_000,
     refetchOnWindowFocus: false
   });
 }

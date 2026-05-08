@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { isAddress } from "viem";
 import { useAccount } from "wagmi";
 import { Activity, BadgeCheck, Clipboard, Flame, Gift, RefreshCw, Sparkles, Trophy, Users, WalletCards } from "lucide-react";
-import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
 import { BasenameLabel } from "@/components/base/BasenameLabel";
+import { GameIdentity, getGameLabel, getGamePath } from "@/components/game/GameIdentity";
 import { useEthUsdPrice } from "@/hooks/useEthUsdPrice";
 import { usePlayerProfile } from "@/hooks/usePlayerProfile";
 import { usePlayerRounds } from "@/hooks/usePlayerRounds";
@@ -16,21 +15,23 @@ import { levelProgress } from "@/lib/progression";
 import { PendingRoundsPanel } from "@/components/wallet/PendingRoundsPanel";
 import { useToast } from "@/components/ui/ToastProvider";
 
-const gameNames = Object.fromEntries(GAMES_REGISTRY.map((game) => [game.id, game.name]));
 type ProfileTab = "profile" | "games" | "rounds" | "badges" | "referrals" | "refunds";
 
 export function ProfileClient({ address }: { address: string }) {
   const account = useAccount();
   const validAddress = isAddress(address) ? address : null;
-  const profile = usePlayerProfile(validAddress);
-  const referralSummary = useReferralSummary(validAddress);
-  const claimReferral = useClaimReferral();
-  const rounds = usePlayerRounds(validAddress, 8);
-  const ethUsd = useEthUsdPrice();
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<ProfileTab>("profile");
   const [roundPageIndex, setRoundPageIndex] = useState(0);
   const [manualReferrer, setManualReferrer] = useState("");
+  const profile = usePlayerProfile(validAddress, {
+    includeGameStats: activeTab === "profile" || activeTab === "games",
+    includeBadges: activeTab === "badges"
+  });
+  const referralSummary = useReferralSummary(validAddress, { enabled: activeTab === "referrals" });
+  const claimReferral = useClaimReferral();
+  const rounds = usePlayerRounds(validAddress, 8, { enabled: activeTab === "rounds" });
+  const ethUsd = useEthUsdPrice(activeTab === "profile" || activeTab === "games" || activeTab === "rounds");
   const data = profile.data;
   const stats = data?.stats;
   const roundPages = rounds.data?.pages ?? [];
@@ -40,6 +41,7 @@ export function ProfileClient({ address }: { address: string }) {
   const progress = levelProgress(xp, level);
   const totalRounds = stats?.total_rounds ?? 0;
   const winRate = totalRounds > 0 && data ? (data.wins / totalRounds) * 100 : 0;
+  const netProfit = stats?.net_profit ?? 0;
   const isConnectedProfile = Boolean(account.address && validAddress && account.address.toLowerCase() === validAddress.toLowerCase());
   const profileTabs: Array<{ id: ProfileTab; label: string; detail: string }> = [
     { id: "profile", label: "Profile", detail: `Lv ${level}` },
@@ -110,7 +112,16 @@ export function ProfileClient({ address }: { address: string }) {
           </h1>
           <p className="mt-2 text-sm text-[var(--text-2)]">Public player stats, XP, streaks, and recent rounds.</p>
         </div>
-        <button type="button" onClick={() => { setRoundPageIndex(0); void profile.refetch(); void rounds.refetch(); }} className="control-shell flex items-center gap-2 px-3 text-xs font-bold">
+        <button
+          type="button"
+          onClick={() => {
+            setRoundPageIndex(0);
+            void profile.refetch();
+            if (activeTab === "rounds") void rounds.refetch();
+            if (activeTab === "referrals") void referralSummary.refetch();
+          }}
+          className="control-shell flex items-center gap-2 px-3 text-xs font-bold"
+        >
           <RefreshCw size={13} className={profile.isFetching || rounds.isFetching ? "animate-spin text-[var(--accent)]" : ""} />
           Refresh
         </button>
@@ -163,7 +174,7 @@ export function ProfileClient({ address }: { address: string }) {
               <div className="grid gap-3 sm:grid-cols-2">
                 <Metric icon={<Activity size={17} />} label="Rounds" value={String(totalRounds)} />
                 <Metric icon={<Trophy size={17} />} label="Win rate" value={`${winRate.toFixed(1)}%`} />
-                <Metric label="Net profit" value={`${(stats?.net_profit ?? 0) >= 0 ? "+" : ""}${formatEth(stats?.net_profit ?? 0)} ETH`} tone={(stats?.net_profit ?? 0) >= 0 ? "win" : "loss"} />
+                <Metric label="Net profit" value={formatSignedEth(netProfit)} detail={formatSignedUsd(netProfit, ethUsd)} tone={netProfit >= 0 ? "win" : "loss"} />
                 <Metric label="Volume" value={`${formatEth(stats?.total_wagered ?? 0)} ETH`} detail={ethUsd ? formatUsd((stats?.total_wagered ?? 0) * ethUsd) : undefined} />
                 <Metric label="XP rank" value={data?.weekly?.xp_rank ? `#${data.weekly.xp_rank}` : "-"} />
                 <Metric label="Profit rank" value={data?.weekly?.profit_rank ? `#${data.weekly.profit_rank}` : "-"} />
@@ -179,20 +190,22 @@ export function ProfileClient({ address }: { address: string }) {
               <span>{data?.gameStats.length ?? 0} games</span>
             </div>
             <div className="divide-y divide-[var(--border)]">
-              {(data?.gameStats ?? []).map((game) => (
-                <div key={`${game.game_id}-${game.chain_id}`} className="profile-list-row">
-                  <div>
-                    <Link href={`/games/${game.game_id}`} className="font-bold text-[var(--text-1)] hover:text-[var(--accent)]">
-                      {gameNames[game.game_id] ?? game.game_id}
-                    </Link>
-                    <div className="mt-1 text-xs text-[var(--text-3)]">{game.wins} wins / {game.losses} losses</div>
+              {(data?.gameStats ?? []).map((game) => {
+                const gameNetUsd = formatSignedUsd(game.net_profit, ethUsd);
+                return (
+                  <div key={`${game.game_id}-${game.chain_id}`} className="profile-list-row">
+                    <div>
+                      <GameIdentity gameId={game.game_id} href={getGamePath(game.game_id)} label={getGameLabel(game.game_id)} size="sm" />
+                      <div className="mt-1 text-xs text-[var(--text-3)]">{game.wins} wins / {game.losses} losses</div>
+                    </div>
+                    <div className={`profile-row-value ${game.net_profit >= 0 ? "text-[var(--win)]" : "text-[var(--lose)]"}`}>
+                      {formatSignedEth(game.net_profit)}
+                      {gameNetUsd && <span>{gameNetUsd}</span>}
+                      <span>{game.total_rounds} rounds</span>
+                    </div>
                   </div>
-                  <div className={`profile-row-value ${game.net_profit >= 0 ? "text-[var(--win)]" : "text-[var(--lose)]"}`}>
-                    {game.net_profit >= 0 ? "+" : ""}{formatEth(game.net_profit)} ETH
-                    <span>{game.total_rounds} rounds</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               {profile.isLoading && <div className="px-4 py-5 text-sm text-[var(--text-3)]">Loading game stats...</div>}
               {!profile.isLoading && (data?.gameStats.length ?? 0) === 0 && <div className="px-4 py-5 text-sm text-[var(--text-3)]">No played games yet.</div>}
             </div>
@@ -208,16 +221,16 @@ export function ProfileClient({ address }: { address: string }) {
             <div className="divide-y divide-[var(--border)]">
               {currentRoundRows.map((row) => {
                 const net = Number(row.payout) - Number(row.bet_amount);
+                const netUsd = formatSignedUsd(net, ethUsd);
                 return (
                   <div key={row.id} className="profile-list-row">
                     <div>
-                      <Link href={`/games/${row.game_id}`} className="font-bold text-[var(--text-1)] hover:text-[var(--accent)]">
-                        {gameNames[row.game_id] ?? row.game_id}
-                      </Link>
+                      <GameIdentity gameId={row.game_id} href={getGamePath(row.game_id)} label={getGameLabel(row.game_id)} size="sm" />
                       <div className="mt-1 font-mono text-[11px] text-[var(--text-3)]">{new Date(row.settled_at).toLocaleString()}</div>
                     </div>
                     <div className={`profile-row-value ${net >= 0 ? "text-[var(--win)]" : "text-[var(--lose)]"}`}>
-                      {net >= 0 ? "+" : ""}{formatEth(net)} ETH
+                      {formatSignedEth(net)}
+                      {netUsd && <span>{netUsd}</span>}
                       <span>{row.won ? "Win" : "Loss"}</span>
                     </div>
                   </div>
@@ -345,4 +358,14 @@ function Metric({ label, value, detail, icon, tone }: { label: string; value: st
       {detail && <div className="mt-1 font-mono text-[10px] text-[var(--text-3)]">{detail}</div>}
     </div>
   );
+}
+
+function formatSignedEth(value: number) {
+  return `${value >= 0 ? "+" : ""}${formatEth(value)} ETH`;
+}
+
+function formatSignedUsd(valueEth: number, ethUsd: number | null) {
+  if (!ethUsd) return undefined;
+  const valueUsd = valueEth * ethUsd;
+  return `${valueUsd >= 0 ? "+" : ""}${formatUsd(valueUsd)}`;
 }

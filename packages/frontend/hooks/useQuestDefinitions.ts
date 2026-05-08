@@ -42,7 +42,7 @@ export interface QuestProgressItem {
   updated_at: string | null;
 }
 
-export function useQuestDefinitions() {
+export function useQuestDefinitions({ enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ["quest-definitions"],
     queryFn: async () => {
@@ -59,8 +59,10 @@ export function useQuestDefinitions() {
       }
       return data?.length ? (data as QuestDefinition[]) : DEFAULT_QUEST_DEFINITIONS;
     },
-    staleTime: 5 * 60_000,
-    gcTime: 15 * 60_000
+    enabled,
+    staleTime: 30 * 60_000,
+    gcTime: 3 * 60 * 60_000,
+    refetchOnWindowFocus: false
   });
 }
 

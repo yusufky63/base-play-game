@@ -14,6 +14,8 @@ export interface GlobalStats {
   players: number;
   volume: number;
   gameCounts: Record<string, number>;
+  cachedAt?: string;
+  cacheTtlSeconds?: number;
 }
 
 const EMPTY_GLOBAL_STATS: GlobalStats = {
@@ -27,10 +29,9 @@ export function useGlobalStats() {
   return useQuery({
     queryKey: ["global-stats"],
     queryFn: fetchGlobalStats,
-    staleTime: 90_000,
-    gcTime: 10 * 60_000,
-    refetchInterval: 120_000,
-    refetchIntervalInBackground: false
+    staleTime: 10 * 60_000,
+    gcTime: 60 * 60_000,
+    refetchOnWindowFocus: false
   });
 }
 
@@ -43,6 +44,13 @@ export function useGameStats() {
 }
 
 async function fetchGlobalStats(): Promise<GlobalStats> {
+  try {
+    const response = await fetch("/api/global-stats", { cache: "force-cache" });
+    if (response.ok) return (await response.json()) as GlobalStats;
+  } catch {
+    // Fall back to direct Supabase/browser RPC below for local-only setups.
+  }
+
   const supabase = getSupabaseBrowser();
 
   if (supabase) {

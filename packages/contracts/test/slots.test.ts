@@ -25,7 +25,7 @@ describe("SlotsGame", function () {
 
   it("reserves the max 25x payout", async function () {
     const { game, player, vault } = await deployFixture();
-    const expectedReserve = (BET * 25n * 9700n) / 10_000n;
+    const expectedReserve = (BET * 25n * 9500n) / 10_000n;
 
     await game.connect(player).placeBet("0x", { value: BET });
 

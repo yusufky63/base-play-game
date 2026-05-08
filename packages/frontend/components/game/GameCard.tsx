@@ -1,89 +1,62 @@
 import type { GameConfig } from "@baseplay/shared/types/game.types";
-import { ArrowUpRight, BadgeDollarSign, Bomb, Boxes, Cherry, CircleDot, Coins, Dice5, Gem, Goal, Gauge, Orbit, Palette, Pickaxe, Radar, Scissors, ScrollText, TrendingUp, type LucideIcon } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
+import { GameIcon } from "@/components/game/GameIdentity";
 
-export function GameCard({ game, playCount = 0 }: { game: GameConfig; playCount?: number }) {
+const gameStyles: Record<string, { label: string; tone: string }> = {
+  crash: { label: "Live cashout", tone: "hot" },
+  mines: { label: "Risk path", tone: "tactical" },
+  hilo: { label: "Decision streak", tone: "tactical" },
+  "plinko-lite": { label: "Drop & reveal", tone: "arcade" },
+  slots: { label: "Spin reveal", tone: "arcade" },
+  wheel: { label: "Wheel spin", tone: "arcade" },
+  "scratch-card": { label: "Prize reveal", tone: "prize" },
+  "treasure-chest": { label: "Pick & reveal", tone: "prize" },
+  "roulette-lite": { label: "Table pick", tone: "arcade" },
+  dice: { label: "Number pick", tone: "classic" },
+  "coin-flip": { label: "Fast choice", tone: "classic" },
+  "over-under": { label: "Threshold pick", tone: "classic" },
+  limbo: { label: "Target multiplier", tone: "classic" },
+  "color-pick": { label: "Color reveal", tone: "classic" },
+  "lucky-seven": { label: "Dice table", tone: "classic" },
+  "rock-paper-scissors": { label: "Move pick", tone: "classic" }
+};
+
+export function GameCard({ game }: { game: GameConfig }) {
+  const style = gameStyles[game.id] ?? { label: "VRF reveal", tone: "classic" };
+
   return (
     <Link
       href={game.active ? game.path : "#"}
       aria-disabled={!game.active}
-      className={`game-card game-card-compact group grid gap-3 p-3.5 transition-all duration-150 ${
+      className={`game-card game-card-compact group grid gap-4 p-4 transition-all duration-150 ${
         game.active ? "hover:-translate-y-0.5" : "cursor-not-allowed opacity-45"
       }`}
     >
       <div className="game-card-top">
-        <div className={`game-icon-box game-icon-${game.id}`}>
-          <GameGlyph id={game.id} />
+        <div className="game-card-icon-wrap">
+          <GameIcon gameId={game.id} size="lg" />
         </div>
-        <span className="game-card-payout">{game.maxMultiplier}x</span>
+        <span className={`game-card-style game-card-style-${style.tone}`}>{style.label}</span>
       </div>
 
-      <div className="game-card-body min-w-0 space-y-2">
+      <div className="game-card-body min-w-0">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <h2 className="display-heading truncate text-lg font-bold text-[var(--text-1)]">{game.name}</h2>
           {!game.active && <span className="rounded-md border border-[var(--border-2)] px-2 py-1 text-[10px] font-semibold text-[var(--text-3)]">Soon</span>}
         </div>
-        <p className="line-clamp-2 text-[13px] leading-5 text-[var(--text-2)]">{game.description}</p>
-        <div className="game-card-tags">
-          {game.tags.slice(0, 2).map((tag) => (
-            <span key={tag} className="rounded-md border border-[var(--border)] bg-[var(--surface-2)] px-2 py-1 text-[10px] font-semibold uppercase text-[var(--text-2)]">
-              {tag}
-            </span>
-          ))}
-        </div>
+        <p className="mt-2 line-clamp-2 text-[13px] leading-5 text-[var(--text-2)]">{game.description}</p>
       </div>
 
-      <div className="game-card-stats">
-        <Meta label="Payout" value={`${game.maxMultiplier}x`} />
-        <Meta label="Played" value={formatCount(playCount)} />
-        <Meta label="Edge" value="3%" />
-      </div>
-
-      <div className="flex items-center justify-end gap-3">
+      <div className="game-card-footer">
+        <span>{game.maxMultiplier}x max</span>
         {game.active && (
-          <span className="play-button-ghost flex h-10 w-full items-center justify-center gap-2 rounded-md px-3 text-sm font-bold">
+          <span className="game-card-play-button">
             Play Now
             <ArrowUpRight size={15} />
           </span>
         )}
       </div>
     </Link>
-  );
-}
-
-function formatCount(value: number) {
-  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(value);
-}
-
-function GameGlyph({ id }: { id: string }) {
-  const glyphs: Record<string, LucideIcon> = {
-    "coin-flip": Coins,
-    dice: Dice5,
-    crash: TrendingUp,
-    mines: Bomb,
-    hilo: Boxes,
-    "over-under": Gauge,
-    limbo: Goal,
-    wheel: Orbit,
-    "plinko-lite": Pickaxe,
-    "color-pick": Palette,
-    "treasure-chest": Gem,
-    "lucky-seven": BadgeDollarSign,
-    "roulette-lite": Radar,
-    "scratch-card": ScrollText,
-    "rock-paper-scissors": Scissors,
-    slots: Cherry
-  };
-  const Icon = glyphs[id] ?? CircleDot;
-
-  return <Icon size={34} strokeWidth={2.2} aria-hidden="true" />;
-}
-
-function Meta({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="game-meta">
-      <div className="text-[10px] font-semibold uppercase text-[var(--text-3)]">{label}</div>
-      <div className="mt-1 font-mono text-sm font-semibold text-[var(--text-1)]">{value}</div>
-    </div>
   );
 }

@@ -14,7 +14,7 @@ contract GameVaultV2 is Ownable2Step, Pausable, ReentrancyGuard {
 
     uint256 public minBet = 0.0002 ether;
     uint256 public maxBet = 0.001 ether;
-    uint256 public houseEdgeBps = 300;
+    uint256 public houseEdgeBps = 500;
 
     mapping(address => bool) public approvedGames;
     mapping(address => uint256) public lockedFunds;

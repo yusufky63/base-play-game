@@ -35,7 +35,7 @@ export type ReferralSummary = {
   }>;
 };
 
-export function useReferralSummary(address?: string | null) {
+export function useReferralSummary(address?: string | null, { enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ["referral-summary", address?.toLowerCase() ?? "none"],
     queryFn: async () => {
@@ -43,11 +43,10 @@ export function useReferralSummary(address?: string | null) {
       if (!data) throw new Error("Backend is not configured");
       return data;
     },
-    enabled: Boolean(address),
-    staleTime: 60_000,
-    gcTime: 10 * 60_000,
-    refetchInterval: 120_000,
-    refetchIntervalInBackground: false
+    enabled: Boolean(address) && enabled,
+    staleTime: 10 * 60_000,
+    gcTime: 60 * 60_000,
+    refetchOnWindowFocus: false
   });
 }
 

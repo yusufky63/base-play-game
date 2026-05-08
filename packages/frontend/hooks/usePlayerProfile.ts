@@ -23,19 +23,39 @@ export interface PlayerProfileData {
   source: "supabase" | "onchain";
 }
 
-export function usePlayerProfile(address?: string | null) {
+export type PlayerProfileOptions = {
+  includeGameStats?: boolean;
+  includeQuests?: boolean;
+  includeBadges?: boolean;
+  enabled?: boolean;
+};
+
+const DEFAULT_PROFILE_OPTIONS = {
+  includeGameStats: false,
+  includeQuests: false,
+  includeBadges: false,
+  enabled: true
+} satisfies Required<PlayerProfileOptions>;
+
+export function usePlayerProfile(address?: string | null, options: PlayerProfileOptions = {}) {
+  const resolved = { ...DEFAULT_PROFILE_OPTIONS, ...options };
   return useQuery({
-    queryKey: ["player-profile", address?.toLowerCase() ?? "none"],
-    queryFn: () => fetchPlayerProfile(address!),
-    enabled: Boolean(address),
-    staleTime: 45_000,
-    gcTime: 5 * 60_000,
-    refetchInterval: 90_000,
-    refetchIntervalInBackground: false
+    queryKey: [
+      "player-profile",
+      address?.toLowerCase() ?? "none",
+      resolved.includeGameStats ? "games" : "summary",
+      resolved.includeQuests ? "quests" : "no-quests",
+      resolved.includeBadges ? "badges" : "no-badges"
+    ],
+    queryFn: () => fetchPlayerProfile(address!, resolved),
+    enabled: Boolean(address) && resolved.enabled,
+    staleTime: 10 * 60_000,
+    gcTime: 60 * 60_000,
+    refetchOnWindowFocus: false
   });
 }
 
-async function fetchPlayerProfile(address: string): Promise<PlayerProfileData> {
+async function fetchPlayerProfile(address: string, options: Required<PlayerProfileOptions>): Promise<PlayerProfileData> {
   const player = address.toLowerCase();
   const supabase = getSupabaseBrowser();
 
@@ -48,10 +68,16 @@ async function fetchPlayerProfile(address: string): Promise<PlayerProfileData> {
       { data: badges, error: badgesError }
     ] = await Promise.all([
       supabase.from("player_stats").select("*").eq("player", player).maybeSingle(),
-      supabase.from("player_game_stats").select("*").eq("player", player).order("total_rounds", { ascending: false }),
+      options.includeGameStats
+        ? supabase.from("player_game_stats").select("*").eq("player", player).order("total_rounds", { ascending: false })
+        : Promise.resolve({ data: [], error: null }),
       supabase.from("leaderboard_weekly_ranked").select("*").eq("player", player).order("week_start", { ascending: false }).limit(1).maybeSingle(),
-      supabase.from("player_quest_summary").select("*").eq("player", player).order("sort_order", { ascending: true }),
-      supabase.from("player_badge_summary").select("*").eq("player", player).order("sort_order", { ascending: true })
+      options.includeQuests
+        ? supabase.from("player_quest_summary").select("*").eq("player", player).order("sort_order", { ascending: true })
+        : Promise.resolve({ data: [], error: null }),
+      options.includeBadges
+        ? supabase.from("player_badge_summary").select("*").eq("player", player).order("sort_order", { ascending: true })
+        : Promise.resolve({ data: [], error: null })
     ]);
 
     if (statsError || gameStatsError || weeklyError || questsError || badgesError) {

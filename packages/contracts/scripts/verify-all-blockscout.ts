@@ -24,7 +24,7 @@ const GAME_CONTRACTS = [
 async function main() {
   const chainId = Number(network.config.chainId);
   const addresses = readSharedAddresses()[chainId];
-  const vaultContractName = process.env.VAULT_CONTRACT_NAME || "GameVault";
+  const vaultContractName = process.env.VAULT_CONTRACT_NAME || "GameVaultV2";
   const failures: Array<{ contractName: string; address: string; message: string }> = [];
 
   if (!addresses?.GameVault) {

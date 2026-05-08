@@ -8,7 +8,9 @@ import { supabaseAdmin } from "../supabase/client.js";
 import type { CrashEngine } from "./crashEngine.js";
 
 const ROUND_SETTLED_ABI = parseAbi([
+  "event BetPlaced(address indexed player, uint256 indexed requestId, uint256 betAmount, bytes params)",
   "event RoundSettled(address indexed player, uint256 indexed requestId, uint256 betAmount, uint256 payout, bool won)",
+  "event BetRefundClaimed(address indexed player, uint256 indexed requestId, uint256 betAmount)",
   "event CrashPointGenerated(uint256 indexed requestId, uint256 crashPoint)"
 ]);
 
@@ -21,7 +23,7 @@ interface EventClient {
   getContractEvents: (args: {
     address: Address;
     abi: typeof ROUND_SETTLED_ABI;
-    eventName: "RoundSettled" | "CrashPointGenerated";
+    eventName: "BetPlaced" | "RoundSettled" | "BetRefundClaimed" | "CrashPointGenerated";
     fromBlock: bigint;
     toBlock: bigint;
   }) => Promise<Log[]>;
@@ -154,14 +156,38 @@ async function pollGame(
   try {
     setIndexerHealth(chainId, gameId, { status: catchingUp ? "catching_up" : "watching", lastError: null });
 
+    const betLogs = await client.getContractEvents({
+      address,
+      abi: ROUND_SETTLED_ABI,
+      eventName: "BetPlaced",
+      fromBlock,
+      toBlock
+    });
+    await persistRoundEvents(chainId, gameId, address, "BetPlaced", betLogs);
+
+    const refundLogs = await client.getContractEvents({
+      address,
+      abi: ROUND_SETTLED_ABI,
+      eventName: "BetRefundClaimed",
+      fromBlock,
+      toBlock
+    });
+    await persistRoundEvents(chainId, gameId, address, "BetRefundClaimed", refundLogs);
+
+    const crashLogs = gameId === "crash"
+      ? await client.getContractEvents({
+          address,
+          abi: ROUND_SETTLED_ABI,
+          eventName: "CrashPointGenerated",
+          fromBlock,
+          toBlock
+        })
+      : [];
+    if (crashLogs.length > 0) {
+      await persistRoundEvents(chainId, gameId, address, "CrashPointGenerated", crashLogs);
+    }
+
     if (gameId === "crash" && latestBlock - toBlock <= 20n) {
-      const crashLogs = await client.getContractEvents({
-        address,
-        abi: ROUND_SETTLED_ABI,
-        eventName: "CrashPointGenerated",
-        fromBlock,
-        toBlock
-      });
       for (const log of crashLogs) {
         const args = "args" in log ? (log.args as { requestId?: bigint; crashPoint?: bigint }) : undefined;
         if (args?.requestId === undefined || args.crashPoint === undefined) continue;
@@ -178,6 +204,7 @@ async function pollGame(
     });
 
     const lastLogBlock = await persistSettledLogs(chainId, gameId, settledLogs);
+    await persistRoundEvents(chainId, gameId, address, "RoundSettled", settledLogs);
     await saveIndexedCheckpoint(chainId, gameId, toBlock);
     state.nextBlock = toBlock + 1n;
     indexerRuntime.set(key, state);
@@ -317,4 +344,56 @@ async function persistSettledLogs(chainId: 84532 | 8453, gameId: string, logs: L
   }
 
   return lastBlock || null;
+}
+
+async function persistRoundEvents(
+  chainId: 84532 | 8453,
+  gameId: string,
+  contractAddress: Address,
+  eventName: "BetPlaced" | "RoundSettled" | "BetRefundClaimed" | "CrashPointGenerated",
+  logs: Log[]
+) {
+  for (const log of logs) {
+    const args = "args" in log ? (log.args as Record<string, unknown>) : {};
+    const requestId = args.requestId;
+    if (typeof requestId !== "bigint") continue;
+
+    const player = typeof args.player === "string" ? args.player.toLowerCase() : null;
+    const txHash = log.transactionHash ?? null;
+    const logIndex = typeof log.logIndex === "number" ? log.logIndex : 0;
+
+    const { error } = await supabaseAdmin.from("round_events").upsert(
+      {
+        vrf_request_id: requestId.toString(),
+        event_name: eventName,
+        tx_hash: txHash,
+        block_number: log.blockNumber ? Number(log.blockNumber) : null,
+        log_index: logIndex,
+        player,
+        game_id: gameId,
+        chain_id: chainId,
+        contract_address: contractAddress.toLowerCase(),
+        args: serializeEventArgs(args) as any,
+        observed_at: new Date().toISOString()
+      },
+      { onConflict: "chain_id,tx_hash,log_index" }
+    );
+
+    if (error) {
+      console.error(`[Listener][${gameId}][${chainId}] Round event error`, error.message);
+    }
+  }
+}
+
+function serializeEventArgs(value: unknown): unknown {
+  if (typeof value === "bigint") return value.toString();
+  if (Array.isArray(value)) return value.map(serializeEventArgs);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .filter(([key]) => Number.isNaN(Number(key)))
+        .map(([key, nestedValue]) => [key, serializeEventArgs(nestedValue)])
+    );
+  }
+  return value;
 }

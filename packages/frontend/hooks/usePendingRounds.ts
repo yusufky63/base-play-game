@@ -71,10 +71,9 @@ export function usePendingRounds({ scanAll = false }: { scanAll?: boolean } = {}
     queryKey: ["pending-rounds", player ?? "none", scanAll ? "all" : "active"],
     queryFn: () => fetchPendingRounds(address!, scanAll),
     enabled: Boolean(address),
-    staleTime: 45_000,
-    gcTime: 5 * 60_000,
-    refetchInterval: scanAll ? false : 90_000,
-    refetchIntervalInBackground: false
+    staleTime: 2 * 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false
   });
 }
 

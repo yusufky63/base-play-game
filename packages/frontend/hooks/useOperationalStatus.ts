@@ -81,9 +81,9 @@ export function useOperationalStatus(contractName: string | null | undefined) {
   const query = useQuery({
     queryKey: ["operational-status", effectiveChainId, contractName],
     enabled: Boolean(contractName),
-    staleTime: 30_000,
-    refetchInterval: 60_000,
-    refetchOnWindowFocus: true,
+    staleTime: 2 * 60_000,
+    gcTime: 15 * 60_000,
+    refetchOnWindowFocus: false,
     queryFn: async () => loadOperationalStatus(effectiveChainId, contractName!)
   });
 

@@ -1,4 +1,4 @@
-export const DEFAULT_HOUSE_EDGE_BPS = 300;
+export const DEFAULT_HOUSE_EDGE_BPS = 500;
 
 export function netPayoutFromGross(grossPayoutEth: number, houseEdgeBps = DEFAULT_HOUSE_EDGE_BPS) {
   if (!Number.isFinite(grossPayoutEth) || grossPayoutEth <= 0) return 0;

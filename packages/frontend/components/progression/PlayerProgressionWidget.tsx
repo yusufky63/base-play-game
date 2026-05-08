@@ -9,8 +9,8 @@ import { mergeQuestRows, useQuestDefinitions } from "@/hooks/useQuestDefinitions
 export function PlayerProgressionWidget({ variant = "home" }: { variant?: "home" | "game" }) {
   const account = useAccount();
   const address = account.address?.toLowerCase() ?? null;
-  const profile = usePlayerProfile(address);
-  const definitions = useQuestDefinitions();
+  const profile = usePlayerProfile(address, { includeQuests: true, includeBadges: true });
+  const definitions = useQuestDefinitions({ enabled: Boolean(address) });
   const quests = mergeQuestRows(definitions.data ?? [], profile.data?.quests ?? []);
   const visibleQuests = quests
     .sort((a, b) => Number(a.completed) - Number(b.completed) || a.sort_order - b.sort_order)

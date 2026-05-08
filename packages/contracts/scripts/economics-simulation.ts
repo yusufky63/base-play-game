@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 
-const HOUSE_EDGE_BPS = 300;
+const HOUSE_EDGE_BPS = 500;
 const BET = 1;
 const GRID_SIZE = 25;
 

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
 import type { Database } from "@baseplay/shared/types/supabase.types";
 import { getSupabaseBrowser } from "@/lib/supabase";
@@ -22,62 +23,44 @@ export interface PlayerProgress {
 
 export function usePlayerProgress() {
   const { address } = useAccount();
-  const [progress, setProgress] = useState<PlayerProgress | null>(null);
-  const [ready, setReady] = useState(false);
   const player = useMemo(() => address?.toLowerCase() ?? null, [address]);
+  const query = useQuery({
+    queryKey: ["player-progress", player ?? "none"],
+    queryFn: () => fetchPlayerProgress(player!),
+    enabled: Boolean(player),
+    staleTime: 10 * 60_000,
+    gcTime: 60 * 60_000,
+    refetchOnWindowFocus: false
+  });
 
-  useEffect(() => {
-    if (!player) {
-      setProgress(null);
-      setReady(true);
-      return;
-    }
+  if (!player) return { progress: null, ready: true };
+  return { progress: query.data ?? null, ready: !query.isLoading };
+}
 
-    let mounted = true;
-    const playerAddress = player;
-    setReady(false);
+async function fetchPlayerProgress(playerAddress: string): Promise<PlayerProgress> {
+  const supabase = getSupabaseBrowser();
+  if (supabase) {
+    const { data } = await supabase.from("player_stats").select("*").eq("player", playerAddress).maybeSingle();
+    return data ? fromStats(data) : emptyProgress(playerAddress);
+  }
 
-    async function load() {
-      const supabase = getSupabaseBrowser();
-      if (supabase) {
-        const { data } = await supabase.from("player_stats").select("*").eq("player", playerAddress).maybeSingle();
-        if (mounted) {
-          setProgress(data ? fromStats(data) : emptyProgress(playerAddress));
-          setReady(true);
-        }
-        return;
-      }
+  const rows = await fetchRecentOnchainRounds({ limit: 250 });
+  const playerRows = rows.filter((row) => row.player.toLowerCase() === playerAddress);
+  const lifetime_xp = playerRows.reduce((sum, row) => sum + calculateRoundXp(row.bet_amount, row.won), 0);
+  const total_wagered = playerRows.reduce((sum, row) => sum + row.bet_amount, 0);
+  const net_profit = playerRows.reduce((sum, row) => sum + row.payout - row.bet_amount, 0);
+  const longest = currentDailyStreak(playerRows.map((row) => row.settled_at));
 
-      const rows = await fetchRecentOnchainRounds({ limit: 250 });
-      const playerRows = rows.filter((row) => row.player.toLowerCase() === playerAddress);
-      const lifetime_xp = playerRows.reduce((sum, row) => sum + calculateRoundXp(row.bet_amount, row.won), 0);
-      const total_wagered = playerRows.reduce((sum, row) => sum + row.bet_amount, 0);
-      const net_profit = playerRows.reduce((sum, row) => sum + row.payout - row.bet_amount, 0);
-      const longest = currentDailyStreak(playerRows.map((row) => row.settled_at));
-
-      if (mounted) {
-        setProgress({
-          player: playerAddress,
-          lifetime_xp,
-          level: levelFromXp(lifetime_xp),
-          current_streak: longest,
-          longest_streak: longest,
-          total_rounds: playerRows.length,
-          total_wagered,
-          net_profit
-        });
-        setReady(true);
-      }
-    }
-
-    void load();
-
-    return () => {
-      mounted = false;
-    };
-  }, [player]);
-
-  return { progress, ready };
+  return {
+    player: playerAddress,
+    lifetime_xp,
+    level: levelFromXp(lifetime_xp),
+    current_streak: longest,
+    longest_streak: longest,
+    total_rounds: playerRows.length,
+    total_wagered,
+    net_profit
+  };
 }
 
 function fromStats(stats: PlayerStats): PlayerProgress {

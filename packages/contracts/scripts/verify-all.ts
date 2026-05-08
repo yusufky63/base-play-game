@@ -33,7 +33,7 @@ const gameConstructorAbi = [
 async function main() {
   const chainId = Number(network.config.chainId);
   const addresses = readSharedAddresses()[chainId];
-  const vaultContractName = process.env.VAULT_CONTRACT_NAME || "GameVault";
+  const vaultContractName = process.env.VAULT_CONTRACT_NAME || "GameVaultV2";
   if (!addresses?.GameVault) {
     throw new Error(`No deployed addresses found for ${network.name} (${chainId}).`);
   }

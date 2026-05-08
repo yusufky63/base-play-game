@@ -71,17 +71,17 @@ export function GameShell({
       )}
 
       <div className="game-shell-grid grid gap-4 lg:grid-cols-[1fr_320px]">
-        <div className="game-contract-area lg:col-start-1 lg:row-start-1">
-          <GameContractPanel gameId={gameId} />
-        </div>
-        <div className="game-primary-area lg:col-start-1 lg:row-start-2">
+        <div className="game-primary-area">
           {children}
         </div>
-        <div className="game-side-stack lg:col-start-2 lg:row-span-3 lg:row-start-1">
+        <div className="game-side-stack">
           {side}
         </div>
-        <div className="game-how-area lg:col-start-1 lg:row-start-3">
+        <div className="game-how-area">
           <HowItWorks gameId={gameId} />
+        </div>
+        <div className="game-contract-area">
+          <GameContractPanel gameId={gameId} />
         </div>
       </div>
     </main>

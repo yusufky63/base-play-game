@@ -44,7 +44,7 @@ describe("Utility VRF games", function () {
 
   it("reserves scratch-card max payout before settlement", async function () {
     const { coordinator, game, player, vault } = await deployFixture("ScratchCardGame");
-    const expectedReserve = (BET * 30n * 9700n) / 10_000n;
+    const expectedReserve = (BET * 30n * 9500n) / 10_000n;
 
     await game.connect(player).placeBet("0x", { value: BET });
     expect(await vault.reservedPayouts(player.address)).to.equal(expectedReserve);

@@ -1,23 +1,21 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { Search, SlidersHorizontal } from "lucide-react";
 import type { GameConfig } from "@baseplay/shared/types/game.types";
 import { GameCard } from "@/components/game/GameCard";
-import { useGameStats } from "@/hooks/useGlobalStats";
 
 const CATEGORY_FILTERS = [
-  { id: "all", label: "All", tags: [] },
-  { id: "quick", label: "Quick", tags: ["simple", "fast", "casual"] },
-  { id: "strategy", label: "Strategy", tags: ["strategy"] },
+  { id: "all", label: "All games", tags: [] },
+  { id: "instant", label: "Instant", tags: ["simple", "fast", "casual"] },
+  { id: "decisions", label: "Decisions", tags: ["strategy", "risk", "odds"] },
   { id: "arcade", label: "Arcade", tags: ["arcade", "spin", "drop"] },
-  { id: "jackpot", label: "Jackpot", tags: ["jackpot", "risk", "odds", "dice"] }
+  { id: "big-win", label: "Big wins", tags: ["jackpot", "risk", "odds", "dice"] }
 ] as const;
 
 export function GameLibrary({ games }: { games: GameConfig[] }) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
-  const { gameCounts } = useGameStats();
   const filteredGames = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     const activeFilter = CATEGORY_FILTERS.find((item) => item.id === category) ?? CATEGORY_FILTERS[0];
@@ -32,9 +30,16 @@ export function GameLibrary({ games }: { games: GameConfig[] }) {
       return matchesCategory && matchesQuery;
     });
   }, [category, games, query]);
-
+  const categoryCounts = useMemo(() => {
+    return Object.fromEntries(
+      CATEGORY_FILTERS.map((item) => [
+        item.id,
+        games.filter((game) => item.id === "all" || item.tags.some((tag) => game.tags.includes(tag))).length
+      ])
+    );
+  }, [games]);
   return (
-    <div className="space-y-3">
+    <div className="game-library-shell">
       <div className="game-library-toolbar">
         <label className="game-search">
           <Search size={15} />
@@ -53,16 +58,20 @@ export function GameLibrary({ games }: { games: GameConfig[] }) {
               onClick={() => setCategory(item.id)}
               className={category === item.id ? "game-category-active" : ""}
             >
-              {item.label}
+              <span>{item.label}</span>
+              <small>{categoryCounts[item.id]}</small>
             </button>
           ))}
         </div>
-        <span className="game-result-count">{filteredGames.length} shown</span>
+        <span className="game-result-count">
+          <SlidersHorizontal size={13} />
+          {filteredGames.length} shown
+        </span>
       </div>
 
       <div className="game-library-grid">
         {filteredGames.map((game) => (
-          <GameCard key={game.id} game={game} playCount={gameCounts[game.id] ?? 0} />
+          <GameCard key={game.id} game={game} />
         ))}
         {filteredGames.length === 0 && (
           <div className="panel p-6 text-sm text-[var(--text-3)]">

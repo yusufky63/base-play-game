@@ -1,36 +1,45 @@
 import type { ChainConfig } from "../types/network.types.js";
 
-export const BASE_SEPOLIA_ALCHEMY_RPC_URL = "https://base-sepolia.g.alchemy.com/v2/qeMia_xnXrvUzsNNiuFiH";
-export const BASE_MAINNET_ALCHEMY_RPC_URL = "https://base-mainnet.g.alchemy.com/v2/qeMia_xnXrvUzsNNiuFiH";
+const env = (name: string) => process.env[name] ?? "";
+const optionalEnvUrl = (name: string) => {
+  const value = env(name).trim();
+  return value.length > 0 ? value : null;
+};
 
-export const BASE_SEPOLIA_FRONTEND_RPC_URLS = [
-  BASE_SEPOLIA_ALCHEMY_RPC_URL,
+function urls(...values: Array<string | null | undefined>) {
+  return Array.from(new Set(values.filter((value): value is string => Boolean(value))));
+}
+
+export const BASE_SEPOLIA_FRONTEND_RPC_URLS = urls(
+  optionalEnvUrl("NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL"),
   "https://sepolia.base.org",
   "https://base-sepolia-rpc.publicnode.com"
-];
+);
 
-export const BASE_MAINNET_FRONTEND_RPC_URLS = [
-  BASE_MAINNET_ALCHEMY_RPC_URL,
+export const BASE_MAINNET_FRONTEND_RPC_URLS = urls(
+  optionalEnvUrl("NEXT_PUBLIC_BASE_MAINNET_RPC_URL"),
   "https://mainnet.base.org",
   "https://base-rpc.publicnode.com"
-];
+);
 
-export const BASE_SEPOLIA_BACKEND_RPC_URLS = [
-  BASE_SEPOLIA_ALCHEMY_RPC_URL,
+export const BASE_SEPOLIA_BACKEND_RPC_URLS = urls(
+  optionalEnvUrl("BASE_SEPOLIA_BACKEND_RPC_URL"),
+  optionalEnvUrl("BASE_SEPOLIA_RPC_URL"),
+  optionalEnvUrl("NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL"),
   "https://sepolia.base.org",
   "https://base-sepolia-rpc.publicnode.com"
-];
+);
 
-export const BASE_MAINNET_BACKEND_RPC_URLS = [
-  BASE_MAINNET_ALCHEMY_RPC_URL,
+export const BASE_MAINNET_BACKEND_RPC_URLS = urls(
+  optionalEnvUrl("BASE_MAINNET_BACKEND_RPC_URL"),
+  optionalEnvUrl("BASE_MAINNET_RPC_URL"),
+  optionalEnvUrl("NEXT_PUBLIC_BASE_MAINNET_RPC_URL"),
   "https://mainnet.base.org",
   "https://base-rpc.publicnode.com"
-];
+);
 
 export const BASE_SEPOLIA_RPC_URLS = BASE_SEPOLIA_FRONTEND_RPC_URLS;
 export const BASE_MAINNET_RPC_URLS = BASE_MAINNET_FRONTEND_RPC_URLS;
-
-const env = (name: string) => process.env[name] ?? "";
 
 export const NETWORKS = {
   baseSepolia: {

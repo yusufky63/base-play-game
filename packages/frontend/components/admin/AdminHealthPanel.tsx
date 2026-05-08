@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Activity, AlertTriangle, CheckCircle2, Server } from "lucide-react";
+import { getNetworkByChainId } from "@baseplay/shared/config/networks";
 
 type IndexerHealth = {
   chainId: number;
@@ -17,6 +18,7 @@ export function AdminHealthPanel() {
   const [indexers, setIndexers] = useState<IndexerHealth[]>([]);
   const [status, setStatus] = useState<"idle" | "ready" | "error">("idle");
   const [message, setMessage] = useState("Loading backend health");
+  const [activeNetworkGroup, setActiveNetworkGroup] = useState<"mainnet" | "testnet">("mainnet");
 
   useEffect(() => {
     let cancelled = false;
@@ -48,12 +50,20 @@ export function AdminHealthPanel() {
 
   const errored = indexers.filter((item) => item.status === "error").length;
   const watching = indexers.filter((item) => item.status === "watching").length;
+  const groupedIndexers = {
+    mainnet: indexers.filter((item) => !isTestnetChain(item.chainId)),
+    testnet: indexers.filter((item) => isTestnetChain(item.chainId))
+  };
+  const activeIndexers = groupedIndexers[activeNetworkGroup];
+  const activeErrored = activeIndexers.filter((item) => item.status === "error").length;
+  const activeWatching = activeIndexers.filter((item) => item.status === "watching").length;
   const sortedIndexers = [...indexers].sort((a, b) => {
     if (a.status === "error" && b.status !== "error") return -1;
     if (a.status !== "error" && b.status === "error") return 1;
     if (a.chainId !== b.chainId) return a.chainId - b.chainId;
     return a.gameId.localeCompare(b.gameId);
   });
+  const visibleIndexers = sortedIndexers.filter((item) => (activeNetworkGroup === "testnet" ? isTestnetChain(item.chainId) : !isTestnetChain(item.chainId)));
 
   return (
     <section className="admin-note mt-4">
@@ -70,14 +80,43 @@ export function AdminHealthPanel() {
         {errored > 0 ? <AlertTriangle size={18} className="text-[var(--pending)]" /> : <CheckCircle2 size={18} className="text-[var(--win)]" />}
       </div>
 
+      <div className="admin-health-tabs" role="tablist" aria-label="RPC and indexer network group">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeNetworkGroup === "mainnet"}
+          className={activeNetworkGroup === "mainnet" ? "admin-health-tab admin-health-tab-active" : "admin-health-tab"}
+          onClick={() => setActiveNetworkGroup("mainnet")}
+        >
+          <span>Mainnet</span>
+          <small>{groupedIndexers.mainnet.length}</small>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeNetworkGroup === "testnet"}
+          className={activeNetworkGroup === "testnet" ? "admin-health-tab admin-health-tab-active" : "admin-health-tab"}
+          onClick={() => setActiveNetworkGroup("testnet")}
+        >
+          <span>Testnets</span>
+          <small>{groupedIndexers.testnet.length}</small>
+        </button>
+      </div>
+
+      {status === "ready" && (
+        <div className="admin-health-group-summary">
+          {activeWatching} watching, {activeErrored} error, {activeIndexers.length} {activeNetworkGroup === "mainnet" ? "mainnet" : "testnet"} indexers
+        </div>
+      )}
+
       <div className="admin-health-list">
-        {sortedIndexers.map((item) => (
+        {visibleIndexers.map((item) => (
           <div key={`${item.chainId}-${item.gameId}`} className={`admin-health-row ${item.status === "error" ? "admin-health-row-error" : ""}`}>
             <div className="admin-health-main">
               <div className="min-w-0">
                 <span className="admin-health-game">{item.gameId}</span>
                 <div className="admin-health-meta">
-                  chain {item.chainId} / block {item.lastIndexedBlock ?? "-"}
+                  {getNetworkLabel(item.chainId)} / chain {item.chainId} / block {item.lastIndexedBlock ?? "-"}
                   {item.lastLogAt ? ` / ${new Date(item.lastLogAt).toLocaleString()}` : ""}
                 </div>
               </div>
@@ -95,7 +134,20 @@ export function AdminHealthPanel() {
             <p className="mt-2">{message}</p>
           </div>
         )}
+        {indexers.length > 0 && visibleIndexers.length === 0 && (
+          <div className="rounded-md border border-dashed border-[var(--border)] bg-[var(--surface-2)] p-3 text-sm leading-6 text-[var(--text-2)]">
+            No {activeNetworkGroup === "mainnet" ? "mainnet" : "testnet"} watcher rows reported yet.
+          </div>
+        )}
       </div>
     </section>
   );
+}
+
+function isTestnetChain(chainId: number) {
+  return getNetworkByChainId(chainId)?.testnet ?? chainId !== 8453;
+}
+
+function getNetworkLabel(chainId: number) {
+  return getNetworkByChainId(chainId)?.name ?? "Unknown network";
 }

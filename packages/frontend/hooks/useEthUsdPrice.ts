@@ -4,12 +4,16 @@ import { useEffect, useState } from "react";
 
 const PRICE_URL = "/api/eth-price";
 const CACHE_KEY = "baseplay:eth-usd";
-const CACHE_TTL = 60_000;
+const CACHE_TTL = 5 * 60_000;
 
-export function useEthUsdPrice() {
+let inFlight: Promise<number | null> | null = null;
+
+export function useEthUsdPrice(enabled = true) {
   const [price, setPrice] = useState<number | null>(null);
 
   useEffect(() => {
+    if (!enabled) return;
+
     let cancelled = false;
 
     const cached = readCache();
@@ -17,12 +21,19 @@ export function useEthUsdPrice() {
 
     async function load() {
       try {
-        const response = await fetch(PRICE_URL, { cache: "no-store" });
-        if (!response.ok) return;
-        const data = (await response.json()) as { price?: number | null };
-        const nextPrice = data.price;
+        inFlight ??= fetch(PRICE_URL, { cache: "force-cache" })
+          .then((response) => (response.ok ? response.json() : null))
+          .then((data: { price?: number | null } | null) => {
+            const nextPrice = data?.price ?? null;
+            if (!Number.isFinite(nextPrice)) return null;
+            window.localStorage.setItem(CACHE_KEY, JSON.stringify({ price: nextPrice, ts: Date.now() }));
+            return nextPrice;
+          })
+          .finally(() => {
+            inFlight = null;
+          });
+        const nextPrice = await inFlight;
         if (!Number.isFinite(nextPrice)) return;
-        window.localStorage.setItem(CACHE_KEY, JSON.stringify({ price: nextPrice, ts: Date.now() }));
         if (!cancelled) setPrice(nextPrice ?? null);
       } catch {
         // USD display is supplemental; keep ETH-only UI if the public price API is unavailable.
@@ -36,7 +47,7 @@ export function useEthUsdPrice() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [enabled]);
 
   return price;
 }

@@ -6,22 +6,20 @@ import { Flame, Sparkles, Trophy } from "lucide-react";
 import type { Database } from "@baseplay/shared/types/supabase.types";
 import { BasenameLabel } from "@/components/base/BasenameLabel";
 import { useEthUsdPrice } from "@/hooks/useEthUsdPrice";
-import { getSupabaseBrowser } from "@/lib/supabase";
 import { formatEth, formatUsd } from "@/lib/formatters";
-import { fetchRecentOnchainRounds } from "@/lib/onchainRounds";
-import { calculateRoundXp, currentDailyStreak, levelFromXp } from "@/lib/progression";
 import { readSessionCache, writeSessionCache } from "@/lib/clientCache";
 
 type Leader = Database["public"]["Views"]["leaderboard_weekly_ranked"]["Row"];
 type SortMode = "xp" | "volume";
 const PAGE_SIZE = 50;
-const CACHE_TTL = 90_000;
-type LeaderboardCache = { leaders: Leader[]; hasMore: boolean; source: "supabase" | "onchain" };
+const CACHE_TTL = 30 * 60_000;
+type LeaderboardCache = { leaders: Leader[]; hasMore: boolean; source: "supabase" | "unconfigured" };
+type LeaderboardResponse = LeaderboardCache & { cachedAt: string; cacheTtlSeconds: number };
 
 export default function LeaderboardPage() {
   const [leaders, setLeaders] = useState<Leader[]>([]);
   const [ready, setReady] = useState(false);
-  const [source, setSource] = useState<"supabase" | "onchain">("onchain");
+  const [source, setSource] = useState<"supabase" | "unconfigured">("unconfigured");
   const [sort, setSort] = useState<SortMode>("xp");
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
@@ -39,56 +37,28 @@ export default function LeaderboardPage() {
     }
 
     setReady(false);
-    const supabase = getSupabaseBrowser();
-    if (!supabase) {
-      loadOnchainLeaders(sort).then((rows) => {
-        const next = rows.slice(0, (page + 1) * PAGE_SIZE);
-        const nextHasMore = rows.length > (page + 1) * PAGE_SIZE;
-        setLeaders(next);
-        setHasMore(nextHasMore);
-        setSource("onchain");
-        writeSessionCache(cacheKey, { leaders: next, hasMore: nextHasMore, source: "onchain" });
-      }).finally(() => setReady(true));
-      return;
-    }
 
     async function load() {
-      const from = page * PAGE_SIZE;
-      const to = from + PAGE_SIZE - 1;
-      const weekStart = getWeekStart();
-      const { data, error } = await supabase
-        .from("leaderboard_weekly_ranked")
-        .select("*")
-        .eq("week_start", weekStart)
-        .order(sort === "xp" ? "xp_rank" : "total_wagered", { ascending: sort === "xp" })
-        .range(from, to);
-
-      if (error) {
-        console.warn("[BasePlay] Supabase leaderboard query failed", error.message);
+      try {
+        const response = await fetch(`/api/leaderboard?sort=${sort}&page=${page}&pageSize=${PAGE_SIZE}`, { cache: "force-cache" });
+        if (!response.ok) throw new Error(`Leaderboard HTTP ${response.status}`);
+        const result = (await response.json()) as LeaderboardResponse;
+        setLeaders((current) => {
+          const next = page === 0 ? result.leaders : [...current, ...result.leaders];
+          writeSessionCache(cacheKey, { leaders: next, hasMore: result.hasMore, source: result.source });
+          return next;
+        });
+        setHasMore(result.hasMore);
+        setSource(result.source);
+      } catch (error) {
+        console.warn("[BasePlay] Leaderboard API query failed", error);
+        setHasMore(false);
         setLeaders((current) => {
           const next = page === 0 ? [] : current;
-          writeSessionCache(cacheKey, { leaders: next, hasMore: false, source: "supabase" });
+          writeSessionCache(cacheKey, { leaders: next, hasMore: false, source: "unconfigured" });
           return next;
         });
-        setHasMore(false);
-        setSource("supabase");
-      } else if (data) {
-        const rows = data as Leader[];
-        setLeaders((current) => {
-          const next = page === 0 ? rows : [...current, ...rows];
-          writeSessionCache(cacheKey, { leaders: next, hasMore: rows.length === PAGE_SIZE, source: "supabase" });
-          return next;
-        });
-        setHasMore(rows.length === PAGE_SIZE);
-        setSource("supabase");
-      } else {
-        const rows = await loadOnchainLeaders(sort);
-        const next = rows.slice(0, (page + 1) * PAGE_SIZE);
-        const nextHasMore = rows.length > (page + 1) * PAGE_SIZE;
-        setLeaders(next);
-        setHasMore(nextHasMore);
-        setSource("onchain");
-        writeSessionCache(cacheKey, { leaders: next, hasMore: nextHasMore, source: "onchain" });
+        setSource("unconfigured");
       }
       setReady(true);
     }
@@ -198,59 +168,4 @@ export default function LeaderboardPage() {
       </section>
     </main>
   );
-}
-
-async function loadOnchainLeaders(sort: SortMode): Promise<Leader[]> {
-  const rounds = await fetchRecentOnchainRounds({ limit: 250 });
-  const grouped = new Map<string, Pick<Leader, "player" | "game_count" | "total_wagered" | "net_profit" | "biggest_win" | "xp" | "current_streak"> & { dates: string[] }>();
-
-  for (const round of rounds) {
-    const key = round.player.toLowerCase();
-    const current =
-      grouped.get(key) ??
-      {
-        player: key,
-        game_count: 0,
-        total_wagered: 0,
-        net_profit: 0,
-        biggest_win: 0,
-        xp: 0,
-        current_streak: 0,
-        dates: []
-      };
-
-    current.game_count += 1;
-    current.total_wagered += round.bet_amount;
-    current.net_profit += round.payout - round.bet_amount;
-    current.biggest_win = Math.max(current.biggest_win, round.payout);
-    current.xp += calculateRoundXp(round.bet_amount, round.won);
-    current.dates.push(round.settled_at);
-    current.current_streak = currentDailyStreak(current.dates);
-    grouped.set(key, current);
-  }
-
-  const weekStart = getWeekStart();
-  return Array.from(grouped.values())
-    .sort((a, b) => sort === "xp" ? b.xp - a.xp || b.total_wagered - a.total_wagered : b.total_wagered - a.total_wagered || b.xp - a.xp)
-    .map((leader) => ({
-      id: `${leader.player}-${weekStart}`,
-      week_start: weekStart,
-      updated_at: new Date().toISOString(),
-      level: levelFromXp(leader.xp),
-      xp_rank: 0,
-      profit_rank: 0,
-      ...leader
-    }))
-    .map((leader, index) => ({
-      ...leader,
-      xp_rank: sort === "xp" ? index + 1 : leader.xp_rank,
-      profit_rank: leader.profit_rank
-    }));
-}
-
-function getWeekStart() {
-  const date = new Date();
-  const day = date.getUTCDay() || 7;
-  date.setUTCDate(date.getUTCDate() - day + 1);
-  return date.toISOString().slice(0, 10);
 }

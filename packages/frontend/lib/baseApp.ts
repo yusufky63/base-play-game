@@ -21,7 +21,7 @@ export function baseProfileUrl(address: string) {
 
 export function baseAppChecklist() {
   return [
-    "Wallet connection and contract writes use wagmi/viem with Base Account, injected wallet, Coinbase Wallet, and WalletConnect options.",
+    "Wallet connection and contract writes use wagmi/viem with injected wallet and Coinbase Wallet connectors, with wallet address as the canonical identity.",
     "The Base App ID meta tag is present in the root Next.js metadata.",
     "Connected wallet address is the user identity in Base App.",
     "Basename display is resolved as a display layer and never replaces wallet-address identity.",

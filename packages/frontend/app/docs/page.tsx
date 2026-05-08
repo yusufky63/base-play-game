@@ -3,6 +3,7 @@ import { BadgeCheck, BookOpen, CircleDollarSign, ExternalLink, Gift, HelpCircle,
 import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
 import { NETWORKS } from "@baseplay/shared/config/networks";
+import { GameIdentity } from "@/components/game/GameIdentity";
 
 const docNav = [
   { id: "essentials", label: "Essentials", title: "Player documentation", description: "Core player concepts before placing a wager." },
@@ -32,7 +33,7 @@ const roundSteps = [
   },
   {
     title: "See the result",
-    body: "The contract settles the round. The screen shows win or loss, and the result appears in the live feed after it is indexed. If settlement is delayed, the connected profile and wallet menu show the pending round and refund action."
+    body: "The contract settles the round. The screen shows win or loss, and the result appears in the live feed after it is indexed. Feed rows open a round detail view with the VRF request, transaction links, and indexed event timeline. If settlement is delayed, the connected profile and wallet menu show the pending round and refund action."
   }
 ];
 
@@ -45,7 +46,7 @@ const playerNotes = [
   {
     icon: <CircleDollarSign size={18} />,
     title: "Clear payouts",
-    body: "Wagers are shown in ETH with a lightweight USD reference where it helps. Quick bet buttons now use smaller amounts, and the contract enforces the active minimum and maximum bet limits."
+    body: "Wagers and profile profit rows are shown in ETH with a lightweight USD reference where it helps. Quick bet buttons now use smaller amounts with a light card shadow, and the contract enforces the active minimum and maximum bet limits."
   },
   {
     icon: <Sparkles size={18} />,
@@ -55,7 +56,7 @@ const playerNotes = [
   {
     icon: <Radio size={18} />,
     title: "Fast activity views",
-    body: "Live feed, profile tabs, and leaderboard data are indexed from settled Base events, cached briefly, and refreshed in the background. Leaderboard can be viewed by weekly XP or wager volume, and ENS fallback display names only resolve when a server-side Ethereum mainnet RPC is configured."
+    body: "Live feed, profile tabs, leaderboard data, Home stats, and round detail timelines are indexed from Base events and cached by view importance instead of polling every few seconds. Leaderboard responses are shared for 30 minutes, Home stats for 10 minutes, compact feeds for 5 minutes, round details for 30 minutes, and profile tabs only load their own data when opened. Basenames are cached after first lookup, and ENS fallback display names only resolve when a server-side Ethereum mainnet RPC is configured."
   },
   {
     icon: <Sparkles size={18} />,
@@ -121,7 +122,11 @@ const faqs = [
   },
   {
     question: "Why can live feed take a few seconds?",
-    answer: "The on-chain result is final first. Feed, profile, and leaderboard views are updated by the backend indexer after it reads settled Base events, so display data can lag the transaction slightly."
+    answer: "The on-chain result is final first. Feed, profile, and leaderboard views are updated by the backend indexer after it reads settled Base events, and public activity views use cache windows to avoid unnecessary Supabase and RPC load."
+  },
+  {
+    question: "Why does the leaderboard not update every second?",
+    answer: "Leaderboard data is not used to settle games, so it is served through a shared 30 minute cache. A player opening it later can reuse the same cached ranking instead of making another database query."
   },
   {
     question: "Why can a round be pending?",
@@ -142,6 +147,10 @@ const faqs = [
   {
     question: "Do referral rewards pay ETH?",
     answer: "No. Referral rewards are only XP and badge progression. They do not create claimable ETH, rebates, or vault liabilities."
+  },
+  {
+    question: "Can public clients read referral history directly?",
+    answer: "No. Referral relationship and reward rows are kept behind the backend referral API, which uses service-role Supabase access and request rate limits."
   },
   {
     question: "When do quests complete?",
@@ -265,11 +274,11 @@ export default async function DocsPage({ searchParams }: { searchParams?: Promis
               {GAMES_REGISTRY.map((game) => (
                 <Link key={game.id} href={game.path} className="docs-game-row">
                   <div>
-                    <strong>{game.name}</strong>
+                    <GameIdentity gameId={game.id} label={game.name} size="sm" />
                     <p>{game.description}</p>
                   </div>
                   <Metric label="Max payout" value={`${game.maxMultiplier}x`} />
-                  <Metric label="Edge" value="3%" />
+                  <Metric label="Edge" value="5%" />
                 </Link>
               ))}
             </div>
@@ -294,7 +303,7 @@ export default async function DocsPage({ searchParams }: { searchParams?: Promis
                   <div className="docs-contract-list">
                     <ContractDocRow label="GameVault" address={CONTRACT_ADDRESSES[network.chainId]?.GameVault} explorer={network.blockExplorer} />
                     {GAMES_REGISTRY.filter((game) => game.active && game.chains.includes(network.chainId === 8453 ? "baseMainnet" : "baseSepolia")).map((game) => (
-                      <ContractDocRow key={`${network.chainId}-${game.id}`} label={game.name} address={CONTRACT_ADDRESSES[network.chainId]?.[game.contractName]} explorer={network.blockExplorer} />
+                      <ContractDocRow key={`${network.chainId}-${game.id}`} label={game.name} gameId={game.id} address={CONTRACT_ADDRESSES[network.chainId]?.[game.contractName]} explorer={network.blockExplorer} />
                     ))}
                   </div>
                 </div>
@@ -426,10 +435,10 @@ function DocLink({ href, label }: { href: string; label: string }) {
   );
 }
 
-function ContractDocRow({ label, address, explorer }: { label: string; address?: string; explorer: string }) {
+function ContractDocRow({ label, address, explorer, gameId }: { label: string; address?: string; explorer: string; gameId?: string }) {
   return (
     <div className="docs-contract-row">
-      <span>{label}</span>
+      {gameId ? <GameIdentity gameId={gameId} label={label} size="xs" /> : <span>{label}</span>}
       <code>{address ?? "Not deployed"}</code>
       {address && (
         <a href={`${explorer}/address/${address}`} target="_blank" rel="noopener noreferrer">

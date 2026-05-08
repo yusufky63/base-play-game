@@ -85,7 +85,7 @@ function QuickAmountButton({
       onClick={() => onAmountChange(quickAmount)}
       className={`bet-quick-button rounded-md border px-2 py-2 transition-colors ${
         amount === quickAmount
-          ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--text-1)]"
+          ? "bet-quick-button-active border-[var(--accent)] bg-[var(--accent-light)] text-[var(--text-1)]"
           : "border-[var(--border)] text-[var(--text-2)] hover:text-[var(--text-1)]"
       }`}
     >

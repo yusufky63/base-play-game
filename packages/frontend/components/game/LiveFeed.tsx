@@ -1,11 +1,14 @@
 "use client";
 
+import { useState, type KeyboardEvent, type MouseEvent } from "react";
 import Link from "next/link";
-import { ArrowDownRight, ArrowUpRight, Radio, SquareArrowOutUpRight } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Radio } from "lucide-react";
 import { useEthUsdPrice } from "@/hooks/useEthUsdPrice";
 import { formatEth, formatUsd } from "@/lib/formatters";
 import { BasenameLabel } from "@/components/base/BasenameLabel";
 import { type FeedRound, useRecentRounds } from "@/hooks/useRecentRounds";
+import { RoundDetailDrawer } from "@/components/rounds/RoundDetailDrawer";
+import { GameIdentity } from "@/components/game/GameIdentity";
 
 interface LiveFeedProps {
   gameId?: string;
@@ -19,7 +22,8 @@ export function LiveFeed({ gameId, title = "Live feed", limit = 8, compact = fal
   const { data, isLoading } = useRecentRounds({ gameId, limit, winsOnly: compact });
   const rows = compact ? (data?.rows ?? []).filter((row) => row.won) : (data?.rows ?? []);
   const ready = !isLoading;
-  const ethUsd = useEthUsdPrice();
+  const ethUsd = useEthUsdPrice(!compact);
+  const [selectedRound, setSelectedRound] = useState<FeedRound | null>(null);
 
   if (compact) {
     return (
@@ -56,7 +60,7 @@ export function LiveFeed({ gameId, title = "Live feed", limit = 8, compact = fal
         <div className="flex items-center gap-2">
           {showAllLink && (
             <Link href={gameId ? `/live-feed?game=${gameId}` : "/live-feed"} aria-label="Open feed page" className="feed-link-button">
-              <SquareArrowOutUpRight size={14} />
+              <ArrowUpRight size={15} strokeWidth={2.25} />
             </Link>
           )}
           <Radio size={14} className="text-[var(--accent)]" />
@@ -73,7 +77,7 @@ export function LiveFeed({ gameId, title = "Live feed", limit = 8, compact = fal
           </div>
         ))}
         {ready && rows.map((row) => (
-          <FeedRow key={row.id} row={row} ethUsd={ethUsd} />
+          <FeedRow key={row.id} row={row} ethUsd={ethUsd} onSelect={() => setSelectedRound(row)} />
         ))}
         {ready && rows.length === 0 && (
           <div className="rounded-md border border-dashed border-[var(--border)] px-3 py-4 text-sm text-[var(--text-3)]">
@@ -81,24 +85,36 @@ export function LiveFeed({ gameId, title = "Live feed", limit = 8, compact = fal
           </div>
         )}
       </div>
+      <RoundDetailDrawer round={selectedRound} open={Boolean(selectedRound)} onClose={() => setSelectedRound(null)} />
     </section>
   );
 }
 
-function FeedRow({ row, ethUsd }: { row: FeedRound; ethUsd: number | null }) {
+function FeedRow({ row, ethUsd, onSelect }: { row: FeedRound; ethUsd: number | null; onSelect: () => void }) {
   const Icon = row.won ? ArrowUpRight : ArrowDownRight;
   const net = Number(row.payout) - Number(row.bet_amount);
 
   return (
-    <div className="feed-row grid grid-cols-[1fr_auto] gap-3 px-3 py-2.5">
+    <div
+      className="feed-row grid cursor-pointer grid-cols-[1fr_auto] gap-3 px-3 py-2.5"
+      role="button"
+      tabIndex={0}
+      onClick={onSelect}
+      onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect();
+        }
+      }}
+    >
       <div className="min-w-0">
         <div className="font-mono text-xs font-semibold text-[var(--text-1)]">
-          <Link href={`/profile/${row.player}`}>
+          <Link href={`/profile/${row.player}`} onClick={(event: MouseEvent<HTMLAnchorElement>) => event.stopPropagation()}>
             <BasenameLabel address={row.player as `0x${string}`} />
           </Link>
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-[var(--text-3)]">
-          <span className="uppercase">{row.game_id}</span>
+          <GameIdentity gameId={row.game_id} size="xs" className="game-identity-feed" />
           <ResultBadge won={row.won} />
         </div>
       </div>
@@ -119,7 +135,7 @@ function FeedChip({ row }: { row: FeedRound }) {
   return (
     <span className="feed-chip inline-flex items-center gap-2 font-mono text-[11px] text-[var(--text-2)]">
       <ResultBadge won={row.won} compact />
-      <span className="font-semibold text-[var(--text-1)]">{row.game_id}</span>
+      <GameIdentity gameId={row.game_id} size="xs" className="game-identity-feed-chip" />
       <Link href={`/profile/${row.player}`} className="hidden text-[var(--text-3)] sm:inline">
         <BasenameLabel address={row.player as `0x${string}`} />
       </Link>

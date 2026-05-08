@@ -50,7 +50,7 @@ describe("CoinFlipGame", function () {
   it("reserves maximum net payout while a round is active", async function () {
     const { game, player, vault } = await deployFixture();
     const params = ethers.AbiCoder.defaultAbiCoder().encode(["uint8"], [1]);
-    const expectedReserved = (BET * 2n * 9700n) / 10_000n;
+    const expectedReserved = (BET * 2n * 9500n) / 10_000n;
 
     await game.connect(player).placeBet(params, { value: BET });
 

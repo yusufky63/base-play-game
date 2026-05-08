@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent, type MouseEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Radio, RefreshCw } from "lucide-react";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
 import { formatEth, shortenAddress } from "@/lib/formatters";
-import { useRoundPages } from "@/hooks/useRecentRounds";
+import { type FeedRound, useRoundPages } from "@/hooks/useRecentRounds";
+import { RoundDetailDrawer } from "@/components/rounds/RoundDetailDrawer";
+import { GameIdentity } from "@/components/game/GameIdentity";
 
 export function LiveFeedPageClient({ initialGame = "all" }: { initialGame?: string }) {
   const router = useRouter();
@@ -15,6 +17,7 @@ export function LiveFeedPageClient({ initialGame = "all" }: { initialGame?: stri
   const feed = useRoundPages({ gameId: gameFilter, limit: 50 });
   const rows = useMemo(() => feed.data?.pages.flatMap((page) => page.rows) ?? [], [feed.data]);
   const ready = !feed.isLoading;
+  const [selectedRound, setSelectedRound] = useState<FeedRound | null>(null);
 
   useEffect(() => {
     setSelectedGame(initialGame);
@@ -93,9 +96,21 @@ export function LiveFeedPageClient({ initialGame = "all" }: { initialGame?: stri
           </div>
         ))}
         {ready && rows.map((row) => (
-          <div key={row.id} className="grid grid-cols-[1fr_80px] gap-3 border-b border-[var(--border)] px-4 py-4 text-sm last:border-b-0 md:grid-cols-[110px_1fr_120px_120px_90px]">
-            <span className="font-mono text-xs font-semibold uppercase text-[var(--text-1)]">{row.game_id}</span>
-            <Link href={`/profile/${row.player}`} className="min-w-0 truncate font-mono text-[var(--text-2)] hover:text-[var(--accent)]">
+          <div
+            key={row.id}
+            className="live-feed-page-row grid cursor-pointer grid-cols-[1fr_80px] gap-3 border-b border-[var(--border)] px-4 py-4 text-sm last:border-b-0 md:grid-cols-[110px_1fr_120px_120px_90px]"
+            role="button"
+            tabIndex={0}
+            onClick={() => setSelectedRound(row)}
+            onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                setSelectedRound(row);
+              }
+            }}
+          >
+            <GameIdentity gameId={row.game_id} size="xs" className="game-identity-feed" />
+            <Link href={`/profile/${row.player}`} onClick={(event: MouseEvent<HTMLAnchorElement>) => event.stopPropagation()} className="min-w-0 truncate font-mono text-[var(--text-2)] hover:text-[var(--accent)]">
               {shortenAddress(row.player)}
             </Link>
             <span className="hidden text-right font-mono text-[var(--text-2)] md:block">{formatEth(row.bet_amount)} ETH</span>
@@ -119,6 +134,7 @@ export function LiveFeedPageClient({ initialGame = "all" }: { initialGame?: stri
         )}
         {ready && rows.length === 0 && <div className="px-4 py-10 text-center text-sm text-[var(--text-3)]">No settled rounds yet.</div>}
       </section>
+      <RoundDetailDrawer round={selectedRound} open={Boolean(selectedRound)} onClose={() => setSelectedRound(null)} />
     </main>
   );
 }

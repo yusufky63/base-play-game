@@ -1,15 +1,19 @@
 import { NextResponse } from "next/server";
 import { createPublicClient, encodePacked, fallback, getAddress, http, keccak256, namehash, parseAbi } from "viem";
 import { base, mainnet } from "viem/chains";
-import { BASE_MAINNET_FRONTEND_RPC_URLS } from "@baseplay/shared/config/networks";
+import { BASE_MAINNET_BACKEND_RPC_URLS } from "@baseplay/shared/config/networks";
 
 const BASE_L2_RESOLVER = "0xC6d566A56A1aFf6508b41f6c90ff131615583BCD";
 const BASE_COIN_TYPE = "80002105";
+const CACHE_TTL_MS = 24 * 60 * 60_000;
+const CACHE_CONTROL = "public, s-maxage=86400, stale-while-revalidate=604800";
 const l2ResolverAbi = parseAbi(["function name(bytes32 node) view returns (string)"]);
+const cache = new Map<string, { name: string | null; expiresAt: number }>();
+const pending = new Map<string, Promise<string | null>>();
 
 const baseClient = createPublicClient({
   chain: base,
-  transport: fallback(BASE_MAINNET_FRONTEND_RPC_URLS.map((url) => http(url, { timeout: 8_000, retryCount: 1, retryDelay: 250 })))
+  transport: fallback(BASE_MAINNET_BACKEND_RPC_URLS.map((url) => http(url, { timeout: 8_000, retryCount: 1, retryDelay: 250 })))
 });
 
 const mainnetRpcUrl = process.env.MAINNET_RPC_URL || process.env.ETHEREUM_RPC_URL || "";
@@ -25,18 +29,40 @@ export async function GET(_request: Request, { params }: { params: Promise<{ add
 
   try {
     const normalized = getAddress(address);
-    const name = await getBasename(normalized) ?? await getEnsName(normalized);
+    const name = await resolveCachedName(normalized);
     return NextResponse.json(
       { name },
       {
         headers: {
-          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=900"
+          "Cache-Control": CACHE_CONTROL
         }
       }
     );
   } catch {
-    return NextResponse.json({ name: null }, { status: 200 });
+    return NextResponse.json({ name: null }, { status: 200, headers: { "Cache-Control": CACHE_CONTROL } });
   }
+}
+
+async function resolveCachedName(address: `0x${string}`) {
+  const key = address.toLowerCase();
+  const current = cache.get(key);
+  if (current && current.expiresAt > Date.now()) return current.name;
+
+  let request = pending.get(key);
+  if (!request) {
+    request = Promise.resolve(getBasename(address))
+      .then((basename) => basename ?? getEnsName(address))
+      .then((name) => {
+        cache.set(key, { name, expiresAt: Date.now() + CACHE_TTL_MS });
+        return name;
+      })
+      .finally(() => {
+        pending.delete(key);
+      });
+    pending.set(key, request);
+  }
+
+  return request;
 }
 
 async function getBasename(address: `0x${string}`) {

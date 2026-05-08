@@ -33,10 +33,12 @@ type RpcClient = ReturnType<typeof createPublicClient> & {
   multicall: (args: { allowFailure: boolean; contracts: readonly unknown[] }) => Promise<Array<{ status: "success"; result: unknown } | { status: "failure"; error: unknown }>>;
 };
 
-const STATUS_CACHE_MS = readPositiveNumber("CONTRACT_STATUS_CACHE_MS", 20_000);
+const STATUS_CACHE_MS = readPositiveNumber("CONTRACT_STATUS_CACHE_MS", 120_000);
+const PENDING_ROUNDS_CACHE_MS = readPositiveNumber("PENDING_ROUNDS_CACHE_MS", 30_000);
 const RPC_COOLDOWN_MS = readPositiveNumber("RPC_UNHEALTHY_COOLDOWN_MS", 45_000);
 const unhealthyUntil = new Map<string, number>();
 const statusCache = new Map<number, { expiresAt: number; data: ContractStatusResponse }>();
+const pendingRoundsCache = new Map<string, { expiresAt: number; rows: PendingRoundSnapshot[] }>();
 
 export type ContractStatusResponse = {
   status: "ok";
@@ -112,12 +114,18 @@ export async function getPendingRoundsForPlayer({
     throw new Error("Invalid player address");
   }
 
+  const cacheKey = `${chainId}:${player.toLowerCase()}:${scanAll ? "all" : "active"}`;
+  const cached = pendingRoundsCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.rows;
+
   const chains = scanAll ? preferredChainOrder(chainId) : [chainId];
   const rows: PendingRoundSnapshot[] = [];
   for (const currentChainId of chains) {
     rows.push(...(await withRpcFallback(currentChainId, (client) => loadPendingRounds(client, currentChainId, player as Address))));
   }
-  return rows.sort((a, b) => Number(BigInt(b.blockNumber) - BigInt(a.blockNumber)));
+  const sorted = rows.sort((a, b) => Number(BigInt(b.blockNumber) - BigInt(a.blockNumber)));
+  pendingRoundsCache.set(cacheKey, { rows: sorted, expiresAt: Date.now() + PENDING_ROUNDS_CACHE_MS });
+  return sorted;
 }
 
 async function loadContractStatus(client: RpcClient, chainId: SupportedChainId): Promise<ContractStatusResponse> {

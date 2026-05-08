@@ -23,7 +23,7 @@ const DEFAULT_NATIVE_SUBSCRIPTION_FUNDING: Record<number, string> = {
   84532: "0.1",
   8453: "0.001"
 };
-const VAULT_CONTRACT_NAME = process.env.VAULT_CONTRACT_NAME || "GameVault";
+const VAULT_CONTRACT_NAME = process.env.VAULT_CONTRACT_NAME || "GameVaultV2";
 const VRF_SUBSCRIPTION_ABI = [
   "function createSubscription() external returns (uint256)",
   "function fundSubscriptionWithNative(uint256 subId) external payable",

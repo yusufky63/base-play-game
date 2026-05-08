@@ -2,6 +2,6 @@
 
 import { useRoundPages } from "@/hooks/useRecentRounds";
 
-export function usePlayerRounds(address?: string | null, limit = 20) {
-  return useRoundPages({ player: address ?? undefined, limit });
+export function usePlayerRounds(address?: string | null, limit = 20, { enabled = true }: { enabled?: boolean } = {}) {
+  return useRoundPages({ player: address ?? undefined, limit, enabled: Boolean(address) && enabled });
 }
