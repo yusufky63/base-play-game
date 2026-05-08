@@ -56,7 +56,7 @@ const playerNotes = [
   {
     icon: <Radio size={18} />,
     title: "Fast activity views",
-    body: "Live feed, profile tabs, leaderboard data, Home stats, and round detail timelines are indexed from Base events and cached by view importance instead of polling every few seconds. Leaderboard responses are shared for 30 minutes, Home stats for 10 minutes, compact feeds for 5 minutes, round details for 30 minutes, and profile tabs only load their own data when opened. Basenames are cached after first lookup, direct contract fallback reads use multicall batching where possible, and ENS fallback display names only resolve when a server-side Ethereum mainnet RPC is configured."
+    body: "Live feed, profile tabs, leaderboard data, Home stats, and round detail timelines are indexed from Base events and cached by view importance instead of polling every few seconds. Leaderboard responses are shared for 30 minutes, Home stats for 10 minutes, compact feeds for 5 minutes, round details for 30 minutes, and profile tabs only load their own data when opened. Profile tab labels avoid stale counts until opened, and each profile panel shows loading rows while its data is fetched. Basenames are cached after first lookup, direct contract fallback reads use multicall batching where possible, and ENS fallback display names only resolve when a server-side Ethereum mainnet RPC is configured."
   },
   {
     icon: <Sparkles size={18} />,
@@ -131,6 +131,10 @@ const faqs = [
   {
     question: "How is Base App support handled?",
     answer: "BasePlay uses standard wagmi and viem wallet flows with Base Account, injected wallet, and Coinbase Wallet connectors. Wallet transactions include the BasePlay Builder Code attribution suffix, and fallback contract status reads are batched with multicall to reduce RPC load."
+  },
+  {
+    question: "Why do profile tabs not show counts in the tab label?",
+    answer: "Profile sections are lazy-loaded to reduce Supabase and RPC usage. Counts are shown inside the opened section after the relevant data has loaded, with loading rows displayed while the request is in progress."
   },
   {
     question: "Why does the leaderboard not update every second?",

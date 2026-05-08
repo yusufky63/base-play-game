@@ -43,13 +43,13 @@ export function ProfileClient({ address }: { address: string }) {
   const winRate = totalRounds > 0 && data ? (data.wins / totalRounds) * 100 : 0;
   const netProfit = stats?.net_profit ?? 0;
   const isConnectedProfile = Boolean(account.address && validAddress && account.address.toLowerCase() === validAddress.toLowerCase());
-  const profileTabs: Array<{ id: ProfileTab; label: string; detail: string }> = [
-    { id: "profile", label: "Profile", detail: `Lv ${level}` },
-    { id: "games", label: "Games", detail: `${data?.gameStats.length ?? 0} played` },
-    { id: "rounds", label: "Rounds", detail: `${roundPages.reduce((count, page) => count + page.rows.length, 0)} loaded` },
-    { id: "badges", label: "Badges", detail: `${data?.badges.length ?? 0} earned` },
-    { id: "referrals", label: "Referrals", detail: `${referralSummary.data?.totalReferrals ?? 0} invited` },
-    ...(isConnectedProfile ? [{ id: "refunds" as const, label: "Refunds", detail: "Active rounds" }] : [])
+  const profileTabs: Array<{ id: ProfileTab; label: string }> = [
+    { id: "profile", label: "Profile" },
+    { id: "games", label: "Games" },
+    { id: "rounds", label: "Rounds" },
+    { id: "badges", label: "Badges" },
+    { id: "referrals", label: "Referrals" },
+    ...(isConnectedProfile ? [{ id: "refunds" as const, label: "Refunds" }] : [])
   ];
 
   useEffect(() => {
@@ -122,7 +122,7 @@ export function ProfileClient({ address }: { address: string }) {
           }}
           className="control-shell flex items-center gap-2 px-3 text-xs font-bold"
         >
-          <RefreshCw size={13} className={profile.isFetching || rounds.isFetching ? "animate-spin text-[var(--accent)]" : ""} />
+          <RefreshCw size={13} className={profile.isFetching || rounds.isFetching || referralSummary.isFetching ? "animate-spin text-[var(--accent)]" : ""} />
           Refresh
         </button>
       </div>
@@ -139,58 +139,62 @@ export function ProfileClient({ address }: { address: string }) {
               onClick={() => setActiveTab(tab.id)}
             >
               <span>{tab.label}</span>
-              <small>{tab.detail}</small>
             </button>
           ))}
         </div>
 
         {activeTab === "profile" && (
-          <div className="profile-tab-panel profile-tab-panel-flat">
-            <section className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-              <div className="profile-hero panel p-5">
-                <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 font-mono text-[11px] font-bold uppercase text-[var(--text-3)]">
-                      <Sparkles size={14} className="text-[var(--accent)]" />
-                      Level {level}
+          <div className="profile-tab-panel profile-tab-panel-flat" aria-busy={profile.isLoading}>
+            {profile.isLoading ? (
+              <ProfileOverviewLoading />
+            ) : (
+              <section className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+                <div className="profile-hero panel p-5">
+                  <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 font-mono text-[11px] font-bold uppercase text-[var(--text-3)]">
+                        <Sparkles size={14} className="text-[var(--accent)]" />
+                        Level {level}
+                      </div>
+                      <div className="mt-2 display-heading text-5xl font-bold text-[var(--text-1)]">{xp} XP</div>
+                      <div className="mt-4 h-3 overflow-hidden rounded-full bg-[var(--surface-3)]">
+                        <span className="block h-full rounded-full bg-[var(--accent)]" style={{ width: `${progress.percent}%` }} />
+                      </div>
+                      <div className="mt-2 flex justify-between font-mono text-[11px] text-[var(--text-3)]">
+                        <span>{progress.current} current</span>
+                        <span>{progress.required} to next level band</span>
+                      </div>
                     </div>
-                    <div className="mt-2 display-heading text-5xl font-bold text-[var(--text-1)]">{xp} XP</div>
-                    <div className="mt-4 h-3 overflow-hidden rounded-full bg-[var(--surface-3)]">
-                      <span className="block h-full rounded-full bg-[var(--accent)]" style={{ width: `${progress.percent}%` }} />
+                    <div className="profile-streak">
+                      <Flame size={22} />
+                      <strong>{stats?.current_streak ?? 0}d</strong>
+                      <span>current streak</span>
                     </div>
-                    <div className="mt-2 flex justify-between font-mono text-[11px] text-[var(--text-3)]">
-                      <span>{progress.current} current</span>
-                      <span>{progress.required} to next level band</span>
-                    </div>
-                  </div>
-                  <div className="profile-streak">
-                    <Flame size={22} />
-                    <strong>{stats?.current_streak ?? 0}d</strong>
-                    <span>current streak</span>
                   </div>
                 </div>
-              </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Metric icon={<Activity size={17} />} label="Rounds" value={String(totalRounds)} />
-                <Metric icon={<Trophy size={17} />} label="Win rate" value={`${winRate.toFixed(1)}%`} />
-                <Metric label="Net profit" value={formatSignedEth(netProfit)} detail={formatSignedUsd(netProfit, ethUsd)} tone={netProfit >= 0 ? "win" : "loss"} />
-                <Metric label="Volume" value={`${formatEth(stats?.total_wagered ?? 0)} ETH`} detail={ethUsd ? formatUsd((stats?.total_wagered ?? 0) * ethUsd) : undefined} />
-                <Metric label="XP rank" value={data?.weekly?.xp_rank ? `#${data.weekly.xp_rank}` : "-"} />
-                <Metric label="Profit rank" value={data?.weekly?.profit_rank ? `#${data.weekly.profit_rank}` : "-"} />
-              </div>
-            </section>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Metric icon={<Activity size={17} />} label="Rounds" value={String(totalRounds)} />
+                  <Metric icon={<Trophy size={17} />} label="Win rate" value={`${winRate.toFixed(1)}%`} />
+                  <Metric label="Net profit" value={formatSignedEth(netProfit)} detail={formatSignedUsd(netProfit, ethUsd)} tone={netProfit >= 0 ? "win" : "loss"} />
+                  <Metric label="Volume" value={`${formatEth(stats?.total_wagered ?? 0)} ETH`} detail={ethUsd ? formatUsd((stats?.total_wagered ?? 0) * ethUsd) : undefined} />
+                  <Metric label="XP rank" value={data?.weekly?.xp_rank ? `#${data.weekly.xp_rank}` : "-"} />
+                  <Metric label="Profit rank" value={data?.weekly?.profit_rank ? `#${data.weekly.profit_rank}` : "-"} />
+                </div>
+              </section>
+            )}
           </div>
         )}
 
         {activeTab === "games" && (
-          <div className="profile-tab-panel">
+          <div className="profile-tab-panel" aria-busy={profile.isLoading}>
             <div className="profile-panel-heading">
               <h2 className="display-heading text-lg font-bold text-[var(--text-1)]">Played games</h2>
-              <span>{data?.gameStats.length ?? 0} games</span>
+              <span>{profile.isLoading ? "Loading" : `${data?.gameStats.length ?? 0} games`}</span>
             </div>
             <div className="divide-y divide-[var(--border)]">
-              {(data?.gameStats ?? []).map((game) => {
+              {profile.isLoading && <ProfileLoadingRows label="Loading game stats" />}
+              {!profile.isLoading && (data?.gameStats ?? []).map((game) => {
                 const gameNetUsd = formatSignedUsd(game.net_profit, ethUsd);
                 return (
                   <div key={`${game.game_id}-${game.chain_id}`} className="profile-list-row">
@@ -206,20 +210,20 @@ export function ProfileClient({ address }: { address: string }) {
                   </div>
                 );
               })}
-              {profile.isLoading && <div className="px-4 py-5 text-sm text-[var(--text-3)]">Loading game stats...</div>}
               {!profile.isLoading && (data?.gameStats.length ?? 0) === 0 && <div className="px-4 py-5 text-sm text-[var(--text-3)]">No played games yet.</div>}
             </div>
           </div>
         )}
 
         {activeTab === "rounds" && (
-          <div className="profile-tab-panel">
+          <div className="profile-tab-panel" aria-busy={rounds.isLoading || rounds.isFetchingNextPage}>
             <div className="profile-panel-heading">
               <h2 className="display-heading text-lg font-bold text-[var(--text-1)]">Recent rounds</h2>
-              <span>Page {roundPages.length > 0 ? roundPageIndex + 1 : 0}</span>
+              <span>{rounds.isLoading ? "Loading" : `Page ${roundPages.length > 0 ? roundPageIndex + 1 : 0}`}</span>
             </div>
             <div className="divide-y divide-[var(--border)]">
-              {currentRoundRows.map((row) => {
+              {rounds.isLoading && <ProfileLoadingRows label="Loading rounds" />}
+              {!rounds.isLoading && currentRoundRows.map((row) => {
                 const net = Number(row.payout) - Number(row.bet_amount);
                 const netUsd = formatSignedUsd(net, ethUsd);
                 return (
@@ -236,7 +240,6 @@ export function ProfileClient({ address }: { address: string }) {
                   </div>
                 );
               })}
-              {rounds.isLoading && <div className="px-4 py-5 text-sm text-[var(--text-3)]">Loading rounds...</div>}
               {!rounds.isLoading && currentRoundRows.length === 0 && <div className="px-4 py-5 text-sm text-[var(--text-3)]">No settled rounds yet.</div>}
             </div>
             <div className="profile-pagination">
@@ -252,13 +255,14 @@ export function ProfileClient({ address }: { address: string }) {
         )}
 
         {activeTab === "badges" && (
-          <div className="profile-tab-panel">
+          <div className="profile-tab-panel" aria-busy={profile.isLoading}>
             <div className="profile-panel-heading">
               <h2 className="display-heading text-lg font-bold text-[var(--text-1)]">Badges</h2>
-              <span>Off-chain now, mint-ready later</span>
+              <span>{profile.isLoading ? "Loading" : "Off-chain now, mint-ready later"}</span>
             </div>
             <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
-              {(data?.badges ?? []).map((badge) => (
+              {profile.isLoading && <ProfileLoadingCards />}
+              {!profile.isLoading && (data?.badges ?? []).map((badge) => (
                 <div key={badge.badge_id} className="badge-card">
                   <div className="badge-card-icon">
                     <BadgeCheck size={20} />
@@ -274,12 +278,17 @@ export function ProfileClient({ address }: { address: string }) {
         )}
 
         {activeTab === "referrals" && (
-          <div className="profile-tab-panel">
+          <div className="profile-tab-panel" aria-busy={referralSummary.isLoading}>
             <div className="profile-panel-heading">
               <h2 className="display-heading text-lg font-bold text-[var(--text-1)]">Referrals</h2>
-              <span>{referralSummary.data?.totalXp ?? 0} XP earned</span>
+              <span>{referralSummary.isLoading ? "Loading" : `${referralSummary.data?.totalXp ?? 0} XP earned`}</span>
             </div>
-            <div className="grid gap-4 p-4 lg:grid-cols-[0.9fr_1.1fr]">
+            {referralSummary.isLoading ? (
+              <div className="p-4">
+                <ProfileLoadingRows label="Loading referrals" rows={4} />
+              </div>
+            ) : (
+              <div className="grid gap-4 p-4 lg:grid-cols-[0.9fr_1.1fr]">
               <div className="progression-card">
                 <div className="flex items-center gap-2 font-mono text-[10px] font-bold uppercase text-[var(--text-3)]">
                   <Gift size={14} className="text-[var(--accent)]" />
@@ -326,7 +335,8 @@ export function ProfileClient({ address }: { address: string }) {
                   {!referralSummary.isLoading && (referralSummary.data?.recentRewards.length ?? 0) === 0 && <div className="py-3 text-sm text-[var(--text-3)]">No referral rewards yet.</div>}
                 </div>
               </div>
-            </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -344,6 +354,67 @@ export function ProfileClient({ address }: { address: string }) {
         )}
       </section>
     </main>
+  );
+}
+
+function ProfileOverviewLoading() {
+  return (
+    <section className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+      <div className="profile-hero panel p-5">
+        <div className="grid gap-4">
+          <span className="feed-skeleton h-4 w-24" />
+          <span className="feed-skeleton h-12 w-44" />
+          <span className="feed-skeleton h-3 w-full rounded-full" />
+          <div className="flex justify-between">
+            <span className="feed-skeleton h-3 w-20" />
+            <span className="feed-skeleton h-3 w-32" />
+          </div>
+        </div>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <div key={index} className="profile-metric panel p-4">
+            <span className="feed-skeleton h-3 w-20" />
+            <span className="mt-3 block feed-skeleton h-4 w-24" />
+            <span className="mt-2 block feed-skeleton h-3 w-16" />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ProfileLoadingRows({ label, rows = 3 }: { label: string; rows?: number }) {
+  return (
+    <>
+      {Array.from({ length: rows }).map((_, index) => (
+        <div key={index} className="profile-list-row" aria-label={index === 0 ? label : undefined}>
+          <div className="grid gap-2">
+            <span className="feed-skeleton h-4 w-36" />
+            <span className="feed-skeleton h-3 w-24" />
+          </div>
+          <div className="grid justify-items-end gap-2">
+            <span className="feed-skeleton h-4 w-20" />
+            <span className="feed-skeleton h-3 w-14" />
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
+
+function ProfileLoadingCards() {
+  return (
+    <>
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div key={index} className="badge-card" aria-label={index === 0 ? "Loading badges" : undefined}>
+          <span className="feed-skeleton h-10 w-10 rounded-md" />
+          <span className="mt-4 block feed-skeleton h-4 w-28" />
+          <span className="mt-2 block feed-skeleton h-3 w-full" />
+          <span className="mt-2 block feed-skeleton h-3 w-3/4" />
+        </div>
+      ))}
+    </>
   );
 }
 
