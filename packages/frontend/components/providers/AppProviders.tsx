@@ -2,7 +2,8 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import miniAppSdk from "@farcaster/miniapp-sdk";
 import { WagmiProvider } from "wagmi";
 import { wagmiConfig } from "@/lib/wagmi.config";
 import { ToastProvider } from "@/components/ui/ToastProvider";
@@ -27,6 +28,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
           <ToastProvider>
+            <FarcasterMiniAppReady />
             <ReferralAttribution />
             {children}
           </ToastProvider>
@@ -34,4 +36,22 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       </WagmiProvider>
     </ThemeProvider>
   );
+}
+
+function FarcasterMiniAppReady() {
+  useEffect(() => {
+    let active = true;
+    miniAppSdk
+      .isInMiniApp()
+      .then((isInMiniApp) => {
+        if (active && isInMiniApp) return miniAppSdk.actions.ready();
+        return undefined;
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  return null;
 }

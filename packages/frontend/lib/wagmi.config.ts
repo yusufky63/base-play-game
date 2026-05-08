@@ -1,6 +1,7 @@
 import { fallback, http } from "viem";
 import { createConfig } from "wagmi";
 import { base, baseSepolia } from "wagmi/chains";
+import { farcasterMiniApp } from "@farcaster/miniapp-wagmi-connector";
 import { baseAccount, coinbaseWallet, injected } from "wagmi/connectors";
 import { BASE_MAINNET_FRONTEND_RPC_URLS, BASE_SEPOLIA_FRONTEND_RPC_URLS } from "@baseplay/shared/config/networks";
 import { BASEPLAY_BUILDER_CODE_SUFFIX } from "@/lib/builderCode";
@@ -9,12 +10,13 @@ const baseSepoliaTransports = BASE_SEPOLIA_FRONTEND_RPC_URLS.map((url) => http(u
 
 const baseMainnetTransports = BASE_MAINNET_FRONTEND_RPC_URLS.map((url) => http(url, { timeout: 8_000, retryCount: 1, retryDelay: 250 }));
 
-export const chains = [baseSepolia, base] as const;
+export const chains = [base, baseSepolia] as const;
 
 export const wagmiConfig = createConfig({
   chains,
   ssr: true,
   connectors: [
+    farcasterMiniApp(),
     baseAccount({ appName: "BasePlay", preference: { options: "all" } }),
     injected({ target: "metaMask" }),
     injected(),

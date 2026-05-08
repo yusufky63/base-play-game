@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import miniAppSdk from "@farcaster/miniapp-sdk";
 import { LogOut, PlugZap } from "lucide-react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { useMounted } from "@/hooks/useMounted";
@@ -20,7 +22,23 @@ function FallbackWalletButton({ compact, hideIcon, accountOnly }: { compact: boo
   const { address, isConnected } = useAccount();
   const { connect, connectors, isPending } = useConnect();
   const { disconnect } = useDisconnect();
-  const connector = connectors.find((item) => item.id === "injected") ?? connectors[0];
+  const [isInFarcaster, setIsInFarcaster] = useState(false);
+  const connector = getPreferredConnector(connectors, isInFarcaster);
+
+  useEffect(() => {
+    let active = true;
+    miniAppSdk
+      .isInMiniApp()
+      .then((value) => {
+        if (active) setIsInFarcaster(value);
+      })
+      .catch(() => {
+        if (active) setIsInFarcaster(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   if (isConnected && address) {
     return (
@@ -54,4 +72,12 @@ function FallbackWalletButton({ compact, hideIcon, accountOnly }: { compact: boo
       {!compact && "Connect"}
     </button>
   );
+}
+
+function getPreferredConnector(connectors: ReturnType<typeof useConnect>["connectors"], isInFarcaster: boolean) {
+  if (isInFarcaster) {
+    return connectors.find((item) => item.id === "farcaster") ?? connectors.find((item) => item.id === "injected") ?? connectors[0];
+  }
+
+  return connectors.find((item) => item.id === "injected") ?? connectors.find((item) => item.id === "baseAccount") ?? connectors[0];
 }

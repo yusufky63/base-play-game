@@ -7,8 +7,8 @@ const appUrl = env.NEXT_PUBLIC_APP_URL || "https://baseplay.games";
 export const BASE_APP_METADATA = {
   appId: BASE_APP_APP_ID,
   name: "BasePlay",
-  tagline: "Mini onchain games on Base",
-  description: "Provably fair mini games with on-chain settlement and Chainlink VRF randomness.",
+  tagline: "Play. Compete. Win on Base.",
+  description: "Provably fair mini games on Base with on-chain settlement, Chainlink VRF randomness, instant payouts, XP, quests, referrals, and weekly plus all-time leaderboards.",
   category: "Games",
   iconUrl: `${appUrl}/brand/baseplay-mark-transparent.png`,
   imageUrl: `${appUrl}/brand/baseplay-logo-full.png`,
