@@ -6,6 +6,34 @@ import { Navbar } from "@/components/layout/Navbar";
 import "./globals.css";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://baseplay.games";
+const farcasterMiniAppEmbed = JSON.stringify({
+  version: "1",
+  imageUrl: `${appUrl}/brand/farcaster-embed.png`,
+  button: {
+    title: "Play BasePlay",
+    action: {
+      type: "launch_miniapp",
+      name: "BasePlay",
+      url: appUrl,
+      splashImageUrl: `${appUrl}/brand/farcaster-splash.png`,
+      splashBackgroundColor: "#0B5CFF"
+    }
+  }
+});
+const farcasterFrameEmbed = JSON.stringify({
+  version: "1",
+  imageUrl: `${appUrl}/brand/farcaster-embed.png`,
+  button: {
+    title: "Play BasePlay",
+    action: {
+      type: "launch_frame",
+      name: "BasePlay",
+      url: appUrl,
+      splashImageUrl: `${appUrl}/brand/farcaster-splash.png`,
+      splashBackgroundColor: "#0B5CFF"
+    }
+  }
+});
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
 const display = Space_Grotesk({ subsets: ["latin"], variable: "--font-display", display: "swap" });
@@ -38,6 +66,8 @@ export const metadata: Metadata = {
     creator: "@BasePlayGames"
   },
   other: {
+    "fc:miniapp": farcasterMiniAppEmbed,
+    "fc:frame": farcasterFrameEmbed,
     "base:app_id": "69f93e9942d4fe010f1c28e7"
   }
 };

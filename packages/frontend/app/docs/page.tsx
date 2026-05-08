@@ -133,6 +133,10 @@ const faqs = [
     answer: "BasePlay uses standard wagmi and viem wallet flows with Base Account, injected wallet, and Coinbase Wallet connectors. The canonical app URL is https://baseplay.games, Base mainnet is the default chain, wallet transactions include the BasePlay Builder Code attribution suffix, and fallback contract status reads are batched with multicall to reduce RPC load."
   },
   {
+    question: "How is Farcaster support handled?",
+    answer: "BasePlay publishes Farcaster Mini App discovery metadata at /.well-known/farcaster.json and emits feed embed metadata for launch cards. Core wallet, game, and Base App flows remain standard browser wagmi/viem flows."
+  },
+  {
     question: "Why do profile tabs not show counts in the tab label?",
     answer: "Profile sections are lazy-loaded to reduce Supabase and RPC usage. Counts are shown inside the opened section after the relevant data has loaded, with loading rows displayed while the request is in progress."
   },

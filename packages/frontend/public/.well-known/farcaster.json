@@ -1,0 +1,40 @@
+{
+  "miniapp": {
+    "version": "1",
+    "name": "BasePlay",
+    "homeUrl": "https://baseplay.games",
+    "iconUrl": "https://baseplay.games/brand/farcaster-icon.png",
+    "splashImageUrl": "https://baseplay.games/brand/farcaster-splash.png",
+    "splashBackgroundColor": "#0B5CFF",
+    "subtitle": "Onchain games",
+    "description": "Provably fair mini games on Base with small onchain wagers, XP, quests, badges, and referrals.",
+    "primaryCategory": "games",
+    "tags": ["base", "games", "onchain", "crypto", "play"],
+    "heroImageUrl": "https://baseplay.games/brand/farcaster-hero.png",
+    "tagline": "Play on Base",
+    "ogTitle": "BasePlay",
+    "ogDescription": "Provably fair mini games on Base.",
+    "ogImageUrl": "https://baseplay.games/brand/farcaster-hero.png",
+    "canonicalDomain": "baseplay.games",
+    "requiredChains": ["eip155:8453"]
+  },
+  "frame": {
+    "version": "1",
+    "name": "BasePlay",
+    "homeUrl": "https://baseplay.games",
+    "iconUrl": "https://baseplay.games/brand/farcaster-icon.png",
+    "splashImageUrl": "https://baseplay.games/brand/farcaster-splash.png",
+    "splashBackgroundColor": "#0B5CFF",
+    "subtitle": "Onchain games",
+    "description": "Provably fair mini games on Base with small onchain wagers, XP, quests, badges, and referrals.",
+    "primaryCategory": "games",
+    "tags": ["base", "games", "onchain", "crypto", "play"],
+    "heroImageUrl": "https://baseplay.games/brand/farcaster-hero.png",
+    "tagline": "Play on Base",
+    "ogTitle": "BasePlay",
+    "ogDescription": "Provably fair mini games on Base.",
+    "ogImageUrl": "https://baseplay.games/brand/farcaster-hero.png",
+    "canonicalDomain": "baseplay.games",
+    "requiredChains": ["eip155:8453"]
+  }
+}
