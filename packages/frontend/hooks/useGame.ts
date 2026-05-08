@@ -70,8 +70,12 @@ export function useGame(gameId: string, contractName: string, abi: Abi | null) {
       try {
         const result = await connectAsync({ connector, chainId: base.id });
         connectedChainId = result.chainId;
-      } catch {
-        toast({ tone: "error", title: "Wallet connection cancelled", description: "Connect a wallet before placing a wager." });
+      } catch (error) {
+        toast({
+          tone: "error",
+          title: getWalletConnectErrorTitle(error),
+          description: getWalletConnectErrorDescription(error)
+        });
         throw new Error("Wallet not connected");
       }
       if (connectedChainId && !getNetworkByChainId(connectedChainId)) {
@@ -432,4 +436,28 @@ function rememberPreferredChain(chainId: number) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem("baseplay:chainId", String(chainId));
   window.dispatchEvent(new CustomEvent("baseplay:chain-change", { detail: chainId }));
+}
+
+function getWalletConnectErrorTitle(error: unknown) {
+  const message = getErrorMessage(error);
+  if (/origin|domain|unauthori[sz]ed|project/i.test(message)) return "Wallet setup blocked";
+  if (/reject|denied|cancel|closed/i.test(message)) return "Wallet connection cancelled";
+  return "Wallet connection failed";
+}
+
+function getWalletConnectErrorDescription(error: unknown) {
+  const message = getErrorMessage(error);
+  if (/origin|domain|unauthori[sz]ed|project/i.test(message)) {
+    return "Check the Reown project domain allowlist for baseplay.games and www.baseplay.games.";
+  }
+  if (/reject|denied|cancel|closed/i.test(message)) {
+    return "Choose a wallet and approve the connection before placing a wager.";
+  }
+  return message ? message.slice(0, 160) : "Try another wallet option or open BasePlay inside your wallet browser.";
+}
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  return "";
 }

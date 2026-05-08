@@ -10,8 +10,8 @@ export function getPreferredWalletConnector(connectors: readonly WalletConnector
   const coinbaseWallet = connectors.find((item) => item.id === "coinbaseWalletSDK" || item.id === "coinbaseWallet");
 
   if (isInFarcaster && farcaster) return farcaster;
-  if (isMobileBrowser() && walletConnect) return walletConnect;
   if (hasInjectedWalletProvider()) return injected ?? baseAccount ?? coinbaseWallet ?? walletConnect ?? connectors[0];
+  if (isMobileBrowser()) return baseAccount ?? coinbaseWallet ?? walletConnect ?? injected ?? connectors[0];
 
   return walletConnect ?? baseAccount ?? coinbaseWallet ?? injected ?? connectors[0];
 }
