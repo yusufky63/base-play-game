@@ -4,7 +4,8 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "BasePlay",
     short_name: "BasePlay",
-    description: "Provably fair mini games on Base with on-chain settlement and Chainlink VRF randomness.",
+    description:
+      "Provably fair mini games on Base with on-chain settlement, Chainlink VRF randomness, instant payouts, XP, quests, referrals, and weekly plus all-time leaderboards.",
     start_url: "/",
     scope: "/",
     display: "standalone",

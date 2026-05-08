@@ -1083,11 +1083,11 @@ select {
 }
 
 .game-stage:has(.result-callout) {
-  margin-bottom: 148px;
+  margin-bottom: 96px;
 }
 
 .game-stage:has(.result-callout-shareable) {
-  margin-bottom: 218px;
+  margin-bottom: 240px;
 }
 
 .game-stage:has(.round-summary-strip) {
@@ -1100,11 +1100,11 @@ select {
 
 @media (max-width: 1023px) {
   .game-stage:has(.result-callout) {
-    margin-bottom: 190px;
+    margin-bottom: 112px;
   }
 
   .game-stage:has(.result-callout-shareable) {
-    margin-bottom: 270px;
+    margin-bottom: 282px;
   }
 
   .game-primary-area {
@@ -1141,6 +1141,25 @@ select {
 
   .game-contract-area {
     order: 6;
+  }
+}
+
+@media (max-width: 640px) {
+  .live-feed-compact-label {
+    border-right: 0;
+    padding-right: 0;
+  }
+
+  .live-feed-compact-title {
+    display: none;
+  }
+
+  .game-stage:has(.result-callout) {
+    margin-bottom: 118px;
+  }
+
+  .game-stage:has(.result-callout-shareable) {
+    margin-bottom: 306px;
   }
 }
 

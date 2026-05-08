@@ -44,10 +44,13 @@ const mono = JetBrains_Mono({
   weight: ["400", "500", "600"]
 });
 
+const appDescription =
+  "Provably fair mini games on Base with on-chain settlement, Chainlink VRF randomness, instant payouts, XP, quests, referrals, and weekly plus all-time leaderboards.";
+
 export const metadata: Metadata = {
   applicationName: "BasePlay",
   title: { default: "BasePlay", template: "%s - BasePlay" },
-  description: "Mini onchain games on Base L2. Provably fair, instant payouts.",
+  description: appDescription,
   metadataBase: new URL(appUrl),
   icons: {
     icon: "/brand/baseplay-mark-transparent.png",
@@ -55,13 +58,13 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "BasePlay - Mini Onchain Games",
-    description: "Provably fair games on Base L2. Small on-chain wagers with XP, quests, and badges.",
+    description: appDescription,
     images: ["/brand/baseplay-logo-full.png"]
   },
   twitter: {
     card: "summary_large_image",
     title: "BasePlay - Mini Onchain Games",
-    description: "Provably fair games on Base L2. Small on-chain wagers with XP, quests, and badges.",
+    description: appDescription,
     images: ["/brand/baseplay-logo-full.png"],
     creator: "@BasePlayGames"
   },

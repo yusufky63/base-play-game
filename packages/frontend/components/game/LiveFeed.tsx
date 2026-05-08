@@ -28,8 +28,8 @@ export function LiveFeed({ gameId, title = "Live feed", limit = 8, compact = fal
   if (compact) {
     return (
       <div className="flex min-w-0 flex-1 items-center gap-4 text-xs">
-        <div className="flex shrink-0 items-center gap-2 border-r border-[var(--border)] pr-4">
-          <span className="font-mono text-[11px] font-semibold uppercase text-[var(--text-1)]">Live feed</span>
+        <div className="live-feed-compact-label flex shrink-0 items-center gap-2 border-r border-[var(--border)] pr-4">
+          <span className="live-feed-compact-title font-mono text-[11px] font-semibold uppercase text-[var(--text-1)]">Live feed</span>
           <span className="h-2 w-2 rounded-full bg-[var(--win)]" />
         </div>
         <div className="min-w-0 flex-1 overflow-hidden">
