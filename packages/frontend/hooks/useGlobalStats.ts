@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import type { Database } from "@baseplay/shared/types/supabase.types";
 import { getSupabaseBrowser } from "@/lib/supabase";
 import { fetchRecentOnchainRounds } from "@/lib/onchainRounds";
-import { defaultChainId } from "@/lib/env";
 
 type Round = Database["public"]["Tables"]["game_rounds"]["Row"];
 type GameStatRow = Pick<Database["public"]["Tables"]["game_stats"]["Row"], "game_id" | "total_rounds">;
@@ -56,7 +55,7 @@ async function fetchGlobalStats(): Promise<GlobalStats> {
   if (supabase) {
     const [{ data: platform, error: platformError }, { data: rawGameRows, error: gameRowsError }] = await Promise.all([
       supabase.from("platform_stats").select("*").eq("id", 1).maybeSingle(),
-      supabase.from("game_stats").select("game_id,total_rounds").eq("chain_id", defaultChainId)
+      supabase.from("game_stats").select("game_id,total_rounds")
     ]);
 
     if (platformError || gameRowsError) {
@@ -65,13 +64,14 @@ async function fetchGlobalStats(): Promise<GlobalStats> {
     }
 
     const gameRows = (rawGameRows ?? []) as GameStatRow[];
+    const gameCounts = gameCountsFromRows(gameRows);
 
-    if (platform) {
+    if (platform && platform.total_rounds > 0) {
       return {
         plays: platform.total_rounds,
         players: platform.total_players,
         volume: Number(platform.total_wagered),
-        gameCounts: Object.fromEntries(gameRows.map((row) => [row.game_id, row.total_rounds]))
+        gameCounts
       };
     }
 
@@ -80,18 +80,28 @@ async function fetchGlobalStats(): Promise<GlobalStats> {
       console.warn("[BasePlay] Supabase round stats fallback failed", error.message);
       return EMPTY_GLOBAL_STATS;
     }
-    return statsFromRows(data ?? []);
+    return statsFromRows(data ?? [], gameCounts);
   }
 
   const rows = await fetchRecentOnchainRounds({ limit: 500 });
   return statsFromRows(rows);
 }
 
-function statsFromRows(rows: Array<Pick<Round, "player" | "bet_amount" | "game_id">>) {
-  const gameCounts = rows.reduce<Record<string, number>>((acc, row) => {
-    acc[row.game_id] = (acc[row.game_id] ?? 0) + 1;
+function gameCountsFromRows(rows: GameStatRow[]) {
+  return rows.reduce<Record<string, number>>((acc, row) => {
+    acc[row.game_id] = (acc[row.game_id] ?? 0) + row.total_rounds;
     return acc;
   }, {});
+}
+
+function statsFromRows(rows: Array<Pick<Round, "player" | "bet_amount" | "game_id">>, cachedGameCounts: Record<string, number> = {}) {
+  const gameCounts =
+    Object.keys(cachedGameCounts).length > 0
+      ? cachedGameCounts
+      : rows.reduce<Record<string, number>>((acc, row) => {
+          acc[row.game_id] = (acc[row.game_id] ?? 0) + 1;
+          return acc;
+        }, {});
 
   return {
     plays: rows.length,
