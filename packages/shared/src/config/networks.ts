@@ -82,7 +82,7 @@ export const NETWORKS = {
 
 export type NetworkKey = keyof typeof NETWORKS;
 export const ACTIVE_NETWORKS = ["baseSepolia", "baseMainnet"] as const;
-export const DEFAULT_NETWORK: NetworkKey = "baseSepolia";
+export const DEFAULT_NETWORK: NetworkKey = "baseMainnet";
 
 export function getNetworkByChainId(chainId: number): ChainConfig | undefined {
   return Object.values(NETWORKS).find((network) => network.chainId === chainId);

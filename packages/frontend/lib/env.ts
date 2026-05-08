@@ -5,7 +5,7 @@ import type { NetworkKey } from "@baseplay/shared/config/networks";
 const cleanEnv = (value: string | undefined) => value?.trim();
 
 const publicEnvSchema = z.object({
-  NEXT_PUBLIC_DEFAULT_CHAIN: z.enum(["baseSepolia", "baseMainnet"]).default("baseSepolia"),
+  NEXT_PUBLIC_DEFAULT_CHAIN: z.enum(["baseSepolia", "baseMainnet"]).default("baseMainnet"),
   NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional().or(z.literal("")),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().optional().default(""),
   NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: z.string().optional().default(""),
