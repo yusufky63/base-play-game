@@ -1,4 +1,9 @@
 {
+  "accountAssociation": {
+    "header": "eyJmaWQiOjg2NDc5MywidHlwZSI6ImF1dGgiLCJrZXkiOiIweDYwNzE4NGVkMTA3NDA5QjU5MTg0QTVEQUYzNDJmMDAzNDNCNWNjMDQifQ",
+    "payload": "eyJkb21haW4iOiJiYXNlcGxheS5nYW1lcyJ9",
+    "signature": "7N/TsjfRHQz2uAxe/W0ahnG1eapb4HRsIVXwVqkq9dJY+Nuj6bjBMXjcuNewsUtCVANodFPYTq58fq/AnxHDBxs="
+  },
   "miniapp": {
     "version": "1",
     "name": "BasePlay",
