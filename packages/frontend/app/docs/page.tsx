@@ -121,6 +121,10 @@ const faqs = [
     answer: "Open the Chainlink VRF button on a game page. It shows the request ID, the wager transaction, and the settlement transaction when available."
   },
   {
+    question: "What does win sharing include?",
+    answer: "Win sharing uses a short invite-focused message and links friends back to BasePlay. If the connected wallet has a referral link, the shared URL uses that referral path."
+  },
+  {
     question: "Why can live feed take a few seconds?",
     answer: "The on-chain result is final first. Feed, profile, and leaderboard views are updated by the backend indexer after it reads settled Base events, and public activity views use cache windows to avoid unnecessary Supabase and RPC load."
   },

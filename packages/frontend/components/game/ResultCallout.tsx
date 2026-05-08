@@ -1,9 +1,9 @@
 "use client";
 
-import { CheckCircle2, Clock3, ExternalLink, Trophy, XCircle } from "lucide-react";
+import { CheckCircle2, Clock3, Trophy, XCircle } from "lucide-react";
 import { useAccount } from "wagmi";
-import { getNetworkByChainId } from "@baseplay/shared/config/networks";
 import { SharePanel } from "@/components/share/SharePanel";
+import { useReferralSummary } from "@/hooks/useReferral";
 
 type ResultVariant = "win" | "loss" | "pending" | "idle";
 
@@ -22,14 +22,14 @@ export function ResultCallout({
     txHash?: string | null;
   };
 }) {
-  const { chain } = useAccount();
+  const { address } = useAccount();
+  const referralSummary = useReferralSummary(address, { enabled: Boolean(address) && variant === "win" && Boolean(share) });
   if (variant === "idle") return null;
 
   const Icon = variant === "win" ? CheckCircle2 : variant === "loss" ? XCircle : Clock3;
   const label = variant === "win" ? "Won" : variant === "loss" ? "Lost" : "Running";
-  const explorer = getNetworkByChainId(chain?.id ?? 8453)?.blockExplorer;
-  const txUrl = share?.txHash && explorer ? `${explorer}/tx/${share.txHash}` : null;
-  const shareText = share ? `I won a verified ${share.game} round on BasePlay. ${share.detail}${txUrl ? ` ${txUrl}` : ""}` : "";
+  const referralPath = referralSummary.data?.referralUrlPath ?? (address ? `/?ref=${address}` : undefined);
+  const shareText = share ? `🎉 I just won ${share.game} on BasePlay. ${share.detail} Join me on Base.` : "";
 
   return (
     <div className={`result-callout result-callout-${variant} ${share && variant === "win" ? "result-callout-shareable" : ""}`} role="status" aria-live="polite">
@@ -47,18 +47,13 @@ export function ResultCallout({
                 <Trophy size={13} className="text-[var(--win)]" />
                 Verified win
               </div>
-              {txUrl && (
-                <a href={txUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-mono text-[10px] font-bold text-[var(--text-3)] hover:text-[var(--accent)]">
-                  TX <ExternalLink size={11} />
-                </a>
-              )}
             </div>
             <p className="win-share-copy">
-              This round settled on-chain. Share the verified result or open the transaction to inspect the payout.
+              Share your win and invite friends to play on Base.
             </p>
             <div className="win-share-result">{share.detail}</div>
             <div className="win-share-actions">
-              <SharePanel compact text={shareText} />
+              <SharePanel compact text={shareText} path={referralPath} />
             </div>
           </div>
         )}

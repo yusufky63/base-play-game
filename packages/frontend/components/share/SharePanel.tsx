@@ -16,7 +16,7 @@ export function SharePanel({ compact = false, text = DEFAULT_TEXT, path }: { com
       await navigator.share({ title: "BasePlay", text, url });
       return;
     }
-    await navigator.clipboard?.writeText(url);
+    await navigator.clipboard?.writeText(`${text} ${url}`);
   }
 
   return (
