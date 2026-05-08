@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Flame, Sparkles, Trophy } from "lucide-react";
+import { CalendarDays, Flame, Sparkles, Trophy } from "lucide-react";
 import type { Database } from "@baseplay/shared/types/supabase.types";
 import { BasenameLabel } from "@/components/base/BasenameLabel";
 import { useEthUsdPrice } from "@/hooks/useEthUsdPrice";
@@ -11,23 +11,26 @@ import { readSessionCache, writeSessionCache } from "@/lib/clientCache";
 
 type Leader = Database["public"]["Views"]["leaderboard_weekly_ranked"]["Row"];
 type SortMode = "xp" | "volume";
+type ScopeMode = "weekly" | "allTime";
 const PAGE_SIZE = 50;
-const CACHE_TTL = 30 * 60_000;
-type LeaderboardCache = { leaders: Leader[]; hasMore: boolean; source: "supabase" | "unconfigured" };
+const WEEKLY_CACHE_TTL = 30 * 60_000;
+const ALL_TIME_CACHE_TTL = 3 * 60 * 60_000;
+type LeaderboardCache = { leaders: Leader[]; hasMore: boolean; source: "supabase" | "unconfigured"; scope: ScopeMode };
 type LeaderboardResponse = LeaderboardCache & { cachedAt: string; cacheTtlSeconds: number };
 
 export default function LeaderboardPage() {
   const [leaders, setLeaders] = useState<Leader[]>([]);
   const [ready, setReady] = useState(false);
   const [source, setSource] = useState<"supabase" | "unconfigured">("unconfigured");
+  const [scope, setScope] = useState<ScopeMode>("weekly");
   const [sort, setSort] = useState<SortMode>("xp");
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const ethUsd = useEthUsdPrice();
 
   useEffect(() => {
-    const cacheKey = `baseplay:leaderboard:${sort}:page:${page}`;
-    const cached = readSessionCache<LeaderboardCache>(cacheKey, CACHE_TTL);
+    const cacheKey = `baseplay:leaderboard:${scope}:${sort}:page:${page}`;
+    const cached = readSessionCache<LeaderboardCache>(cacheKey, getClientCacheTtl(scope));
     if (cached) {
       setLeaders(cached.leaders);
       setHasMore(cached.hasMore);
@@ -40,12 +43,12 @@ export default function LeaderboardPage() {
 
     async function load() {
       try {
-        const response = await fetch(`/api/leaderboard?sort=${sort}&page=${page}&pageSize=${PAGE_SIZE}`, { cache: "force-cache" });
+        const response = await fetch(`/api/leaderboard?scope=${scope}&sort=${sort}&page=${page}&pageSize=${PAGE_SIZE}`, { cache: "force-cache" });
         if (!response.ok) throw new Error(`Leaderboard HTTP ${response.status}`);
         const result = (await response.json()) as LeaderboardResponse;
         setLeaders((current) => {
           const next = page === 0 ? result.leaders : [...current, ...result.leaders];
-          writeSessionCache(cacheKey, { leaders: next, hasMore: result.hasMore, source: result.source });
+          writeSessionCache(cacheKey, { leaders: next, hasMore: result.hasMore, source: result.source, scope: result.scope });
           return next;
         });
         setHasMore(result.hasMore);
@@ -55,7 +58,7 @@ export default function LeaderboardPage() {
         setHasMore(false);
         setLeaders((current) => {
           const next = page === 0 ? [] : current;
-          writeSessionCache(cacheKey, { leaders: next, hasMore: false, source: "unconfigured" });
+          writeSessionCache(cacheKey, { leaders: next, hasMore: false, source: "unconfigured", scope });
           return next;
         });
         setSource("unconfigured");
@@ -64,7 +67,13 @@ export default function LeaderboardPage() {
     }
 
     void load();
-  }, [page, sort]);
+  }, [page, scope, sort]);
+
+  function changeScope(nextScope: ScopeMode) {
+    setScope(nextScope);
+    setPage(0);
+    setLeaders([]);
+  }
 
   function changeSort(nextSort: SortMode) {
     setSort(nextSort);
@@ -81,10 +90,20 @@ export default function LeaderboardPage() {
           </div>
           <div>
             <h1 className="display-heading text-3xl font-bold text-[var(--text-1)]">Leaderboard</h1>
-            <p className="mt-1 text-sm text-[var(--text-2)]">Weekly XP and wager volume rankings. Top rows load first; larger seasons are paginated.</p>
+            <p className="mt-1 text-sm text-[var(--text-2)]">Weekly and all-time XP and wager volume rankings. Top rows load first; larger seasons are paginated.</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <div className="segmented-control">
+            <button type="button" onClick={() => changeScope("weekly")} className={scope === "weekly" ? "segmented-active" : ""}>
+              <CalendarDays size={13} />
+              Weekly
+            </button>
+            <button type="button" onClick={() => changeScope("allTime")} className={scope === "allTime" ? "segmented-active" : ""}>
+              <Trophy size={13} />
+              All-time
+            </button>
+          </div>
           <div className="segmented-control">
             <button type="button" onClick={() => changeSort("xp")} className={sort === "xp" ? "segmented-active" : ""}>
               <Sparkles size={13} />
@@ -168,4 +187,8 @@ export default function LeaderboardPage() {
       </section>
     </main>
   );
+}
+
+function getClientCacheTtl(scope: ScopeMode) {
+  return scope === "allTime" ? ALL_TIME_CACHE_TTL : WEEKLY_CACHE_TTL;
 }

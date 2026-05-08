@@ -142,7 +142,7 @@ const faqs = [
   },
   {
     question: "Why does the leaderboard not update every second?",
-    answer: "Leaderboard data is not used to settle games, so it is served through a shared 30 minute cache. A player opening it later can reuse the same cached ranking instead of making another database query, and the API falls back to the latest indexed week if the current week has no rows yet."
+    answer: "Leaderboard data is not used to settle games, so weekly rankings are served through a shared 30 minute cache and all-time rankings use a longer 3 hour cache from aggregate player stats. A player opening it later can reuse the same cached ranking instead of making another database query, and the weekly API falls back to the latest indexed week if the current week has no rows yet."
   },
   {
     question: "Why can a round be pending?",
@@ -178,7 +178,7 @@ const faqs = [
   },
   {
     question: "Why are XP and volume separate rankings?",
-    answer: "XP rewards activity and quest progress. Volume ranks how much was wagered during the week, so active players can be compared without turning leaderboard order into a lucky profit race."
+    answer: "XP rewards activity and quest progress. Volume ranks how much was wagered in the selected leaderboard scope, so active players can be compared without turning leaderboard order into a lucky profit race."
   },
   {
     question: "What does gross payout mean?",
