@@ -138,7 +138,7 @@ const faqs = [
   },
   {
     question: "How is Farcaster support handled?",
-    answer: "BasePlay publishes Farcaster Mini App discovery metadata at /.well-known/farcaster.json, emits feed embed metadata with branded launch imagery, uses a 1200x630 branded social preview for Open Graph and X/Twitter cards, calls the Farcaster ready signal in Mini App clients, and prioritizes the Farcaster Mini App wallet connector only after the player starts a wallet action. Automatic reconnect and background referral signing are disabled in Mini App sessions so reopening the app does not ask for wallet authorization. Core game and Base App flows remain standard wagmi/viem flows."
+    answer: "BasePlay publishes Farcaster Mini App discovery metadata at /.well-known/farcaster.json, emits feed embed metadata with branded launch imagery, trims the canonical app URL before generating embed URLs, uses a 1200x630 branded social preview for Open Graph and X/Twitter cards, calls the Farcaster ready signal in Mini App clients, and prioritizes the Farcaster Mini App wallet connector only after the player starts a wallet action. Automatic reconnect and background referral signing are disabled in Mini App sessions so reopening the app does not ask for wallet authorization. Core game and Base App flows remain standard wagmi/viem flows."
   },
   {
     question: "Is Google Analytics enabled?",

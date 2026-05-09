@@ -6,7 +6,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import "./globals.css";
 
-const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://baseplay.games";
+const appUrl = (process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://baseplay.games").replace(/\/+$/, "");
 const farcasterMiniAppEmbed = JSON.stringify({
   version: "1",
   imageUrl: `${appUrl}/brand/farcaster-embed.png`,
