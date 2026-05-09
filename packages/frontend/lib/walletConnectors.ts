@@ -10,7 +10,11 @@ export function openWalletModal() {
 }
 
 export function getWalletConnectorOptions(connectors: readonly WalletConnector[], isInFarcaster = false) {
-  const visible = connectors.filter((connector) => isInFarcaster || connector.id !== "farcaster");
+  const visible = connectors.filter((connector) => {
+    if (!isInFarcaster && connector.id === "farcaster") return false;
+    if ((connector.id === "injected" || connector.id === "metaMask") && !hasInjectedProvider()) return false;
+    return true;
+  });
   const unique = new Map<string, WalletConnector>();
 
   for (const connector of visible) {
@@ -19,6 +23,16 @@ export function getWalletConnectorOptions(connectors: readonly WalletConnector[]
   }
 
   return Array.from(unique.values()).sort((left, right) => getConnectorPriority(left, isInFarcaster) - getConnectorPriority(right, isInFarcaster));
+}
+
+export function getNativeAppConnector(connectors: readonly WalletConnector[], isInFarcaster = false) {
+  if (isInFarcaster) return connectors.find((connector) => connector.id === "farcaster");
+  if (!isBaseAppBrowser()) return undefined;
+  return (
+    connectors.find((connector) => connector.id === "baseAccount") ??
+    connectors.find((connector) => connector.id === "coinbaseWalletSDK" || connector.id === "coinbaseWallet") ??
+    connectors.find((connector) => connector.id === "injected")
+  );
 }
 
 export function getWalletConnectorLabel(connector: WalletConnector) {
@@ -54,4 +68,14 @@ function getConnectorPriority(connector: WalletConnector, isInFarcaster: boolean
   if (connector.id === "coinbaseWalletSDK" || connector.id === "coinbaseWallet") return 3;
   if (connector.id === "baseAccount") return 4;
   return 9;
+}
+
+function hasInjectedProvider() {
+  if (typeof window === "undefined") return false;
+  return Boolean((window as typeof window & { ethereum?: unknown }).ethereum);
+}
+
+function isBaseAppBrowser() {
+  if (typeof navigator === "undefined") return false;
+  return /baseapp|base app|coinbasewallet|coinbase wallet/i.test(navigator.userAgent);
 }

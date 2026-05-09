@@ -9,6 +9,7 @@ import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/ToastProvider";
 import {
   OPEN_WALLET_MODAL_EVENT,
+  getNativeAppConnector,
   getWalletConnectorDescription,
   getWalletConnectorLabel,
   getWalletConnectorOptions
@@ -38,12 +39,17 @@ export function WalletConnectModal() {
 
   useEffect(() => {
     function handleOpenWalletModal() {
+      const nativeConnector = getNativeAppConnector(connectors, isInFarcaster);
+      if (nativeConnector) {
+        void connectWallet(nativeConnector);
+        return;
+      }
       setOpen(true);
     }
 
     window.addEventListener(OPEN_WALLET_MODAL_EVENT, handleOpenWalletModal);
     return () => window.removeEventListener(OPEN_WALLET_MODAL_EVENT, handleOpenWalletModal);
-  }, []);
+  }, [connectors, isInFarcaster]);
 
   async function connectWallet(connector: (typeof connectors)[number]) {
     setOpen(false);
