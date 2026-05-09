@@ -46,7 +46,7 @@ const mono = JetBrains_Mono({
 });
 
 const appDescription =
-  "Provably fair mini games on Base with on-chain settlement, Chainlink VRF randomness, instant payouts, XP, quests, referrals, and weekly plus all-time leaderboards.";
+  "Fast mini games on Base with verifiable randomness, on-chain settlement, and instant payouts when you win.";
 const socialPreviewImage = {
   url: "/brand/farcaster-hero.png",
   width: 1200,
@@ -66,13 +66,13 @@ export const metadata: Metadata = {
     apple: "/brand/baseplay-mark-transparent.png"
   },
   openGraph: {
-    title: "BasePlay - Mini Onchain Games",
+    title: "BasePlay - Play Mini Games on Base",
     description: appDescription,
     images: [socialPreviewImage]
   },
   twitter: {
     card: "summary_large_image",
-    title: "BasePlay - Mini Onchain Games",
+    title: "BasePlay - Play Mini Games on Base",
     description: appDescription,
     images: [socialPreviewImage],
     creator: "@BasePlayGames"

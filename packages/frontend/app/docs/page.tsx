@@ -122,7 +122,7 @@ const faqs = [
   },
   {
     question: "What does win sharing include?",
-    answer: "Win sharing uses a short invite-focused message and links friends back to BasePlay. Game pages also include a lightweight invite card outside the win state; when a wallet is connected it shares the wallet referral path without querying referral stats."
+    answer: "Win sharing uses a short invite-focused message with light emoji and links friends back to BasePlay. Game pages also include a lightweight invite card outside the win state; when a wallet is connected it shares the wallet referral path without querying referral stats."
   },
   {
     question: "Why can live feed take a few seconds?",

@@ -7,7 +7,7 @@ import { useToast } from "@/components/ui/ToastProvider";
 import { openWalletModal } from "@/lib/walletConnectors";
 
 const CANONICAL_ORIGIN = "https://baseplay.games";
-const SHARE_TEXT = "Join me on BasePlay: 16 provably fair mini games on Base with instant payouts, XP, quests, referrals, and leaderboards.";
+const SHARE_TEXT = "Try BasePlay with me. 🎲 Fast mini games on Base with verifiable results and instant payouts when you win.";
 
 export function ReferralShareCard() {
   const { address } = useAccount();

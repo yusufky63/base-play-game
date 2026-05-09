@@ -3,7 +3,7 @@
 import { Share2 } from "lucide-react";
 import { BASEPLAY_SOCIAL_LINKS } from "@/lib/socialLinks";
 
-const DEFAULT_TEXT = "BasePlay: on-chain, fair, verifiable mini games on Base.";
+const DEFAULT_TEXT = "BasePlay is live on Base. 🎲 Fast mini games, verifiable results, and instant payouts when you win.";
 const DEFAULT_ORIGIN = "https://baseplay.games";
 
 export function SharePanel({ compact = false, text = DEFAULT_TEXT, path }: { compact?: boolean; text?: string; path?: string }) {
