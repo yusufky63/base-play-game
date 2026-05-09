@@ -116,6 +116,8 @@ export function HiLoClient() {
           </div>
 
           <ResultCallout
+            payout={game.vrfResult?.payout}
+            betAmount={game.vrfResult?.betAmount ?? game.vrfResult?.bet_amount}
             variant={isBusy ? "pending" : settled ? (won ? "win" : "loss") : "idle"}
             title={isBusy ? "Card draw is running" : won ? "Direction matched" : "Direction missed"}
             detail={

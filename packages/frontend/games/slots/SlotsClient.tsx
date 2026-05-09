@@ -134,6 +134,8 @@ export function SlotsClient() {
           />
 
           <ResultCallout
+            payout={game.vrfResult?.payout}
+            betAmount={game.vrfResult?.betAmount ?? game.vrfResult?.bet_amount}
             variant={isBusy ? "pending" : settled ? (won ? "win" : "loss") : "idle"}
             title={isBusy ? "Reels are spinning" : won ? resultLabel : "No matching line"}
             detail={isBusy ? "Waiting for contract settlement" : settled ? `${reelLine} - ${grossMultiplier} gross` : undefined}

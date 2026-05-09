@@ -90,6 +90,8 @@ export function RockPaperScissorsClient() {
             status={settled ? (won ? "win" : "loss") : isBusy ? "running" : "idle"}
           />
           <ResultCallout
+            payout={game.vrfResult?.payout}
+            betAmount={game.vrfResult?.betAmount ?? game.vrfResult?.bet_amount}
             variant={isBusy ? "pending" : settled ? (won ? "win" : "loss") : "idle"}
             title={isBusy ? "House move is resolving" : won ? "Your move won" : "House won"}
             detail={isBusy ? "Waiting for contract settlement" : settled ? `${moves[playerMove ?? 0].label} vs ${moves[houseMove ?? 0].label}` : undefined}

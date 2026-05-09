@@ -85,6 +85,8 @@ export function LimboClient() {
             status={settled ? (won ? "win" : "loss") : isBusy ? "running" : "idle"}
           />
           <ResultCallout
+            payout={game.vrfResult?.payout}
+            betAmount={game.vrfResult?.betAmount ?? game.vrfResult?.bet_amount}
             variant={isBusy ? "pending" : settled ? (won ? "win" : "loss") : "idle"}
             title={isBusy ? "Limbo roll is running" : won ? "Target cleared" : "Target missed"}
             detail={isBusy ? "Waiting for contract settlement" : settled ? `Target ${(roundTarget / 100).toFixed(2)}x. Roll ${roll ?? "-"} / threshold ${threshold ?? "-"}.` : undefined}

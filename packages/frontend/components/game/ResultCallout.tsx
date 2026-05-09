@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircle2, Clock3, Trophy, XCircle } from "lucide-react";
+import { formatEther } from "viem";
 import { useAccount } from "wagmi";
 import { SharePanel } from "@/components/share/SharePanel";
 import { useReferralSummary } from "@/hooks/useReferral";
@@ -11,11 +12,15 @@ export function ResultCallout({
   variant,
   title,
   detail,
+  payout,
+  betAmount,
   share
 }: {
   variant: ResultVariant;
   title: string;
   detail?: string;
+  payout?: unknown;
+  betAmount?: unknown;
   share?: {
     game: string;
     detail: string;
@@ -29,7 +34,8 @@ export function ResultCallout({
   const Icon = variant === "win" ? CheckCircle2 : variant === "loss" ? XCircle : Clock3;
   const label = variant === "win" ? "Won" : variant === "loss" ? "Lost" : "Running";
   const referralPath = referralSummary.data?.referralUrlPath ?? (address ? `/?ref=${address}` : undefined);
-  const shareText = share ? `I just hit ${share.game} on BasePlay. 🎲 ${share.detail} Try a round with me.` : "";
+  const winMultiplier = formatWinMultiplier(payout, betAmount);
+  const shareText = share ? `I just hit ${share.game} on BasePlay 🎲${winMultiplier ? ` Won ${winMultiplier}.` : ""} ${share.detail} Try a round with me.` : "";
 
   return (
     <div className={`result-callout result-callout-${variant} ${share && variant === "win" ? "result-callout-shareable" : ""}`} role="status" aria-live="polite">
@@ -60,4 +66,28 @@ export function ResultCallout({
       </div>
     </div>
   );
+}
+
+function formatWinMultiplier(payout: unknown, betAmount: unknown) {
+  const payoutEth = toEthNumber(payout);
+  const betEth = toEthNumber(betAmount);
+  if (!payoutEth || !betEth || payoutEth <= 0 || betEth <= 0) return null;
+  return `${trimMultiplier(payoutEth / betEth)}x`;
+}
+
+function toEthNumber(value: unknown) {
+  if (typeof value === "bigint") return Number(formatEther(value));
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    if (/^\d+$/.test(trimmed) && trimmed.length > 12) return Number(formatEther(BigInt(trimmed)));
+    const parsed = Number(trimmed);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function trimMultiplier(value: number) {
+  return value.toFixed(2).replace(/\.?0+$/, "");
 }

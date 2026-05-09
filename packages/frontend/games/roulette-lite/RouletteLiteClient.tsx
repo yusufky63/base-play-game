@@ -128,6 +128,8 @@ export function RouletteLiteClient() {
             status={settled ? (won ? "win" : "loss") : isBusy ? "running" : "idle"}
           />
           <ResultCallout
+            payout={game.vrfResult?.payout}
+            betAmount={game.vrfResult?.betAmount ?? game.vrfResult?.bet_amount}
             variant={isBusy ? "pending" : settled ? (won ? "win" : "loss") : "idle"}
             title={isBusy ? "Wheel is spinning" : won ? "Roulette hit" : "Roulette missed"}
             detail={isBusy ? "Waiting for contract settlement" : settled ? `${betTypes[round.betType].label}, result ${(result ?? 0) + 1}, ${((multiplierBps ?? 0) / 10_000).toFixed(2)}x gross` : undefined}

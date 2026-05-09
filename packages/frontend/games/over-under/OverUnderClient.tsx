@@ -92,6 +92,8 @@ export function OverUnderClient() {
             status={settled ? (won ? "win" : "loss") : isBusy ? "running" : "idle"}
           />
           <ResultCallout
+            payout={game.vrfResult?.payout}
+            betAmount={game.vrfResult?.betAmount ?? game.vrfResult?.bet_amount}
             variant={isBusy ? "pending" : settled ? (won ? "win" : "loss") : "idle"}
             title={isBusy ? "Number is rolling" : won ? "Threshold hit" : "Threshold missed"}
             detail={isBusy ? "Waiting for contract settlement" : settled ? `Rolled ${rolled}, needed ${roundChoice} ${roundTarget}` : undefined}

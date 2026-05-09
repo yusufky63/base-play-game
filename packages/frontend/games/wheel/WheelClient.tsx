@@ -92,6 +92,8 @@ export function WheelClient() {
             status={settled ? (won ? "win" : "loss") : isBusy ? "running" : "idle"}
           />
           <ResultCallout
+            payout={game.vrfResult?.payout}
+            betAmount={game.vrfResult?.betAmount ?? game.vrfResult?.bet_amount}
             variant={isBusy ? "pending" : settled ? (won ? "win" : "loss") : "idle"}
             title={isBusy ? "Wheel is spinning" : won ? "Multiplier landed" : "No payout segment"}
             detail={isBusy ? "Waiting for contract settlement" : settled ? `${profiles[roundProfile].label} risk, segment ${(segment ?? 0) + 1}, ${((multiplierBps ?? 0) / 10_000).toFixed(2)}x gross` : undefined}

@@ -100,6 +100,8 @@ export function ScratchCardClient() {
             status={settled ? (won ? "win" : "loss") : isBusy ? "running" : "idle"}
           />
           <ResultCallout
+            payout={game.vrfResult?.payout}
+            betAmount={game.vrfResult?.betAmount ?? game.vrfResult?.bet_amount}
             variant={isBusy ? "pending" : settled ? (won ? "win" : "loss") : "idle"}
             title={isBusy ? "Card is revealing" : won ? "Prize revealed" : "No prize"}
             detail={isBusy ? "Waiting for contract settlement" : settled ? `${tiers[tier ?? 0].label}, ${((multiplierBps ?? 0) / 10_000).toFixed(2)}x gross` : undefined}

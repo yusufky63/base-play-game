@@ -102,6 +102,8 @@ export function DiceClient() {
           />
 
           <ResultCallout
+            payout={game.vrfResult?.payout}
+            betAmount={game.vrfResult?.betAmount ?? game.vrfResult?.bet_amount}
             variant={rolling ? "pending" : rolled !== null ? (won ? "win" : "loss") : "idle"}
             title={rolling ? "Dice is rolling on-chain" : won ? "Face matched" : "Face missed"}
             detail={rolling ? "Waiting for contract settlement" : rolled !== null ? `Picked ${roundGuess}, rolled ${rolled}` : undefined}

@@ -119,6 +119,8 @@ export function CrashClient() {
           />
 
           <ResultCallout
+            payout={game.vrfResult?.payout}
+            betAmount={game.vrfResult?.betAmount ?? game.vrfResult?.bet_amount}
             variant={isBusy ? "pending" : settled ? (won ? "win" : "loss") : "idle"}
             title={isBusy ? "Multiplier is running" : won ? "Auto cashout hit" : "Crashed before target"}
             detail={

@@ -77,6 +77,8 @@ export function LuckySevenClient() {
             status={settled ? (won ? "win" : "loss") : isBusy ? "running" : "idle"}
           />
           <ResultCallout
+            payout={game.vrfResult?.payout}
+            betAmount={game.vrfResult?.betAmount ?? game.vrfResult?.bet_amount}
             variant={isBusy ? "pending" : settled ? (won ? "win" : "loss") : "idle"}
             title={isBusy ? "Dice are rolling" : won ? "Seven call hit" : "Seven call missed"}
             detail={isBusy ? "Waiting for contract settlement" : settled ? `${choices[roundChoice].label}, rolled ${dieA}+${dieB}=${total}` : undefined}

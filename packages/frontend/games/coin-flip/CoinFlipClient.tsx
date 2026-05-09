@@ -99,6 +99,8 @@ export function CoinFlipClient() {
           />
 
           <ResultCallout
+            payout={game.vrfResult?.payout}
+            betAmount={game.vrfResult?.betAmount ?? game.vrfResult?.bet_amount}
             variant={isBusy ? "pending" : settled ? (won ? "win" : "loss") : "idle"}
             title={isBusy ? "Coin is spinning on-chain" : won ? "Correct side" : "Wrong side"}
             detail={isBusy ? "Waiting for contract settlement" : settled ? `Picked ${roundChoice}, landed ${result}` : undefined}

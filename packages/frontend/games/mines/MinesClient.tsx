@@ -162,6 +162,8 @@ export function MinesClient() {
           </div>
 
           <ResultCallout
+            payout={game.vrfResult?.payout}
+            betAmount={game.vrfResult?.betAmount ?? game.vrfResult?.bet_amount}
             variant={isBusy ? "pending" : settled ? (won ? "win" : "loss") : "idle"}
             title={isBusy ? "Mine field is resolving" : won ? "Selected cells were safe" : "A mine was hit"}
             detail={isBusy ? "Waiting for contract settlement" : settled ? `${roundSafeCount} picks, ${roundMineCount} mines` : undefined}
