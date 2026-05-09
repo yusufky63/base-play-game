@@ -137,6 +137,10 @@ const faqs = [
     answer: "BasePlay publishes Farcaster Mini App discovery metadata at /.well-known/farcaster.json, emits feed embed metadata with branded launch imagery, uses a 1200x630 branded social preview for Open Graph and X/Twitter cards, calls the Farcaster ready signal in Mini App clients, and prioritizes the Farcaster Mini App wallet connector only after the player starts a wallet action. Automatic reconnect and background referral signing are disabled in Mini App sessions so reopening the app does not ask for wallet authorization. Core game and Base App flows remain standard wagmi/viem flows."
   },
   {
+    question: "Is Google Analytics enabled?",
+    answer: "BasePlay loads Google Analytics through the official gtag script after the app becomes interactive. The production measurement ID is G-EXWSNL6326 and can be overridden with NEXT_PUBLIC_GA_MEASUREMENT_ID if the analytics property changes."
+  },
+  {
     question: "Why do profile tabs not show counts in the tab label?",
     answer: "Profile sections are lazy-loaded to reduce Supabase and RPC usage. Counts are shown inside the opened section after the relevant data has loaded, with loading rows displayed while the request is in progress."
   },
