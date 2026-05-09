@@ -51,7 +51,9 @@ export function getReconnectConnectorCandidates(connectors: readonly WalletConne
   }
 
   const nativeConnector = getNativeAppConnector(connectors, false);
-  return nativeConnector ? [nativeConnector] : [];
+  if (nativeConnector) return [nativeConnector];
+
+  return getWalletConnectorOptions(connectors, false);
 }
 
 export function getWalletConnectorLabel(connector: WalletConnector) {
