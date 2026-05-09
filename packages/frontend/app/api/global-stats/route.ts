@@ -7,7 +7,8 @@ type GameStatRow = Pick<Database["public"]["Tables"]["game_stats"]["Row"], "game
 type RoundStatRow = Pick<Database["public"]["Tables"]["game_rounds"]["Row"], "player" | "bet_amount" | "game_id">;
 
 const CACHE_TTL_SECONDS = 10 * 60;
-const CACHE_CONTROL = `public, s-maxage=${CACHE_TTL_SECONDS}, stale-while-revalidate=${60 * 60}`;
+const STALE_WHILE_REVALIDATE_SECONDS = 60;
+const CACHE_CONTROL = `public, max-age=0, s-maxage=${CACHE_TTL_SECONDS}, stale-while-revalidate=${STALE_WHILE_REVALIDATE_SECONDS}`;
 
 export async function GET() {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL;
@@ -25,8 +26,8 @@ export async function GET() {
 
   try {
     const [platformResponse, gameResponse] = await Promise.all([
-      fetch(`${baseUrl}/rest/v1/platform_stats?select=*&id=eq.1&limit=1`, { headers, next: { revalidate: CACHE_TTL_SECONDS } }),
-      fetch(`${baseUrl}/rest/v1/game_stats?select=game_id,total_rounds`, { headers, next: { revalidate: CACHE_TTL_SECONDS } })
+      fetch(`${baseUrl}/rest/v1/platform_stats?select=*&id=eq.1&limit=1`, { headers, cache: "no-store" }),
+      fetch(`${baseUrl}/rest/v1/game_stats?select=game_id,total_rounds`, { headers, cache: "no-store" })
     ]);
 
     const platformRows = platformResponse.ok ? ((await platformResponse.json()) as PlatformStats[]) : [];
@@ -48,7 +49,7 @@ export async function GET() {
 
     const roundResponse = await fetch(`${baseUrl}/rest/v1/game_rounds?select=player,bet_amount,game_id&limit=10000`, {
       headers,
-      next: { revalidate: CACHE_TTL_SECONDS }
+      cache: "no-store"
     });
     if (!roundResponse.ok) throw new Error("Supabase round stats fallback failed");
     const roundRows = (await roundResponse.json()) as RoundStatRow[];

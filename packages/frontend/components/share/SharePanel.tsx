@@ -4,9 +4,10 @@ import { Share2 } from "lucide-react";
 import { BASEPLAY_SOCIAL_LINKS } from "@/lib/socialLinks";
 
 const DEFAULT_TEXT = "BasePlay: on-chain, fair, verifiable mini games on Base.";
+const DEFAULT_ORIGIN = "https://baseplay.games";
 
 export function SharePanel({ compact = false, text = DEFAULT_TEXT, path }: { compact?: boolean; text?: string; path?: string }) {
-  const origin = typeof window === "undefined" ? "https://baseplay.app" : window.location.origin;
+  const origin = typeof window === "undefined" ? DEFAULT_ORIGIN : window.location.origin;
   const url = path ? `${origin}${path}` : origin;
   const shareUrl = encodeURIComponent(url);
   const shareText = encodeURIComponent(text);

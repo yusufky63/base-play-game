@@ -7,6 +7,7 @@ import { GameContractPanel } from "@/components/game/GameContractPanel";
 import { FairnessButton } from "@/components/game/FairnessModal";
 import { HowItWorks } from "@/components/game/HowItWorks";
 import { RoundStatus } from "@/components/game/RoundStatus";
+import { ReferralShareCard } from "@/components/share/ReferralShareCard";
 import type { VRFState } from "@/hooks/useVRF";
 import { useOperationalStatus } from "@/hooks/useOperationalStatus";
 
@@ -76,6 +77,7 @@ export function GameShell({
         </div>
         <div className="game-side-stack">
           {side}
+          <ReferralShareCard />
         </div>
         <div className="game-how-area">
           <HowItWorks gameId={gameId} />

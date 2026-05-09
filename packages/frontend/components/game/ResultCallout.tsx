@@ -29,7 +29,7 @@ export function ResultCallout({
   const Icon = variant === "win" ? CheckCircle2 : variant === "loss" ? XCircle : Clock3;
   const label = variant === "win" ? "Won" : variant === "loss" ? "Lost" : "Running";
   const referralPath = referralSummary.data?.referralUrlPath ?? (address ? `/?ref=${address}` : undefined);
-  const shareText = share ? `🎉 I just won ${share.game} on BasePlay. ${share.detail} Join me on Base.` : "";
+  const shareText = share ? `I just won ${share.game} on BasePlay. ${share.detail} Join me on Base.` : "";
 
   return (
     <div className={`result-callout result-callout-${variant} ${share && variant === "win" ? "result-callout-shareable" : ""}`} role="status" aria-live="polite">

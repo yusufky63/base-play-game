@@ -44,7 +44,7 @@ export function useGameStats() {
 
 async function fetchGlobalStats(): Promise<GlobalStats> {
   try {
-    const response = await fetch("/api/global-stats", { cache: "force-cache" });
+    const response = await fetch("/api/global-stats", { cache: "no-store" });
     if (response.ok) return (await response.json()) as GlobalStats;
   } catch {
     // Fall back to direct Supabase/browser RPC below for local-only setups.

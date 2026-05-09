@@ -1177,6 +1177,12 @@ select {
   box-shadow: var(--card-shadow-3d);
 }
 
+.game-side-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .game-stage:has(.result-callout) {
   margin-bottom: 96px;
 }
@@ -1226,16 +1232,20 @@ select {
     order: 3;
   }
 
-  .game-side-stack .game-feed-panel {
+  .game-side-stack .referral-share-card {
     order: 4;
   }
 
-  .game-how-area {
+  .game-side-stack .game-feed-panel {
     order: 5;
   }
 
-  .game-contract-area {
+  .game-how-area {
     order: 6;
+  }
+
+  .game-contract-area {
+    order: 7;
   }
 }
 
@@ -2310,6 +2320,66 @@ select {
   color: var(--accent);
   box-shadow: 5px 5px 0 color-mix(in srgb, var(--accent) 15%, transparent);
   transform: translate(-1px, -1px);
+}
+
+.referral-share-card {
+  display: grid;
+  gap: 12px;
+}
+
+.referral-share-head {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+}
+
+.referral-share-icon {
+  display: inline-flex;
+  height: 34px;
+  width: 34px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--border-2));
+  border-radius: var(--radius-ui);
+  background: var(--accent-light);
+  color: var(--accent);
+  box-shadow: 4px 4px 0 color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.referral-share-head h2 {
+  color: var(--text-1);
+  font-size: 14px;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.referral-share-head p {
+  margin-top: 3px;
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.referral-share-url {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-ui);
+  background: var(--surface-2);
+  padding: 9px 10px;
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.referral-share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .docs-hero {

@@ -56,7 +56,7 @@ const playerNotes = [
   {
     icon: <Radio size={18} />,
     title: "Fast activity views",
-    body: "Live feed, profile tabs, leaderboard data, Home stats, and round detail timelines are indexed from Base events and cached by view importance instead of polling every few seconds. Leaderboard responses are shared for 30 minutes, Home stats for 10 minutes, compact feeds for 5 minutes, round details for 30 minutes, and profile tabs only load their own data when opened. Home global stats read aggregate tables first and fall back to settled round rows if an aggregate is empty. Profile tab labels avoid stale counts until opened, and each profile panel shows loading rows while its data is fetched. Basenames are cached after first lookup, direct contract fallback reads use multicall batching where possible, and ENS fallback display names only resolve when a server-side Ethereum mainnet RPC is configured."
+    body: "Live feed, profile tabs, leaderboard data, Home stats, and round detail timelines are indexed from Base events and cached by view importance instead of polling every few seconds. Leaderboard responses are shared for 30 minutes, Home stats use a shared 10 minute API cache with no browser-level force-cache, compact feeds for 5 minutes, round details for 30 minutes, and profile tabs only load their own data when opened. Home global stats read aggregate tables first and fall back to settled round rows if an aggregate is empty. Profile tab labels avoid stale counts until opened, and each profile panel shows loading rows while its data is fetched. Basenames are cached after first lookup, game pages expose a referral share card without adding referral API load, direct contract fallback reads use multicall batching where possible, and ENS fallback display names only resolve when a server-side Ethereum mainnet RPC is configured."
   },
   {
     icon: <Sparkles size={18} />,
@@ -122,11 +122,15 @@ const faqs = [
   },
   {
     question: "What does win sharing include?",
-    answer: "Win sharing uses a short invite-focused message and links friends back to BasePlay. If the connected wallet has a referral link, the shared URL uses that referral path."
+    answer: "Win sharing uses a short invite-focused message and links friends back to BasePlay. Game pages also include a lightweight invite card outside the win state; when a wallet is connected it shares the wallet referral path without querying referral stats."
   },
   {
     question: "Why can live feed take a few seconds?",
     answer: "The on-chain result is final first. Feed, profile, and leaderboard views are updated by the backend indexer after it reads settled Base events, and public activity views use cache windows to avoid unnecessary Supabase and RPC load."
+  },
+  {
+    question: "Why can Home global stats lag behind a new round?",
+    answer: "Home global stats are served through a shared API cache for up to 10 minutes so every visitor can reuse the same aggregate response. Browser force-cache is disabled for this endpoint, so desktop, mobile, Farcaster, and private windows should converge on the same API value once the shared cache refreshes."
   },
   {
     question: "How is Base App support handled?",
