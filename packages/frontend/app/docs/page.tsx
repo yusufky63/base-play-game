@@ -61,7 +61,7 @@ const playerNotes = [
   {
     icon: <Sparkles size={18} />,
     title: "Clean Home hero",
-    body: "The Home hero uses a static full-width band without an animated Pixel Blast background, while tabs, game cards, buttons, filters, and mobile help sections stay compact with thinner neutral borders and consistent card shadows."
+    body: "The Home hero uses a static full-width band without an animated Pixel Blast background, while tabs, game cards, round status panels, contract panels, buttons, filters, and mobile help sections stay compact with thinner neutral borders and consistent card shadows."
   }
 ];
 

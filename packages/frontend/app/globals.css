@@ -434,6 +434,8 @@ select {
 [data-theme="dark"] .brand-image-mark,
 [data-theme="dark"] .panel,
 [data-theme="dark"] .game-stage,
+[data-theme="dark"] .contract-panel,
+[data-theme="dark"] .round-status,
 [data-theme="dark"] .game-card,
 [data-theme="dark"] .status-panel.panel,
 [data-theme="dark"] .admin-sidebar,
@@ -933,6 +935,7 @@ select {
   border-radius: var(--radius-ui);
   background: color-mix(in srgb, var(--surface) 92%, var(--surface-2));
   padding: 12px;
+  box-shadow: var(--card-shadow-3d);
 }
 
 .contract-link {
@@ -2101,7 +2104,7 @@ select {
     color-mix(in srgb, var(--accent-light) 36%, var(--surface))
   );
   padding: 12px;
-  box-shadow: var(--shadow-tight);
+  box-shadow: var(--card-shadow-3d);
 }
 
 .round-status-settled {
