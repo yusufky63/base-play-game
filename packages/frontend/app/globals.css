@@ -614,6 +614,41 @@ select {
   border-radius: var(--radius-ui);
   color: var(--accent);
   background: color-mix(in srgb, var(--accent-light) 72%, var(--surface));
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.wallet-modal-option-icon img {
+  display: block;
+  height: 24px;
+  width: 24px;
+  border-radius: 7px;
+}
+
+.wallet-modal-option-icon-walletconnect {
+  border-color: color-mix(in srgb, #3b99fc 58%, var(--border));
+  background: color-mix(in srgb, #3b99fc 16%, var(--surface));
+  color: #2474e8;
+}
+
+.wallet-modal-option-icon-metamask {
+  border-color: color-mix(in srgb, #f6851b 58%, var(--border));
+  background: color-mix(in srgb, #f6851b 15%, var(--surface));
+  color: #cf5f00;
+}
+
+.wallet-modal-option-icon-coinbase,
+.wallet-modal-option-icon-base {
+  border-color: color-mix(in srgb, var(--accent) 58%, var(--border));
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  color: var(--accent);
+}
+
+.wallet-modal-option-icon-farcaster {
+  border-color: color-mix(in srgb, #855dcd 58%, var(--border));
+  background: color-mix(in srgb, #855dcd 15%, var(--surface));
+  color: #7652bd;
 }
 
 .wallet-modal-option-title {

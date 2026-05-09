@@ -12,6 +12,7 @@ import { useMounted } from "@/hooks/useMounted";
 import { usePlayerProgress } from "@/hooks/usePlayerProgress";
 import { defaultChainId } from "@/lib/env";
 import { levelProgress } from "@/lib/progression";
+import { markManualWalletDisconnect } from "@/lib/walletConnectors";
 import { getNetworkByChainId } from "@baseplay/shared/config/networks";
 
 export function HeaderAccountMenu() {
@@ -70,7 +71,16 @@ export function HeaderAccountMenu() {
             </span>
             <ChevronDown size={14} className={`text-[var(--text-3)] transition-transform ${open ? "rotate-180" : ""}`} />
           </button>
-          <button type="button" onClick={() => disconnect()} className="header-account-exit" aria-label="Disconnect wallet" title="Disconnect wallet">
+          <button
+            type="button"
+            onClick={() => {
+              markManualWalletDisconnect();
+              disconnect();
+            }}
+            className="header-account-exit"
+            aria-label="Disconnect wallet"
+            title="Disconnect wallet"
+          >
             <LogOut size={15} />
           </button>
         </div>

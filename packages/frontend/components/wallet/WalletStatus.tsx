@@ -4,11 +4,10 @@ import { LogOut, PlugZap } from "lucide-react";
 import { useAccount, useDisconnect } from "wagmi";
 import { useMounted } from "@/hooks/useMounted";
 import { BasenameLabel } from "@/components/base/BasenameLabel";
-import { openWalletModal } from "@/lib/walletConnectors";
+import { markManualWalletDisconnect, openWalletModal } from "@/lib/walletConnectors";
 
 export function WalletStatus({ compact = false, hideIcon = false, accountOnly = false }: { compact?: boolean; hideIcon?: boolean; accountOnly?: boolean }) {
   const mounted = useMounted();
-  const { disconnect } = useDisconnect();
 
   if (!mounted) {
     return <div className="h-9 w-9 rounded-md border border-[var(--border)] sm:w-28" />;
@@ -25,7 +24,10 @@ function FallbackWalletButton({ compact, hideIcon, accountOnly }: { compact: boo
     return (
       <button
         type="button"
-        onClick={() => disconnect()}
+        onClick={() => {
+          markManualWalletDisconnect();
+          disconnect();
+        }}
         title={accountOnly ? "Disconnect wallet" : undefined}
         aria-label={accountOnly ? "Disconnect wallet" : undefined}
         className={`control-shell flex items-center justify-center gap-2 text-sm font-semibold text-[var(--text-1)] ${

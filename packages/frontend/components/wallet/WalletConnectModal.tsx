@@ -9,10 +9,14 @@ import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/ToastProvider";
 import {
   OPEN_WALLET_MODAL_EVENT,
+  clearPendingWalletConnector,
   getNativeAppConnector,
   getWalletConnectorDescription,
+  getWalletConnectorIconKey,
+  getWalletConnectorIconLabel,
   getWalletConnectorLabel,
-  getWalletConnectorOptions
+  getWalletConnectorOptions,
+  markWalletConnectAttempt
 } from "@/lib/walletConnectors";
 
 export function WalletConnectModal() {
@@ -53,9 +57,12 @@ export function WalletConnectModal() {
 
   async function connectWallet(connector: (typeof connectors)[number]) {
     setOpen(false);
+    markWalletConnectAttempt(connector.id);
     try {
       await connectAsync({ connector, chainId: base.id });
+      clearPendingWalletConnector();
     } catch (error) {
+      if (isUserCancelledWalletConnect(error)) clearPendingWalletConnector();
       toast({
         tone: "error",
         title: getWalletConnectErrorTitle(error),
@@ -75,9 +82,7 @@ export function WalletConnectModal() {
             onClick={() => void connectWallet(connector)}
             className="wallet-modal-option"
           >
-            <span className="wallet-modal-option-icon">
-              <PlugZap size={16} />
-            </span>
+            <WalletConnectorIcon connector={connector} />
             <span className="min-w-0">
               <span className="wallet-modal-option-title">{getWalletConnectorLabel(connector)}</span>
               <span className="wallet-modal-option-detail">{getWalletConnectorDescription(connector)}</span>
@@ -87,6 +92,36 @@ export function WalletConnectModal() {
       </div>
     </Modal>
   );
+}
+
+function WalletConnectorIcon({ connector }: { connector: ReturnType<typeof useConnect>["connectors"][number] }) {
+  if (connector.icon) {
+    return (
+      <span className="wallet-modal-option-icon wallet-modal-option-icon-image">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={connector.icon} alt="" aria-hidden="true" />
+      </span>
+    );
+  }
+
+  const key = getWalletConnectorIconKey(connector);
+  if (key === "injected") {
+    return (
+      <span className="wallet-modal-option-icon wallet-modal-option-icon-injected">
+        <PlugZap size={16} />
+      </span>
+    );
+  }
+
+  return (
+    <span className={`wallet-modal-option-icon wallet-modal-option-icon-${key}`}>
+      {getWalletConnectorIconLabel(connector)}
+    </span>
+  );
+}
+
+function isUserCancelledWalletConnect(error: unknown) {
+  return /reject|denied|cancel|closed/i.test(getErrorMessage(error));
 }
 
 function getWalletConnectErrorTitle(error: unknown) {

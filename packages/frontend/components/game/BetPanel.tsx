@@ -17,8 +17,8 @@ interface BetPanelProps {
   actionLabel?: string;
   hideAction?: boolean;
   onAmountChange: (value: string) => void;
-  onPlay: () => void;
-  onRefund?: () => void;
+  onPlay: () => unknown | Promise<unknown>;
+  onRefund?: () => unknown | Promise<unknown>;
 }
 
 export function BetPanel({ amount, disabled = false, disabledReason, loading = false, vrfState = "idle", actionLabel = "Play", hideAction = false, onAmountChange, onPlay, onRefund }: BetPanelProps) {
@@ -50,7 +50,7 @@ export function BetPanel({ amount, disabled = false, disabledReason, loading = f
       {!hideAction && (
         <button
           type="button"
-          onClick={onPlay}
+          onClick={() => void runPanelAction(onPlay)}
           disabled={disabled || isBusy}
           className="primary-action mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-md px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-45"
         >
@@ -62,7 +62,7 @@ export function BetPanel({ amount, disabled = false, disabledReason, loading = f
       {vrfState === "error" && onRefund && (
         <button
           type="button"
-          onClick={onRefund}
+          onClick={() => void runPanelAction(onRefund)}
           className="mt-3 flex h-10 w-full items-center justify-center rounded-md border border-[var(--lose)] px-4 text-sm font-bold text-[var(--lose)] hover:bg-[var(--lose-light)]"
         >
           Claim refund
@@ -71,6 +71,14 @@ export function BetPanel({ amount, disabled = false, disabledReason, loading = f
 
     </aside>
   );
+}
+
+async function runPanelAction(action?: () => unknown | Promise<unknown>) {
+  try {
+    await action?.();
+  } catch {
+    // Game actions already surface player-facing errors through toast state.
+  }
 }
 
 function QuickAmountButton({

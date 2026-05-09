@@ -13,6 +13,7 @@ import { HeaderAccountMenu } from "@/components/layout/HeaderAccountMenu";
 import { WalletStatus } from "@/components/wallet/WalletStatus";
 import { ChainSwitcher } from "@/components/wallet/ChainSwitcher";
 import { useBalance } from "@/hooks/useBalance";
+import { markManualWalletDisconnect } from "@/lib/walletConnectors";
 
 const navItems = [
   { href: "/", label: "Games", icon: Gamepad2 },
@@ -150,7 +151,14 @@ function MobileHeaderMenu({ pathname }: { pathname: string }) {
                     </span>
                   </span>
                 </Link>
-                <button type="button" onClick={() => disconnect()} className="mobile-menu-link text-[var(--lose)]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    markManualWalletDisconnect();
+                    disconnect();
+                  }}
+                  className="mobile-menu-link text-[var(--lose)]"
+                >
                   <LogOut size={15} />
                   Disconnect
                 </button>

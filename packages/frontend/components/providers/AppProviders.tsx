@@ -9,6 +9,7 @@ import { wagmiConfig } from "@/lib/wagmi.config";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { ReferralAttribution } from "@/components/referral/ReferralAttribution";
 import { WalletConnectModal } from "@/components/wallet/WalletConnectModal";
+import { WalletReconnectSync } from "@/components/wallet/WalletReconnectSync";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -31,6 +32,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
           <ToastProvider>
             <FarcasterMiniAppReady />
             <ReferralAttribution />
+            <WalletReconnectSync />
             <WalletConnectModal />
             {children}
           </ToastProvider>
