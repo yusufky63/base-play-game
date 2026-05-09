@@ -46,6 +46,12 @@ const mono = JetBrains_Mono({
 
 const appDescription =
   "Provably fair mini games on Base with on-chain settlement, Chainlink VRF randomness, instant payouts, XP, quests, referrals, and weekly plus all-time leaderboards.";
+const socialPreviewImage = {
+  url: "/brand/farcaster-hero.png",
+  width: 1200,
+  height: 630,
+  alt: "BasePlay - Play. Compete. Win on Base."
+};
 
 export const metadata: Metadata = {
   applicationName: "BasePlay",
@@ -59,13 +65,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: "BasePlay - Mini Onchain Games",
     description: appDescription,
-    images: ["/brand/baseplay-logo-full.png"]
+    images: [socialPreviewImage]
   },
   twitter: {
     card: "summary_large_image",
     title: "BasePlay - Mini Onchain Games",
     description: appDescription,
-    images: ["/brand/baseplay-logo-full.png"],
+    images: [socialPreviewImage],
     creator: "@BasePlayGames"
   },
   other: {
