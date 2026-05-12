@@ -56,7 +56,7 @@ const playerNotes = [
   {
     icon: <Radio size={18} />,
     title: "Fast activity views",
-    body: "Live feed, profile tabs, leaderboard data, Home stats, and round detail timelines are indexed from Base events and cached by view importance instead of polling every few seconds. Leaderboard responses are shared for 30 minutes, Home stats use a shared 10 minute API cache with no browser-level force-cache, compact feeds for 5 minutes, round details for 30 minutes, and profile tabs only load their own data when opened. Home global stats read aggregate tables first and fall back to settled round rows if an aggregate is empty. Profile tab labels avoid stale counts until opened, and each profile panel shows loading rows while its data is fetched. Basenames are cached after first lookup, game pages expose a referral share card without adding referral API load, backend event indexing polls Base mainnet in production by default, reads all tracked game events with one log request per game window, contract status reads prioritize public Base RPC endpoints before configured private fallbacks, direct contract fallback reads use multicall batching where possible, and ENS fallback display names only resolve when a server-side Ethereum mainnet RPC is configured."
+    body: "Live feed, profile tabs, leaderboard data, Home stats, and round detail timelines are indexed from Base events and cached by view importance instead of polling every few seconds. Leaderboard responses are shared for 30 minutes, Home stats use a shared 10 minute API cache with no browser-level force-cache, compact feeds for 5 minutes, round details for 30 minutes, and profile tabs only load their own data when opened. Home global stats read aggregate tables first and fall back to settled round rows if an aggregate is empty. Profile tab labels avoid stale counts until opened, and each profile panel shows loading rows while its data is fetched. Basenames are cached after first lookup, game pages expose a referral share card without adding referral API load, backend event indexing polls Base mainnet by default, reads all tracked game events with one log request per game window, contract status reads prioritize public Base RPC endpoints before configured private fallbacks, direct contract fallback reads use multicall batching where possible, and ENS fallback display names only resolve when a server-side Ethereum mainnet RPC is configured."
   },
   {
     icon: <Sparkles size={18} />,
@@ -126,7 +126,7 @@ const faqs = [
   },
   {
     question: "Why can live feed take a few seconds?",
-    answer: "The on-chain result is final first. Feed, profile, and leaderboard views are updated by the backend indexer after it reads settled Base events. Production indexing is mainnet-first by default and batches tracked game events into one log query per game window, while public activity views use cache windows to avoid unnecessary Supabase and RPC load."
+    answer: "The on-chain result is final first. Feed, profile, and leaderboard views are updated by the backend indexer after it reads settled Base events. Indexing is mainnet-first by default and batches tracked game events into one log query per game window, while public activity views use cache windows to avoid unnecessary Supabase and RPC load."
   },
   {
     question: "Why can Home global stats lag behind a new round?",

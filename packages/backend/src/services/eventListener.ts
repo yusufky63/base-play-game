@@ -272,7 +272,7 @@ function getEnabledIndexerChains(): Array<84532 | 8453> {
     return Array.from(new Set(configured));
   }
 
-  return process.env.NODE_ENV === "production" ? [8453] : [84532, 8453];
+  return [8453];
 }
 
 function readPositiveNumber(name: string, fallbackValue: number) {
