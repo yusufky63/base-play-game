@@ -22,7 +22,7 @@ interface InitOptions {
 interface EventClient {
   getBlockNumber: () => Promise<bigint>;
   getContractEvents: (args: {
-    address: Address;
+    address: Address | Address[];
     abi: typeof ROUND_SETTLED_ABI;
     eventName?: GameEventName;
     fromBlock: bigint;
@@ -51,6 +51,7 @@ const indexerHealth = new Map<
     updatedAt: string;
   }
 >();
+type ActiveGame = { game: (typeof GAMES_REGISTRY)[number]; address: Address };
 
 export function getIndexerHealth() {
   return Array.from(indexerHealth.values()).sort((a, b) => a.chainId - b.chainId || a.gameId.localeCompare(b.gameId));
@@ -115,10 +116,7 @@ function startChainIndexerLoop(
       let delayMs = POLL_INTERVAL_MS;
       try {
         const latestBlock = await client.getBlockNumber();
-        for (const { game, address } of activeGames) {
-          await pollGame(client, chainId, address, game.id, latestBlock, options);
-          await sleep(POLL_GAME_SPACING_MS);
-        }
+        await pollGames(client, chainId, activeGames, latestBlock, options);
       } catch (error) {
         delayMs = ERROR_POLL_INTERVAL_MS;
         const message = cleanErrorMessage(error);
@@ -132,72 +130,110 @@ function startChainIndexerLoop(
   })();
 }
 
-async function pollGame(
+async function pollGames(
   client: EventClient,
   chainId: 8453,
-  address: Address,
-  gameId: string,
+  activeGames: ActiveGame[],
   latestBlock: bigint,
   options: InitOptions
 ) {
-  const key = `${chainId}:${gameId}`;
-  const state = indexerRuntime.get(key) ?? { nextBlock: null };
+  const dueGames: Array<ActiveGame & { state: { nextBlock: bigint | null } }> = [];
 
-  if (state.nextBlock === null) {
-    state.nextBlock = await getInitialFromBlock(client, chainId, gameId, latestBlock);
-    indexerRuntime.set(key, state);
+  for (const entry of activeGames) {
+    const key = `${chainId}:${entry.game.id}`;
+    const state = indexerRuntime.get(key) ?? { nextBlock: null };
+    if (state.nextBlock === null) {
+      state.nextBlock = await getInitialFromBlock(client, chainId, entry.game.id, latestBlock);
+      indexerRuntime.set(key, state);
+    }
+
+    if (state.nextBlock > latestBlock) {
+      setIndexerHealth(chainId, entry.game.id, { status: "watching", lastError: null });
+      continue;
+    }
+
+    dueGames.push({ ...entry, state });
   }
 
-  if (state.nextBlock > latestBlock) {
-    setIndexerHealth(chainId, gameId, { status: "watching", lastError: null });
-    return;
-  }
+  if (dueGames.length === 0) return;
 
-  const fromBlock = state.nextBlock;
+  const fromBlock = dueGames.reduce((min, entry) => {
+    const nextBlock = entry.state.nextBlock ?? latestBlock;
+    return nextBlock < min ? nextBlock : min;
+  }, latestBlock);
   const toBlock = fromBlock + MAX_LOG_RANGE_BLOCKS > latestBlock ? latestBlock : fromBlock + MAX_LOG_RANGE_BLOCKS;
   const catchingUp = latestBlock - toBlock > MAX_LOG_RANGE_BLOCKS;
+  const entriesByAddress = new Map(dueGames.map((entry) => [entry.address.toLowerCase(), entry]));
+  const logsByGameId = new Map<string, Log[]>();
 
   try {
-    setIndexerHealth(chainId, gameId, { status: catchingUp ? "catching_up" : "watching", lastError: null });
-
-    const logs = await client.getContractEvents({ address, abi: ROUND_SETTLED_ABI, fromBlock, toBlock });
-    const groupedLogs = groupLogsByEventName(logs);
-    const betLogs = groupedLogs.BetPlaced;
-    await persistRoundEvents(chainId, gameId, address, "BetPlaced", betLogs);
-
-    const refundLogs = groupedLogs.BetRefundClaimed;
-    await persistRoundEvents(chainId, gameId, address, "BetRefundClaimed", refundLogs);
-
-    const crashLogs = gameId === "crash" ? groupedLogs.CrashPointGenerated : [];
-    if (crashLogs.length > 0) {
-      await persistRoundEvents(chainId, gameId, address, "CrashPointGenerated", crashLogs);
+    for (const { game } of dueGames) {
+      setIndexerHealth(chainId, game.id, { status: catchingUp ? "catching_up" : "watching", lastError: null });
     }
 
-    if (gameId === "crash" && latestBlock - toBlock <= 20n) {
-      for (const log of crashLogs) {
-        const args = "args" in log ? (log.args as { requestId?: bigint; crashPoint?: bigint }) : undefined;
-        if (args?.requestId === undefined || args.crashPoint === undefined) continue;
-        options.crashEngine.startRound(args.requestId.toString(), Number(args.crashPoint) / 100);
-      }
-    }
-
-    const settledLogs = groupedLogs.RoundSettled;
-
-    const lastLogBlock = await persistSettledLogs(chainId, gameId, settledLogs);
-    await persistRoundEvents(chainId, gameId, address, "RoundSettled", settledLogs);
-    await saveIndexedCheckpoint(chainId, gameId, toBlock);
-    state.nextBlock = toBlock + 1n;
-    indexerRuntime.set(key, state);
-    setIndexerHealth(chainId, gameId, {
-      status: catchingUp ? "catching_up" : "watching",
-      lastIndexedBlock: toBlock.toString(),
-      ...(lastLogBlock ? { lastLogAt: new Date().toISOString() } : {}),
-      lastError: null
+    const logs = await client.getContractEvents({
+      address: dueGames.map((entry) => entry.address),
+      abi: ROUND_SETTLED_ABI,
+      fromBlock,
+      toBlock
     });
+
+    for (const log of logs) {
+      const entry = entriesByAddress.get(log.address.toLowerCase());
+      const nextBlock = entry?.state.nextBlock;
+      if (!entry || nextBlock === null || nextBlock === undefined) continue;
+      if (log.blockNumber !== null && log.blockNumber < nextBlock) continue;
+      const rows = logsByGameId.get(entry.game.id) ?? [];
+      rows.push(log);
+      logsByGameId.set(entry.game.id, rows);
+    }
+
+    for (const entry of dueGames) {
+      if ((entry.state.nextBlock ?? latestBlock) > toBlock) continue;
+      const gameId = entry.game.id;
+      const gameLogs = logsByGameId.get(gameId) ?? [];
+      const groupedLogs = groupLogsByEventName(gameLogs);
+      const betLogs = groupedLogs.BetPlaced;
+      await persistRoundEvents(chainId, gameId, entry.address, "BetPlaced", betLogs);
+
+      const refundLogs = groupedLogs.BetRefundClaimed;
+      await persistRoundEvents(chainId, gameId, entry.address, "BetRefundClaimed", refundLogs);
+
+      const crashLogs = gameId === "crash" ? groupedLogs.CrashPointGenerated : [];
+      if (crashLogs.length > 0) {
+        await persistRoundEvents(chainId, gameId, entry.address, "CrashPointGenerated", crashLogs);
+      }
+
+      if (gameId === "crash" && latestBlock - toBlock <= 20n) {
+        for (const log of crashLogs) {
+          const args = "args" in log ? (log.args as { requestId?: bigint; crashPoint?: bigint }) : undefined;
+          if (args?.requestId === undefined || args.crashPoint === undefined) continue;
+          options.crashEngine.startRound(args.requestId.toString(), Number(args.crashPoint) / 100);
+        }
+      }
+
+      const settledLogs = groupedLogs.RoundSettled;
+
+      const lastLogBlock = await persistSettledLogs(chainId, gameId, settledLogs);
+      await persistRoundEvents(chainId, gameId, entry.address, "RoundSettled", settledLogs);
+      await saveIndexedCheckpoint(chainId, gameId, toBlock);
+      entry.state.nextBlock = toBlock + 1n;
+      indexerRuntime.set(`${chainId}:${gameId}`, entry.state);
+      setIndexerHealth(chainId, gameId, {
+        status: catchingUp ? "catching_up" : "watching",
+        lastIndexedBlock: toBlock.toString(),
+        ...(lastLogBlock ? { lastLogAt: new Date().toISOString() } : {}),
+        lastError: null
+      });
+    }
+
+    await sleep(POLL_GAME_SPACING_MS);
   } catch (error) {
     const message = cleanErrorMessage(error);
-    console.error(`[Listener][${gameId}][${chainId}] ${message}`);
-    setIndexerHealth(chainId, gameId, { status: "error", lastError: message });
+    console.error(`[Listener][batch][${chainId}] ${message}`);
+    for (const { game } of dueGames) {
+      setIndexerHealth(chainId, game.id, { status: "error", lastError: message });
+    }
   }
 }
 
