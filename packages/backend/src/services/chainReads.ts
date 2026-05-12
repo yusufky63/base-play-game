@@ -152,6 +152,18 @@ async function loadContractStatus(client: RpcClient, chainId: SupportedChainId):
     .multicall({ allowFailure: true, contracts: vaultCalls })
     .then((results) => results.map((result) => (result.status === "success" ? result.result : null)));
 
+  if (
+    vaultPaused === null ||
+    minBetWei === null ||
+    maxBetWei === null ||
+    houseEdgeBps === null ||
+    availableLiquidityWei === null ||
+    totalReservedPayoutWei === null ||
+    vaultBalanceWei === null
+  ) {
+    throw new Error("Contract status vault reads failed");
+  }
+
   const gameCalls = games
     .map((game) => ({
       game,
@@ -167,6 +179,10 @@ async function loadContractStatus(client: RpcClient, chainId: SupportedChainId):
   const pausedResults = gameCalls.length
     ? await client.multicall({ allowFailure: true, contracts: gameCalls.map((entry) => entry.call) })
     : [];
+
+  if (gameCalls.length > 0 && pausedResults.every((result) => result.status !== "success")) {
+    throw new Error("Contract status game reads failed");
+  }
 
   const entries = gameCalls.map((entry, index) => {
     const pausedResult = pausedResults[index];

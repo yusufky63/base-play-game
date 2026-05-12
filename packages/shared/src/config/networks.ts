@@ -11,31 +11,31 @@ function urls(...values: Array<string | null | undefined>) {
 }
 
 export const BASE_SEPOLIA_FRONTEND_RPC_URLS = urls(
-  optionalEnvUrl("NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL"),
   "https://sepolia.base.org",
-  "https://base-sepolia-rpc.publicnode.com"
+  "https://base-sepolia-rpc.publicnode.com",
+  optionalEnvUrl("NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL")
 );
 
 export const BASE_MAINNET_FRONTEND_RPC_URLS = urls(
-  optionalEnvUrl("NEXT_PUBLIC_BASE_MAINNET_RPC_URL"),
   "https://mainnet.base.org",
-  "https://base-rpc.publicnode.com"
+  "https://base-rpc.publicnode.com",
+  optionalEnvUrl("NEXT_PUBLIC_BASE_MAINNET_RPC_URL")
 );
 
 export const BASE_SEPOLIA_BACKEND_RPC_URLS = urls(
+  "https://sepolia.base.org",
+  "https://base-sepolia-rpc.publicnode.com",
   optionalEnvUrl("BASE_SEPOLIA_BACKEND_RPC_URL"),
   optionalEnvUrl("BASE_SEPOLIA_RPC_URL"),
-  optionalEnvUrl("NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL"),
-  "https://sepolia.base.org",
-  "https://base-sepolia-rpc.publicnode.com"
+  optionalEnvUrl("NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL")
 );
 
 export const BASE_MAINNET_BACKEND_RPC_URLS = urls(
+  "https://mainnet.base.org",
+  "https://base-rpc.publicnode.com",
   optionalEnvUrl("BASE_MAINNET_BACKEND_RPC_URL"),
   optionalEnvUrl("BASE_MAINNET_RPC_URL"),
-  optionalEnvUrl("NEXT_PUBLIC_BASE_MAINNET_RPC_URL"),
-  "https://mainnet.base.org",
-  "https://base-rpc.publicnode.com"
+  optionalEnvUrl("NEXT_PUBLIC_BASE_MAINNET_RPC_URL")
 );
 
 export const BASE_SEPOLIA_RPC_URLS = BASE_SEPOLIA_FRONTEND_RPC_URLS;

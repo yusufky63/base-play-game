@@ -2,7 +2,7 @@ import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
 import { BASE_MAINNET_BACKEND_RPC_URLS, BASE_SEPOLIA_BACKEND_RPC_URLS, type NetworkKey } from "@baseplay/shared/config/networks";
 import { netPayoutFromGross } from "@baseplay/shared/utils/payout";
-import { createPublicClient, fallback, formatEther, http, parseAbi, type Address, type Log } from "viem";
+import { createPublicClient, decodeEventLog, fallback, formatEther, http, parseAbi, type Address, type Log } from "viem";
 import { base, baseSepolia } from "viem/chains";
 import { supabaseAdmin } from "../supabase/client.js";
 import type { CrashEngine } from "./crashEngine.js";
@@ -23,17 +23,19 @@ interface EventClient {
   getContractEvents: (args: {
     address: Address;
     abi: typeof ROUND_SETTLED_ABI;
-    eventName: "BetPlaced" | "RoundSettled" | "BetRefundClaimed" | "CrashPointGenerated";
+    eventName?: GameEventName;
     fromBlock: bigint;
     toBlock: bigint;
   }) => Promise<Log[]>;
 }
 
+type GameEventName = "BetPlaced" | "RoundSettled" | "BetRefundClaimed" | "CrashPointGenerated";
+
 const DEFAULT_LOOKBACK_BLOCKS = 20_000n;
 const MAX_LOG_RANGE_BLOCKS = 9_000n;
-const POLL_INTERVAL_MS = readPositiveNumber("INDEXER_POLL_MS", 10_000);
-const ERROR_POLL_INTERVAL_MS = readPositiveNumber("INDEXER_ERROR_POLL_MS", 12_000);
-const POLL_GAME_SPACING_MS = readPositiveNumber("INDEXER_GAME_SPACING_MS", 150);
+const POLL_INTERVAL_MS = readPositiveNumber("INDEXER_POLL_MS", 30_000);
+const ERROR_POLL_INTERVAL_MS = readPositiveNumber("INDEXER_ERROR_POLL_MS", 60_000);
+const POLL_GAME_SPACING_MS = readPositiveNumber("INDEXER_GAME_SPACING_MS", 50);
 const BLOCKPI_PATTERN = /blockpi\.network/i;
 const indexerRuntime = new Map<string, { nextBlock: bigint | null }>();
 const indexerHealth = new Map<
@@ -67,8 +69,9 @@ async function listenChain(chainId: 84532 | 8453, options: InitOptions) {
 }
 
 export async function initEventListeners(options: InitOptions) {
-  await listenChain(84532, options);
-  await listenChain(8453, options);
+  for (const chainId of getEnabledIndexerChains()) {
+    await listenChain(chainId, options);
+  }
 }
 
 async function getInitialFromBlock(
@@ -156,33 +159,15 @@ async function pollGame(
   try {
     setIndexerHealth(chainId, gameId, { status: catchingUp ? "catching_up" : "watching", lastError: null });
 
-    const betLogs = await client.getContractEvents({
-      address,
-      abi: ROUND_SETTLED_ABI,
-      eventName: "BetPlaced",
-      fromBlock,
-      toBlock
-    });
+    const logs = await client.getContractEvents({ address, abi: ROUND_SETTLED_ABI, fromBlock, toBlock });
+    const groupedLogs = groupLogsByEventName(logs);
+    const betLogs = groupedLogs.BetPlaced;
     await persistRoundEvents(chainId, gameId, address, "BetPlaced", betLogs);
 
-    const refundLogs = await client.getContractEvents({
-      address,
-      abi: ROUND_SETTLED_ABI,
-      eventName: "BetRefundClaimed",
-      fromBlock,
-      toBlock
-    });
+    const refundLogs = groupedLogs.BetRefundClaimed;
     await persistRoundEvents(chainId, gameId, address, "BetRefundClaimed", refundLogs);
 
-    const crashLogs = gameId === "crash"
-      ? await client.getContractEvents({
-          address,
-          abi: ROUND_SETTLED_ABI,
-          eventName: "CrashPointGenerated",
-          fromBlock,
-          toBlock
-        })
-      : [];
+    const crashLogs = gameId === "crash" ? groupedLogs.CrashPointGenerated : [];
     if (crashLogs.length > 0) {
       await persistRoundEvents(chainId, gameId, address, "CrashPointGenerated", crashLogs);
     }
@@ -195,13 +180,7 @@ async function pollGame(
       }
     }
 
-    const settledLogs = await client.getContractEvents({
-      address,
-      abi: ROUND_SETTLED_ABI,
-      eventName: "RoundSettled",
-      fromBlock,
-      toBlock
-    });
+    const settledLogs = groupedLogs.RoundSettled;
 
     const lastLogBlock = await persistSettledLogs(chainId, gameId, settledLogs);
     await persistRoundEvents(chainId, gameId, address, "RoundSettled", settledLogs);
@@ -284,6 +263,18 @@ function getBackendRpcUrls(chainId: 84532 | 8453) {
   return urls.length > 0 ? urls : rpcUrls.filter(Boolean);
 }
 
+function getEnabledIndexerChains(): Array<84532 | 8453> {
+  const configured = process.env.INDEXER_CHAINS?.split(",")
+    .map((value) => Number(value.trim()))
+    .filter((value): value is 84532 | 8453 => value === 84532 || value === 8453);
+
+  if (configured?.length) {
+    return Array.from(new Set(configured));
+  }
+
+  return process.env.NODE_ENV === "production" ? [8453] : [84532, 8453];
+}
+
 function readPositiveNumber(name: string, fallbackValue: number) {
   const parsed = Number(process.env[name]);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallbackValue;
@@ -346,11 +337,43 @@ async function persistSettledLogs(chainId: 84532 | 8453, gameId: string, logs: L
   return lastBlock || null;
 }
 
+function groupLogsByEventName(logs: Log[]) {
+  const grouped: Record<GameEventName, Log[]> = {
+    BetPlaced: [],
+    RoundSettled: [],
+    BetRefundClaimed: [],
+    CrashPointGenerated: []
+  };
+
+  for (const log of logs) {
+    const eventName = getLogEventName(log);
+    if (eventName) grouped[eventName].push(log);
+  }
+
+  return grouped;
+}
+
+function getLogEventName(log: Log): GameEventName | null {
+  const decodedName = "eventName" in log && typeof log.eventName === "string" ? log.eventName : null;
+  if (isGameEventName(decodedName)) return decodedName;
+
+  try {
+    const decoded = decodeEventLog({ abi: ROUND_SETTLED_ABI, data: log.data, topics: log.topics });
+    return isGameEventName(decoded.eventName) ? decoded.eventName : null;
+  } catch {
+    return null;
+  }
+}
+
+function isGameEventName(value: unknown): value is GameEventName {
+  return value === "BetPlaced" || value === "RoundSettled" || value === "BetRefundClaimed" || value === "CrashPointGenerated";
+}
+
 async function persistRoundEvents(
   chainId: 84532 | 8453,
   gameId: string,
   contractAddress: Address,
-  eventName: "BetPlaced" | "RoundSettled" | "BetRefundClaimed" | "CrashPointGenerated",
+  eventName: GameEventName,
   logs: Log[]
 ) {
   for (const log of logs) {

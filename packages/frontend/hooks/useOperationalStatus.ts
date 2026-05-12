@@ -93,29 +93,38 @@ export function useOperationalStatus(contractName: string | null | undefined) {
 async function loadOperationalStatus(chainId: SupportedChainId, contractName: string): Promise<OperationalState> {
   const backend = await fetchBackendJson<BackendContractStatus>(`/api/contracts/status?chainId=${chainId}`).catch(() => null);
   const backendGame = backend?.games?.[contractName];
+  if (backendGame && backendGame.status !== "unavailable") {
+    return decorateBackendStatus(chainId, backend.networkName, backendGame);
+  }
+
   if (backendGame) {
-    return decorateStatus({
-      status: backendGame.status,
-      chainId,
-      networkName: backend.networkName,
-      gameAddress: backendGame.gameAddress ?? undefined,
-      vaultAddress: backendGame.vaultAddress ?? undefined,
-      gamePaused: backendGame.gamePaused,
-      vaultPaused: backendGame.vaultPaused,
-      minBetWei: parseOptionalBigInt(backendGame.minBetWei),
-      maxBetWei: parseOptionalBigInt(backendGame.maxBetWei),
-      houseEdgeBps: backendGame.houseEdgeBps,
-      availableLiquidityWei: parseOptionalBigInt(backendGame.availableLiquidityWei),
-      totalReservedPayoutWei: parseOptionalBigInt(backendGame.totalReservedPayoutWei),
-      vaultBalanceWei: parseOptionalBigInt(backendGame.vaultBalanceWei),
-      minBetEth: backendGame.minBetEth,
-      maxBetEth: backendGame.maxBetEth,
-      availableLiquidityEth: backendGame.availableLiquidityEth,
-      vaultBalanceEth: backendGame.vaultBalanceEth
-    });
+    const directStatus = await loadOperationalStatusDirect(chainId, contractName).catch(() => null);
+    return directStatus && directStatus.status !== "unavailable" ? directStatus : decorateBackendStatus(chainId, backend.networkName, backendGame);
   }
 
   return loadOperationalStatusDirect(chainId, contractName);
+}
+
+function decorateBackendStatus(chainId: SupportedChainId, networkName: string, backendGame: BackendContractStatus["games"][string]) {
+  return decorateStatus({
+    status: backendGame.status,
+    chainId,
+    networkName,
+    gameAddress: backendGame.gameAddress ?? undefined,
+    vaultAddress: backendGame.vaultAddress ?? undefined,
+    gamePaused: backendGame.gamePaused,
+    vaultPaused: backendGame.vaultPaused,
+    minBetWei: parseOptionalBigInt(backendGame.minBetWei),
+    maxBetWei: parseOptionalBigInt(backendGame.maxBetWei),
+    houseEdgeBps: backendGame.houseEdgeBps,
+    availableLiquidityWei: parseOptionalBigInt(backendGame.availableLiquidityWei),
+    totalReservedPayoutWei: parseOptionalBigInt(backendGame.totalReservedPayoutWei),
+    vaultBalanceWei: parseOptionalBigInt(backendGame.vaultBalanceWei),
+    minBetEth: backendGame.minBetEth,
+    maxBetEth: backendGame.maxBetEth,
+    availableLiquidityEth: backendGame.availableLiquidityEth,
+    vaultBalanceEth: backendGame.vaultBalanceEth
+  });
 }
 
 async function loadOperationalStatusDirect(chainId: SupportedChainId, contractName: string): Promise<OperationalState> {
