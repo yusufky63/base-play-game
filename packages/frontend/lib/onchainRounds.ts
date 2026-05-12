@@ -2,8 +2,9 @@ import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
 import { BASE_MAINNET_FRONTEND_RPC_URLS } from "@baseplay/shared/config/networks";
 import { netPayoutFromGross } from "@baseplay/shared/utils/payout";
-import { createPublicClient, fallback, formatEther, http, parseAbi } from "viem";
+import { formatEther, parseAbi } from "viem";
 import { base } from "viem/chains";
+import { createBaseRpcClient } from "@/lib/rpc";
 
 const ROUND_SETTLED_ABI = parseAbi([
   "event RoundSettled(address indexed player, uint256 indexed requestId, uint256 betAmount, uint256 payout, bool won)"
@@ -26,10 +27,7 @@ export interface OnchainRound {
   log_index: number;
 }
 
-const client = createPublicClient({
-  chain: base,
-  transport: fallback(BASE_MAINNET_FRONTEND_RPC_URLS.map((url) => http(url, { timeout: 10_000 })))
-});
+const client = createBaseRpcClient(base, BASE_MAINNET_FRONTEND_RPC_URLS, { timeout: 10_000 });
 
 export async function fetchRecentOnchainRounds({
   limit = 20,

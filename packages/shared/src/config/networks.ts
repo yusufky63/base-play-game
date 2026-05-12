@@ -6,21 +6,38 @@ const optionalEnvUrl = (name: string) => {
   return value.length > 0 ? value : null;
 };
 
-function urls(...values: Array<string | null | undefined>) {
-  return Array.from(new Set(values.filter((value): value is string => Boolean(value))));
+const optionalEnvUrls = (name: string) => {
+  const value = env(name).trim();
+  if (!value) return [];
+  return value
+    .split(",")
+    .map((url) => url.trim())
+    .filter(Boolean);
+};
+
+function urls(...values: Array<string | string[] | null | undefined>) {
+  const flattened = values.flatMap((value) => Array.isArray(value) ? value : [value]);
+  return Array.from(new Set(flattened.filter((value): value is string => Boolean(value))));
 }
 
-export const BASE_MAINNET_FRONTEND_RPC_URLS = urls(
+export const BASE_MAINNET_PUBLIC_RPC_URLS = urls(
   "https://mainnet.base.org",
-  "https://base-rpc.publicnode.com",
+  "https://base-rpc.publicnode.com"
+);
+
+export const BASE_MAINNET_FRONTEND_RPC_URLS = urls(
+  BASE_MAINNET_PUBLIC_RPC_URLS,
+  optionalEnvUrls("NEXT_PUBLIC_BASE_MAINNET_RPC_URLS"),
   optionalEnvUrl("NEXT_PUBLIC_BASE_MAINNET_RPC_URL")
 );
 
 export const BASE_MAINNET_BACKEND_RPC_URLS = urls(
-  "https://mainnet.base.org",
-  "https://base-rpc.publicnode.com",
+  BASE_MAINNET_PUBLIC_RPC_URLS,
+  optionalEnvUrls("BASE_MAINNET_BACKEND_RPC_URLS"),
   optionalEnvUrl("BASE_MAINNET_BACKEND_RPC_URL"),
+  optionalEnvUrls("BASE_MAINNET_RPC_URLS"),
   optionalEnvUrl("BASE_MAINNET_RPC_URL"),
+  optionalEnvUrls("NEXT_PUBLIC_BASE_MAINNET_RPC_URLS"),
   optionalEnvUrl("NEXT_PUBLIC_BASE_MAINNET_RPC_URL")
 );
 

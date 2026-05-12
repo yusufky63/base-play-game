@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AlertTriangle, ExternalLink, ShieldCheck } from "lucide-react";
-import { createPublicClient, encodeFunctionData, fallback, formatEther, http, parseEther } from "viem";
+import { encodeFunctionData, formatEther, parseEther } from "viem";
 import { useAccount, usePublicClient, useSendTransaction, useSwitchChain, useWriteContract } from "wagmi";
 import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
@@ -16,6 +16,7 @@ import { useToast } from "@/components/ui/ToastProvider";
 import { betPresetAmounts } from "@/lib/env";
 import { getDefaultNetworkConfig } from "@/lib/networkConfig";
 import { BASEPLAY_BUILDER_CODE_SUFFIX } from "@/lib/builderCode";
+import { createBaseRpcClient } from "@/lib/rpc";
 
 const vaultAbi = [
   { type: "function", name: "vaultBalance", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
@@ -88,11 +89,7 @@ export default function AdminVaultPage() {
   useEffect(() => {
     if (!vaultAddress) return;
 
-    const client = createPublicClient({
-      chain: defaultNetwork.viemChain,
-      batch: { multicall: true },
-      transport: fallback(defaultNetwork.rpcUrls.map((url) => http(url, { timeout: 10_000 })))
-    });
+    const client = createBaseRpcClient(defaultNetwork.viemChain, defaultNetwork.rpcUrls, { timeout: 10_000 });
 
     async function load() {
       const [vaultReads, withdrawSupported] = await Promise.all([

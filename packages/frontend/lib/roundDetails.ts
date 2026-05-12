@@ -2,9 +2,10 @@
 
 import type { Database } from "@baseplay/shared/types/supabase.types";
 import { getNetworkByChainId } from "@baseplay/shared/config/networks";
-import { createPublicClient, fallback, http, parseAbi, parseEventLogs, type PublicClient } from "viem";
+import { parseAbi, parseEventLogs, type PublicClient } from "viem";
 import { getSupabaseBrowser } from "@/lib/supabase";
 import type { FeedRound } from "@/hooks/useRecentRounds";
+import { createBaseRpcClient } from "@/lib/rpc";
 
 export type RoundEvent = Database["public"]["Tables"]["round_events"]["Row"];
 export type RoundSummary = Database["public"]["Tables"]["game_rounds"]["Row"];
@@ -158,15 +159,16 @@ function getClient(chainId: number) {
   const network = getNetworkByChainId(chainId);
   if (!network?.frontendRpcUrls?.length) return null;
 
-  const client = createPublicClient({
-    chain: {
+  const client = createBaseRpcClient(
+    {
       id: network.chainId,
       name: network.name,
       nativeCurrency: network.nativeCurrency,
       rpcUrls: { default: { http: network.frontendRpcUrls } }
     },
-    transport: fallback(network.frontendRpcUrls.map((url) => http(url, { timeout: 10_000 })))
-  });
+    network.frontendRpcUrls,
+    { timeout: 10_000 }
+  );
   clients.set(chainId, client);
   return client;
 }

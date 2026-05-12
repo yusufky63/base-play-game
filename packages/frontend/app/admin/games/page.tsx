@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { createPublicClient, fallback, http } from "viem";
 import { useWriteContract } from "wagmi";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
 import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
@@ -9,6 +8,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { useToast } from "@/components/ui/ToastProvider";
 import { getDefaultNetworkConfig } from "@/lib/networkConfig";
 import { BASEPLAY_BUILDER_CODE_SUFFIX } from "@/lib/builderCode";
+import { createBaseRpcClient } from "@/lib/rpc";
 
 const defaultNetwork = getDefaultNetworkConfig();
 const deployedGameNames = new Set(Object.keys(CONTRACT_ADDRESSES[defaultNetwork.chainId] ?? {}));
@@ -37,11 +37,7 @@ export default function AdminGamesPage() {
 
   useEffect(() => {
     let mounted = true;
-    const client = createPublicClient({
-      chain: defaultNetwork.viemChain,
-      batch: { multicall: true },
-      transport: fallback(defaultNetwork.rpcUrls.map((url) => http(url, { timeout: 10_000 })))
-    });
+    const client = createBaseRpcClient(defaultNetwork.viemChain, defaultNetwork.rpcUrls, { timeout: 10_000 });
 
     async function loadPausedStates() {
       const deployedGames = GAMES_REGISTRY.map((game, index) => ({

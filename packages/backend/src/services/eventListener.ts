@@ -2,10 +2,11 @@ import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
 import { BASE_MAINNET_BACKEND_RPC_URLS, type NetworkKey } from "@baseplay/shared/config/networks";
 import { netPayoutFromGross } from "@baseplay/shared/utils/payout";
-import { createPublicClient, decodeEventLog, fallback, formatEther, http, parseAbi, type Address, type Log } from "viem";
+import { createPublicClient, decodeEventLog, formatEther, parseAbi, type Address, type Log } from "viem";
 import { base } from "viem/chains";
 import { supabaseAdmin } from "../supabase/client.js";
 import type { CrashEngine } from "./crashEngine.js";
+import { createPublicFirstTransport } from "./rpc.js";
 
 const ROUND_SETTLED_ABI = parseAbi([
   "event BetPlaced(address indexed player, uint256 indexed requestId, uint256 betAmount, bytes params)",
@@ -61,7 +62,7 @@ async function listenChain(chainId: 8453, options: InitOptions) {
 
   const client = createPublicClient({
     chain: viemChain,
-    transport: fallback(getBackendRpcUrls(chainId).map((url) => http(url, { timeout: 10_000 })))
+    transport: createPublicFirstTransport(getBackendRpcUrls(chainId), { timeout: 10_000 })
   });
 
   const games = GAMES_REGISTRY.filter((entry) => entry.chains.includes(networkKey));

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { createPublicClient, encodePacked, fallback, getAddress, http, keccak256, namehash, parseAbi } from "viem";
+import { createPublicClient, encodePacked, getAddress, http, keccak256, namehash, parseAbi } from "viem";
 import { base, mainnet } from "viem/chains";
 import { BASE_MAINNET_BACKEND_RPC_URLS } from "@baseplay/shared/config/networks";
+import { createPublicFirstTransport } from "@/lib/rpc";
 
 const BASE_L2_RESOLVER = "0xC6d566A56A1aFf6508b41f6c90ff131615583BCD";
 const BASE_COIN_TYPE = "80002105";
@@ -13,7 +14,7 @@ const pending = new Map<string, Promise<string | null>>();
 
 const baseClient = createPublicClient({
   chain: base,
-  transport: fallback(BASE_MAINNET_BACKEND_RPC_URLS.map((url) => http(url, { timeout: 8_000, retryCount: 1, retryDelay: 250 })))
+  transport: createPublicFirstTransport(BASE_MAINNET_BACKEND_RPC_URLS, { timeout: 8_000, retryCount: 1, retryDelay: 250 })
 });
 
 const mainnetRpcUrl = process.env.MAINNET_RPC_URL || process.env.ETHEREUM_RPC_URL || "";

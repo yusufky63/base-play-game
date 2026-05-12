@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { createPublicClient, fallback, formatEther, http, type Abi } from "viem";
+import { formatEther, type Abi } from "viem";
 import { useAccount } from "wagmi";
 import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
 import { getNetworkByChainId } from "@baseplay/shared/config/networks";
@@ -9,6 +9,7 @@ import { fetchBackendJson } from "@/lib/backend";
 import { defaultChainId } from "@/lib/env";
 import { getNetworkConfigByChainId } from "@/lib/networkConfig";
 import { usePreferredChainId } from "@/lib/preferredChain";
+import { createBaseRpcClient } from "@/lib/rpc";
 
 const gameStatusAbi = [
   { type: "function", name: "gamePaused", stateMutability: "view", inputs: [], outputs: [{ type: "bool" }] }
@@ -137,11 +138,7 @@ async function loadOperationalStatusDirect(chainId: SupportedChainId, contractNa
     return buildFallbackStatus(network.chainId, "unavailable");
   }
 
-  const client = createPublicClient({
-    chain: networkConfig.viemChain,
-    batch: { multicall: true },
-    transport: fallback(networkConfig.rpcUrls.map((url) => http(url, { timeout: 10_000 })))
-  });
+  const client = createBaseRpcClient(networkConfig.viemChain, networkConfig.rpcUrls, { timeout: 10_000 });
 
   const statusReads = await client
     .multicall({

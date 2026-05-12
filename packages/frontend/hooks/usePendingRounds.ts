@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { createPublicClient, fallback, formatEther, http, parseAbi } from "viem";
+import { formatEther, parseAbi } from "viem";
 import { base } from "wagmi/chains";
 import { useAccount, useSwitchChain, useWriteContract } from "wagmi";
 import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
@@ -13,6 +13,7 @@ import { defaultChainId } from "@/lib/env";
 import { parseContractError } from "@/lib/errors";
 import { useToast } from "@/components/ui/ToastProvider";
 import { BASEPLAY_BUILDER_CODE_SUFFIX } from "@/lib/builderCode";
+import { createBaseRpcClient } from "@/lib/rpc";
 
 const pendingRoundAbi = parseAbi([
   "function activeRound(address player) view returns (uint256)",
@@ -22,11 +23,7 @@ const pendingRoundAbi = parseAbi([
 ]);
 
 const clientByChainId = {
-  8453: createPublicClient({
-    chain: base,
-    batch: { multicall: true },
-    transport: fallback(BASE_MAINNET_FRONTEND_RPC_URLS.map((url) => http(url, { timeout: 10_000 })))
-  })
+  8453: createBaseRpcClient(base, BASE_MAINNET_FRONTEND_RPC_URLS, { timeout: 10_000 })
 } as const;
 
 export interface PendingRound {

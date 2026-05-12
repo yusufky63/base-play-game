@@ -1,4 +1,3 @@
-import { fallback, http } from "viem";
 import { createConfig } from "wagmi";
 import { base } from "wagmi/chains";
 import { farcasterMiniApp } from "@farcaster/miniapp-wagmi-connector";
@@ -6,8 +5,7 @@ import { baseAccount, coinbaseWallet, injected, walletConnect } from "wagmi/conn
 import { BASE_MAINNET_FRONTEND_RPC_URLS } from "@baseplay/shared/config/networks";
 import { BASEPLAY_BUILDER_CODE_SUFFIX } from "@/lib/builderCode";
 import { walletConnectProjectId } from "@/lib/env";
-
-const baseMainnetTransports = BASE_MAINNET_FRONTEND_RPC_URLS.map((url) => http(url, { timeout: 8_000, retryCount: 1, retryDelay: 250 }));
+import { createPublicFirstTransport } from "@/lib/rpc";
 
 export const chains = [base] as const;
 
@@ -39,6 +37,6 @@ export const wagmiConfig = createConfig({
   },
   dataSuffix: BASEPLAY_BUILDER_CODE_SUFFIX,
   transports: {
-    [base.id]: fallback(baseMainnetTransports)
+    [base.id]: createPublicFirstTransport(BASE_MAINNET_FRONTEND_RPC_URLS, { timeout: 8_000, retryCount: 1, retryDelay: 250 })
   }
 });

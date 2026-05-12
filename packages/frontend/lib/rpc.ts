@@ -1,22 +1,39 @@
 import { NETWORKS, type NetworkKey } from "@baseplay/shared/config/networks";
-import { createPublicClient, fallback, http } from "viem";
+import { createPublicClient, fallback, http, type Chain, type FallbackTransport, type HttpTransport } from "viem";
+
+type RpcTransportOptions = {
+  timeout?: number;
+  retryCount?: number;
+  retryDelay?: number;
+};
+
+export function createPublicFirstTransport(
+  urls: readonly string[],
+  { timeout = 10_000, retryCount = 1, retryDelay = 250 }: RpcTransportOptions = {}
+): FallbackTransport<HttpTransport[]> {
+  return fallback(
+    urls.filter(Boolean).map((url) => http(url, { timeout, retryCount, retryDelay })),
+    {
+      rank: false,
+      retryCount: 2,
+      retryDelay: 500
+    }
+  );
+}
+
+export function createBaseRpcClient(chain: Chain, urls: readonly string[], options?: RpcTransportOptions) {
+  return createPublicClient({
+    chain,
+    batch: { multicall: true },
+    transport: createPublicFirstTransport(urls, options)
+  });
+}
 
 export function createResilientClient(networkKey: NetworkKey) {
   const network = NETWORKS[networkKey];
-  const transports = network.frontendRpcUrls
-    .filter(Boolean)
-    .map((url) => http(url, { timeout: 8_000, retryCount: 2, retryDelay: 200 }));
 
   return createPublicClient({
-    transport: fallback(transports, {
-      rank: {
-        interval: 60_000,
-        sampleCount: 5,
-        timeout: 3_000,
-        weights: { latency: 0.3, stability: 0.7 }
-      },
-      retryCount: 3
-    })
+    transport: createPublicFirstTransport(network.frontendRpcUrls, { timeout: 8_000, retryCount: 2, retryDelay: 200 })
   });
 }
 

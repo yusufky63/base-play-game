@@ -2,7 +2,7 @@ export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> 
   {
     date: "May 12, 2026",
     title: "RPC resilience",
-    body: "BasePlay now runs mainnet-only in the app and backend, tries public Base RPC first, batches event polling per game window, and keeps direct frontend status fallback if backend reads degrade."
+    body: "BasePlay now keeps Base public RPCs first across app and backend reads, only falling back to private RPCs when public endpoints fail or rate-limit."
   },
   {
     date: "May 8, 2026",
