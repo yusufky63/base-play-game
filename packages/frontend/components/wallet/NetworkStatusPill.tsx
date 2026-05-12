@@ -25,8 +25,8 @@ export function NetworkStatusPill() {
 
   return (
     <div className="hidden items-center gap-2 rounded-md border border-[var(--border-2)] px-3 py-2 text-xs lg:flex">
-      <span className={`h-2 w-2 rounded-full ${isMainnet ? "bg-[var(--pending)]" : "bg-[var(--win)]"}`} />
-      <span className="font-mono text-[var(--text-2)]">{isMainnet ? "Base mainnet" : "Base Sepolia"}</span>
+      <span className={`h-2 w-2 rounded-full ${isMainnet ? "bg-[var(--pending)]" : "bg-[var(--lose)]"}`} />
+      <span className="font-mono text-[var(--text-2)]">{isMainnet ? "Base mainnet" : "Unsupported network"}</span>
     </div>
   );
 }

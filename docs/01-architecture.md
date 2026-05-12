@@ -51,30 +51,30 @@ export interface ChainConfig {
   rpcUrls:        string[]; // priority order — primary first
   blockExplorer:  string;
   vrf:            VRFConfig;
-  testnet:        boolean;
+  mainnet:        boolean;
   nativeCurrency: { name: string; symbol: string; decimals: number };
 }
 
 export const NETWORKS: Record<string, ChainConfig> = {
-  baseSepolia: {
-    chainId:   84532,
-    name:      "Base Sepolia",
-    shortName: "base-sep",
+  baseMainnet: {
+    chainId:   8453,
+    name:      "Base mainnet",
+    shortName: "base",
     rpcUrls: [
-      process.env.ALCHEMY_BASE_SEPOLIA_URL!,                    // Primary (Alchemy)
-      "https://sepolia.base.org",                                // Fallback 1 (official)
-      "https://base-sepolia-rpc.publicnode.com",                 // Fallback 2
-      "https://base-sepolia.blockpi.network/v1/rpc/public",      // Fallback 3
+      process.env.ALCHEMY_BASE_MAINNET_URL!,                    // Primary (Alchemy)
+      "https://mainnet.base.org",                                // Fallback 1 (official)
+      "https://base-rpc.publicnode.com",                 // Fallback 2
+      "https://base.blockpi.network/v1/rpc/public",      // Fallback 3
     ],
-    blockExplorer: "https://sepolia.basescan.org",
+    blockExplorer: "https://basescan.org",
     vrf: {
       coordinator:          "0x5C210eF41CD1a72de73bF76eC39637bB0d3d7BEE",
       keyHash:              "0x9e1344a1247c8a1785d0a4681a27152bffdb43666ae5bf7d14d24a5efd44bf71",
-      subId:                process.env.VRF_SUB_ID_SEPOLIA!,
+      subId:                process.env.VRF_SUB_ID_mainnet!,
       callbackGasLimit:     200_000,
       requestConfirmations: 3,
     },
-    testnet:        true,
+    mainnet:        true,
     nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
   },
 
@@ -96,7 +96,7 @@ export const NETWORKS: Record<string, ChainConfig> = {
       callbackGasLimit:     200_000,
       requestConfirmations: 3,
     },
-    testnet:        false,
+    mainnet:        false,
     nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
   },
 
@@ -104,7 +104,7 @@ export const NETWORKS: Record<string, ChainConfig> = {
 };
 
 export type NetworkKey        = keyof typeof NETWORKS;
-export const ACTIVE_NETWORKS  = ["baseSepolia", "baseMainnet"] as const;
+export const ACTIVE_NETWORKS  = ["baseMainnet"] as const;
 export const DEFAULT_NETWORK: NetworkKey = "baseMainnet";
 
 export function getNetworkByChainId(chainId: number): ChainConfig | undefined {
@@ -128,7 +128,7 @@ Update this file after each Remix deploy.
 // packages/shared/config/addresses.ts
 
 export const CONTRACT_ADDRESSES: Record<number, Record<string, `0x${string}`>> = {
-  84532: { // Base Sepolia
+  8453: { // Base mainnet
     GameVault:    "0x...",
     CoinFlipGame: "0x...",
     DiceGame:     "0x...",
@@ -193,7 +193,7 @@ export const GAMES_REGISTRY: GameConfig[] = [
     contractName: "CoinFlipGame",
     minBetEth: "0.0002", maxBetEth: "0.001",
     houseEdgePercent: 3, maxMultiplier: 2,
-    active: true, chains: ["baseSepolia", "baseMainnet"],
+    active: true, chains: ["baseMainnet"],
     requiresWebSocket: false, tags: ["simple", "fast"],
   },
   {
@@ -203,7 +203,7 @@ export const GAMES_REGISTRY: GameConfig[] = [
     contractName: "DiceGame",
     minBetEth: "0.0002", maxBetEth: "0.001",
     houseEdgePercent: 3, maxMultiplier: 6,
-    active: true, chains: ["baseSepolia", "baseMainnet"],
+    active: true, chains: ["baseMainnet"],
     requiresWebSocket: false, tags: ["simple", "fast"],
   },
   {
@@ -213,7 +213,7 @@ export const GAMES_REGISTRY: GameConfig[] = [
     contractName: "CrashGame",
     minBetEth: "0.0002", maxBetEth: "0.001",
     houseEdgePercent: 3, maxMultiplier: 10,
-    active: true, chains: ["baseSepolia", "baseMainnet"],
+    active: true, chains: ["baseMainnet"],
     requiresWebSocket: true, tags: ["popular", "realtime"],
   },
   {
@@ -223,7 +223,7 @@ export const GAMES_REGISTRY: GameConfig[] = [
     contractName: "MinesGame",
     minBetEth: "0.0002", maxBetEth: "0.001",
     houseEdgePercent: 3, maxMultiplier: 20,
-    active: true, chains: ["baseSepolia", "baseMainnet"],
+    active: true, chains: ["baseMainnet"],
     requiresWebSocket: false, tags: ["strategy"],
   },
   {
@@ -233,7 +233,7 @@ export const GAMES_REGISTRY: GameConfig[] = [
     contractName: "HiLoGame",
     minBetEth: "0.0002", maxBetEth: "0.001",
     houseEdgePercent: 3, maxMultiplier: 8,
-    active: true, chains: ["baseSepolia", "baseMainnet"],
+    active: true, chains: ["baseMainnet"],
     requiresWebSocket: false, tags: ["strategy", "fast"],
   },
   // Add new games here — everything else adapts automatically.
@@ -411,3 +411,6 @@ baseplay/
 │
 └── docs/                              # This documentation
 ```
+
+
+

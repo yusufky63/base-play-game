@@ -86,3 +86,5 @@ Shared Style. Create a premium badge showing two linked wallet/player tokens con
 
 ### Big Win 5x
 Shared Style. Create a premium badge showing a large faceted emerald gem bursting from a Base blue medallion with five small blue rays around it to imply high multiplier. Use ray count only; no printed 5, no x, no text.
+
+

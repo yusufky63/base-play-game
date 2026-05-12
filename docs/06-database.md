@@ -268,3 +268,5 @@ Adds the production data layer for cached global stats, game counts, profile sum
 - `GRANT SELECT` is included for `anon` and `authenticated` because new Supabase tables may not be exposed to the Data API automatically.
 
 Operational note: the migration file exists locally, but applying it to the remote project requires an authenticated Supabase MCP/CLI session.
+
+

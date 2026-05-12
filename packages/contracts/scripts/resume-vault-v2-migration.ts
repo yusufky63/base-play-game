@@ -3,7 +3,6 @@ import path from "node:path";
 import { ethers, network } from "hardhat";
 
 const VRF_COORDINATORS: Record<number, string> = {
-  84532: "0x5C210eF41CD1a72de73bF76eC39637bB0d3d7BEE",
   8453: "0xd5D517aBE5cF79B7e95eC98dB0f0277788aFF634"
 };
 

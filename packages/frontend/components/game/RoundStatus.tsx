@@ -15,7 +15,7 @@ interface RoundStatusProps {
 export function RoundStatus({ state, requestId, txHash }: RoundStatusProps) {
   const { chain } = useAccount();
   const network = getNetworkByChainId(chain?.id ?? defaultChainId);
-  const explorerBase = network?.blockExplorer ?? "https://sepolia.basescan.org";
+  const explorerBase = network?.blockExplorer ?? "https://basescan.org";
 
   if (state === "idle") return null;
 

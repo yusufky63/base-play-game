@@ -1,9 +1,9 @@
 import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
-import { BASE_MAINNET_BACKEND_RPC_URLS, BASE_SEPOLIA_BACKEND_RPC_URLS, type NetworkKey } from "@baseplay/shared/config/networks";
+import { BASE_MAINNET_BACKEND_RPC_URLS, type NetworkKey } from "@baseplay/shared/config/networks";
 import { netPayoutFromGross } from "@baseplay/shared/utils/payout";
 import { createPublicClient, decodeEventLog, fallback, formatEther, http, parseAbi, type Address, type Log } from "viem";
-import { base, baseSepolia } from "viem/chains";
+import { base } from "viem/chains";
 import { supabaseAdmin } from "../supabase/client.js";
 import type { CrashEngine } from "./crashEngine.js";
 
@@ -55,9 +55,9 @@ export function getIndexerHealth() {
   return Array.from(indexerHealth.values()).sort((a, b) => a.chainId - b.chainId || a.gameId.localeCompare(b.gameId));
 }
 
-async function listenChain(chainId: 84532 | 8453, options: InitOptions) {
-  const networkKey = chainId === 8453 ? "baseMainnet" : "baseSepolia";
-  const viemChain = chainId === 8453 ? base : baseSepolia;
+async function listenChain(chainId: 8453, options: InitOptions) {
+  const networkKey = "baseMainnet";
+  const viemChain = base;
 
   const client = createPublicClient({
     chain: viemChain,
@@ -76,11 +76,11 @@ export async function initEventListeners(options: InitOptions) {
 
 async function getInitialFromBlock(
   client: EventClient,
-  chainId: 84532 | 8453,
+  chainId: 8453,
   gameId: string,
   latestBlock: bigint
 ) {
-  const envName = `INDEX_FROM_BLOCK_${chainId === 8453 ? "MAINNET" : "SEPOLIA"}`;
+  const envName = "INDEX_FROM_BLOCK_MAINNET";
   const configuredFromBlock = process.env[envName] ? BigInt(process.env[envName]!) : undefined;
   const checkpoint = configuredFromBlock === undefined ? await getIndexedCheckpoint(chainId, gameId) : 0n;
   return (
@@ -95,7 +95,7 @@ async function getInitialFromBlock(
 
 function startChainIndexerLoop(
   client: EventClient,
-  chainId: 84532 | 8453,
+  chainId: 8453,
   networkKey: NetworkKey,
   games: Array<(typeof GAMES_REGISTRY)[number]>,
   options: InitOptions
@@ -133,7 +133,7 @@ function startChainIndexerLoop(
 
 async function pollGame(
   client: EventClient,
-  chainId: 84532 | 8453,
+  chainId: 8453,
   address: Address,
   gameId: string,
   latestBlock: bigint,
@@ -200,7 +200,7 @@ async function pollGame(
   }
 }
 
-async function getIndexedCheckpoint(chainId: 84532 | 8453, gameId: string) {
+async function getIndexedCheckpoint(chainId: 8453, gameId: string) {
   const { data, error } = await supabaseAdmin
     .from("indexer_state")
     .select("last_indexed_block")
@@ -216,7 +216,7 @@ async function getIndexedCheckpoint(chainId: 84532 | 8453, gameId: string) {
   return data?.last_indexed_block ? BigInt(String(data.last_indexed_block)) : 0n;
 }
 
-async function saveIndexedCheckpoint(chainId: 84532 | 8453, gameId: string, blockNumber: bigint) {
+async function saveIndexedCheckpoint(chainId: 8453, gameId: string, blockNumber: bigint) {
   const { error } = await supabaseAdmin.from("indexer_state").upsert(
     {
       chain_id: chainId,
@@ -233,7 +233,7 @@ async function saveIndexedCheckpoint(chainId: 84532 | 8453, gameId: string, bloc
 }
 
 function setIndexerHealth(
-  chainId: 84532 | 8453,
+  chainId: 8453,
   gameId: string,
   patch: Partial<ReturnType<typeof getIndexerHealth>[number]>
 ) {
@@ -257,21 +257,13 @@ function setIndexerHealth(
   });
 }
 
-function getBackendRpcUrls(chainId: 84532 | 8453) {
-  const rpcUrls = chainId === 8453 ? BASE_MAINNET_BACKEND_RPC_URLS : BASE_SEPOLIA_BACKEND_RPC_URLS;
+function getBackendRpcUrls(chainId: 8453) {
+  const rpcUrls = BASE_MAINNET_BACKEND_RPC_URLS;
   const urls = rpcUrls.filter((url) => url && !BLOCKPI_PATTERN.test(url));
   return urls.length > 0 ? urls : rpcUrls.filter(Boolean);
 }
 
-function getEnabledIndexerChains(): Array<84532 | 8453> {
-  const configured = process.env.INDEXER_CHAINS?.split(",")
-    .map((value) => Number(value.trim()))
-    .filter((value): value is 84532 | 8453 => value === 84532 || value === 8453);
-
-  if (configured?.length) {
-    return Array.from(new Set(configured));
-  }
-
+function getEnabledIndexerChains(): Array<8453> {
   return [8453];
 }
 
@@ -294,7 +286,7 @@ function cleanErrorMessage(error: unknown) {
     .slice(0, 600);
 }
 
-async function persistSettledLogs(chainId: 84532 | 8453, gameId: string, logs: Log[]) {
+async function persistSettledLogs(chainId: 8453, gameId: string, logs: Log[]) {
   let lastBlock = 0n;
 
   for (const log of logs) {
@@ -370,7 +362,7 @@ function isGameEventName(value: unknown): value is GameEventName {
 }
 
 async function persistRoundEvents(
-  chainId: 84532 | 8453,
+  chainId: 8453,
   gameId: string,
   contractAddress: Address,
   eventName: GameEventName,

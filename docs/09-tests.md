@@ -19,7 +19,7 @@ const config: HardhatUserConfig = {
   solidity: { version: "0.8.24", settings: { optimizer: { enabled: true, runs: 200 } } },
   networks: {
     hardhat:  { chainId: 31337 },
-    sepolia:  { url: process.env.ALCHEMY_BASE_SEPOLIA!, accounts: [process.env.PRIVATE_KEY!] },
+    mainnet:  { url: process.env.ALCHEMY_BASE_MAINNET!, accounts: [process.env.PRIVATE_KEY!] },
     mainnet:  { url: process.env.ALCHEMY_BASE_MAINNET!, accounts: [process.env.PRIVATE_KEY!] },
   },
 };
@@ -592,8 +592,8 @@ REPORT_GAS=true npx hardhat test
 # Coverage
 npx hardhat coverage
 
-# On Base Sepolia (smoke test)
-npx hardhat test --network sepolia
+# On Base mainnet (smoke test)
+npx hardhat test --network mainnet
 ```
 
 ## Current Verification Snapshot
@@ -659,3 +659,5 @@ Small 100-round samples are intentionally noisy, especially for high-variance ga
 
 Coverage: 95.2% statements | 92.4% branches | 97.1% functions
 ```
+
+

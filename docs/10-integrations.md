@@ -26,7 +26,7 @@ npm install @coinbase/onchainkit
 
 import { useAccount }       from "wagmi";
 import { Name, Avatar }     from "@coinbase/onchainkit/identity";
-import { base, baseSepolia } from "wagmi/chains";
+import { base, baseMainnet } from "wagmi/chains";
 import { ConnectButton }    from "@rainbow-me/rainbowkit";
 import { useBalance }       from "@/hooks/useBalance";
 import { useMounted }       from "@/hooks/useMounted";
@@ -35,7 +35,7 @@ export function BasenameDisplay() {
   const mounted             = useMounted();
   const { address, chain }  = useAccount();
   const { formatted }       = useBalance();
-  const resolveChain        = chain?.id === 8453 ? base : baseSepolia;
+  const resolveChain        = chain?.id === 8453 ? base : baseMainnet;
 
   if (!mounted) return <div className="w-36 h-9" />; // prevent SSR flash
 
@@ -249,3 +249,5 @@ export async function GET(
   );
 }
 ```
+
+

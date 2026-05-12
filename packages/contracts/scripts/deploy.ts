@@ -4,23 +4,19 @@ import { Contract, parseEther, type Log } from "ethers";
 import { ethers, network } from "hardhat";
 
 const KEY_HASHES: Record<number, string> = {
-  84532: "0x9e1344a1247c8a1785d0a4681a27152bffdb43666ae5bf7d14d24a5efd44bf71",
   8453: "0xdc2f87677b01473c763cb0aee938ed3341512f6057324a584e5944e786144d70"
 };
 
 const COORDINATORS: Record<number, string> = {
-  84532: "0x5C210eF41CD1a72de73bF76eC39637bB0d3d7BEE",
   8453: "0xd5D517aBE5cF79B7e95eC98dB0f0277788aFF634"
 };
 
 const CALLBACK_GAS_LIMIT = 200_000;
 const REQUEST_CONFIRMATIONS = 3;
 const DEFAULT_VAULT_FUNDING: Record<number, string> = {
-  84532: "0.05",
   8453: "0"
 };
 const DEFAULT_NATIVE_SUBSCRIPTION_FUNDING: Record<number, string> = {
-  84532: "0.1",
   8453: "0.001"
 };
 const VAULT_CONTRACT_NAME = process.env.VAULT_CONTRACT_NAME || "GameVaultV2";
@@ -43,7 +39,7 @@ async function main() {
     throw new Error(`Deployer has 0 ETH on ${network.name}. Fund ${deployer.address} before deploying.`);
   }
 
-  const subscriptionEnvName = `VRF_SUB_ID_${chainId === 8453 ? "MAINNET" : "SEPOLIA"}`;
+  const subscriptionEnvName = "VRF_SUB_ID_MAINNET";
   let subscriptionId = process.env[subscriptionEnvName];
   const coordinator = new ethers.Contract(COORDINATORS[chainId], VRF_SUBSCRIPTION_ABI, deployer);
   assertProductionDeployReady(chainId, subscriptionId, balance);
@@ -62,7 +58,7 @@ async function main() {
 
   const vault = await ethers.deployContract(VAULT_CONTRACT_NAME);
   await vault.waitForDeployment();
-  const vaultFunding = process.env[`VAULT_FUND_ETH_${chainId === 8453 ? "MAINNET" : "SEPOLIA"}`] ?? DEFAULT_VAULT_FUNDING[chainId] ?? "0";
+  const vaultFunding = process.env.VAULT_FUND_ETH_MAINNET ?? DEFAULT_VAULT_FUNDING[chainId] ?? "0";
   if (parseEther(vaultFunding) > 0n) {
     const fundTx = await deployer.sendTransaction({ to: await vault.getAddress(), value: parseEther(vaultFunding) });
     await fundTx.wait();
@@ -216,7 +212,7 @@ async function createAndFundSubscription(
   }
 
   const fundingEth =
-    process.env[`VRF_NATIVE_FUND_ETH_${chainId === 8453 ? "MAINNET" : "SEPOLIA"}`] ??
+    process.env.VRF_NATIVE_FUND_ETH_MAINNET ??
     DEFAULT_NATIVE_SUBSCRIPTION_FUNDING[chainId];
   const fundTx = await coordinator.fundSubscriptionWithNative(subscriptionId, {
     value: parseEther(fundingEth)

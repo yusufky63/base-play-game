@@ -2,12 +2,11 @@ import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
 import {
   BASE_MAINNET_BACKEND_RPC_URLS,
-  BASE_SEPOLIA_BACKEND_RPC_URLS,
   getNetworkByChainId,
   type NetworkKey
 } from "@baseplay/shared/config/networks";
 import { createPublicClient, formatEther, http, isAddress, parseAbi, type Address } from "viem";
-import { base, baseSepolia } from "viem/chains";
+import { base } from "viem/chains";
 
 const gameStatusAbi = parseAbi(["function gamePaused() view returns (bool)"]);
 
@@ -27,7 +26,7 @@ const pendingRoundAbi = parseAbi([
   "function VRF_TIMEOUT_BLOCKS() view returns (uint256)"
 ]);
 
-type SupportedChainId = 8453 | 84532;
+type SupportedChainId = 8453;
 type RpcClient = ReturnType<typeof createPublicClient> & {
   getBlockNumber: () => Promise<bigint>;
   multicall: (args: { allowFailure: boolean; contracts: readonly unknown[] }) => Promise<Array<{ status: "success"; result: unknown } | { status: "failure"; error: unknown }>>;
@@ -89,7 +88,7 @@ export type PendingRoundSnapshot = {
 };
 
 export function toSupportedChainId(chainId: unknown): SupportedChainId {
-  return Number(chainId) === 8453 ? 8453 : 84532;
+  return 8453;
 }
 
 export async function getCachedContractStatus(chainId: SupportedChainId, force = false) {
@@ -118,7 +117,7 @@ export async function getPendingRoundsForPlayer({
   const cached = pendingRoundsCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) return cached.rows;
 
-  const chains = scanAll ? preferredChainOrder(chainId) : [chainId];
+  const chains = [chainId];
   const rows: PendingRoundSnapshot[] = [];
   for (const currentChainId of chains) {
     rows.push(...(await withRpcFallback(currentChainId, (client) => loadPendingRounds(client, currentChainId, player as Address))));
@@ -296,7 +295,7 @@ async function withRpcFallback<T>(chainId: SupportedChainId, run: (client: RpcCl
   for (const url of urls) {
     try {
       const client = createPublicClient({
-        chain: chainId === 8453 ? base : baseSepolia,
+        chain: base,
         transport: http(url, { timeout: 8_000, retryCount: 1, retryDelay: 250 })
       });
       return await run(client as RpcClient);
@@ -310,7 +309,7 @@ async function withRpcFallback<T>(chainId: SupportedChainId, run: (client: RpcCl
 }
 
 function orderedHealthyUrls(chainId: SupportedChainId) {
-  const urls = chainId === 8453 ? BASE_MAINNET_BACKEND_RPC_URLS : BASE_SEPOLIA_BACKEND_RPC_URLS;
+  const urls = BASE_MAINNET_BACKEND_RPC_URLS;
   const now = Date.now();
   const healthy = urls.filter((url) => (unhealthyUntil.get(url) ?? 0) <= now);
   const coolingDown = urls.filter((url) => (unhealthyUntil.get(url) ?? 0) > now);
@@ -407,11 +406,7 @@ function bigintOrNull(value: unknown) {
 }
 
 function getNetworkKey(chainId: SupportedChainId): NetworkKey {
-  return chainId === 8453 ? "baseMainnet" : "baseSepolia";
-}
-
-function preferredChainOrder(chainId: SupportedChainId) {
-  return chainId === 8453 ? ([8453, 84532] as const) : ([84532, 8453] as const);
+  return "baseMainnet";
 }
 
 function readPositiveNumber(name: string, fallbackValue: number) {

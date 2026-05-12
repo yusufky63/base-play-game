@@ -28,9 +28,9 @@ const schema = z.object({
   PORT:                 z.coerce.number().default(4000),
   SUPABASE_URL:         z.string().url(),
   SUPABASE_SERVICE_KEY: z.string().min(1),
-  ALCHEMY_BASE_SEPOLIA: z.string().url(),
   ALCHEMY_BASE_MAINNET: z.string().url(),
-  VRF_SUB_ID_SEPOLIA:   z.string().min(1),
+  ALCHEMY_BASE_MAINNET: z.string().url(),
+  VRF_SUB_ID_mainnet:   z.string().min(1),
   VRF_SUB_ID_MAINNET:   z.string().min(1),
   REDIS_URL:            z.string().url(),
   FRONTEND_URL:         z.string().url(),
@@ -86,7 +86,7 @@ Listens to all game contracts on both chains and writes results to Supabase.
 ```ts
 // src/services/eventListener.ts
 import { createPublicClient, fallback, http, parseAbi } from "viem";
-import { base, baseSepolia }  from "viem/chains";
+import { base, baseMainnet }  from "viem/chains";
 import { supabaseAdmin }      from "../supabase/client";
 import { NETWORKS }           from "@baseplay/shared/config/networks";
 import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
@@ -98,9 +98,9 @@ const SETTLE_ABI = parseAbi([
 
 async function listenChain(chainId: number) {
   const isMainnet  = chainId === 8453;
-  const networkKey = isMainnet ? "baseMainnet" : "baseSepolia";
+  const networkKey = isMainnet ? "baseMainnet" : "baseMainnet";
   const net        = NETWORKS[networkKey];
-  const viemChain  = isMainnet ? base : baseSepolia;
+  const viemChain  = isMainnet ? base : baseMainnet;
 
   const client = createPublicClient({
     chain:     viemChain,
@@ -142,7 +142,7 @@ async function listenChain(chainId: number) {
 }
 
 export async function initEventListeners() {
-  await listenChain(84532); // Base Sepolia
+  await listenChain(8453); // Base mainnet
   await listenChain(8453);  // Base Mainnet
 }
 ```
@@ -275,3 +275,5 @@ RUN npm run build
 EXPOSE 4000
 CMD ["node", "dist/index.js"]
 ```
+
+

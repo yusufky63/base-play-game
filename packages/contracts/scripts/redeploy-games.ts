@@ -3,12 +3,10 @@ import path from "node:path";
 import { ethers, network } from "hardhat";
 
 const KEY_HASHES: Record<number, string> = {
-  84532: "0x9e1344a1247c8a1785d0a4681a27152bffdb43666ae5bf7d14d24a5efd44bf71",
   8453: "0xdc2f87677b01473c763cb0aee938ed3341512f6057324a584e5944e786144d70"
 };
 
 const COORDINATORS: Record<number, string> = {
-  84532: "0x5C210eF41CD1a72de73bF76eC39637bB0d3d7BEE",
   8453: "0xd5D517aBE5cF79B7e95eC98dB0f0277788aFF634"
 };
 
@@ -31,7 +29,7 @@ async function main() {
     throw new Error("Set GAMES to a comma-separated contract list, e.g. GAMES=CrashGame,MinesGame,HiLoGame");
   }
 
-  const subscriptionEnvName = `VRF_SUB_ID_${chainId === 8453 ? "MAINNET" : "SEPOLIA"}`;
+  const subscriptionEnvName = "VRF_SUB_ID_MAINNET";
   const subscriptionId = process.env[subscriptionEnvName];
   if (!subscriptionId || subscriptionId === "0") {
     throw new Error(`${subscriptionEnvName} is required before deploying VRF games.`);

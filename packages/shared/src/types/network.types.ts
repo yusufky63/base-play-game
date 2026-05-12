@@ -15,7 +15,6 @@ export interface ChainConfig {
   backendRpcUrls: string[];
   blockExplorer: string;
   vrf: VRFConfig;
-  testnet: boolean;
   nativeCurrency: {
     name: string;
     symbol: string;

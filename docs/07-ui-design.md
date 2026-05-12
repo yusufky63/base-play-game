@@ -276,8 +276,8 @@ interface Props {
 
 export function FairnessModal({ open, onClose, requestId, txHash }: Props) {
   const { chain }   = useAccount();
-  const net         = getNetworkByChainId(chain?.id ?? 84532);
-  const explorerBase = net?.blockExplorer ?? "https://sepolia.basescan.org";
+  const net         = getNetworkByChainId(chain?.id ?? 8453);
+  const explorerBase = net?.blockExplorer ?? "https://basescan.org";
 
   return (
     <Modal open={open} onClose={onClose} title="Provably Fair">
@@ -350,3 +350,5 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 // Desktop: rank + player + games + volume + profit (5 cols)
 <div className="grid grid-cols-[28px_1fr_80px] md:grid-cols-[28px_1fr_60px_80px_80px]">
 ```
+
+

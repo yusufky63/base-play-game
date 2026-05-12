@@ -12,7 +12,7 @@ export const GAMES_REGISTRY: GameConfig[] = [
     houseEdgePercent: 5,
     maxMultiplier: 2,
     active: true,
-    chains: ["baseSepolia", "baseMainnet"],
+    chains: ["baseMainnet"],
     requiresWebSocket: false,
     tags: ["simple", "fast"]
   },
@@ -27,7 +27,7 @@ export const GAMES_REGISTRY: GameConfig[] = [
     houseEdgePercent: 5,
     maxMultiplier: 6,
     active: true,
-    chains: ["baseSepolia", "baseMainnet"],
+    chains: ["baseMainnet"],
     requiresWebSocket: false,
     tags: ["simple", "fast"]
   },
@@ -42,7 +42,7 @@ export const GAMES_REGISTRY: GameConfig[] = [
     houseEdgePercent: 5,
     maxMultiplier: 10,
     active: true,
-    chains: ["baseSepolia", "baseMainnet"],
+    chains: ["baseMainnet"],
     requiresWebSocket: true,
     tags: ["popular", "realtime"]
   },
@@ -57,7 +57,7 @@ export const GAMES_REGISTRY: GameConfig[] = [
     houseEdgePercent: 5,
     maxMultiplier: 20,
     active: true,
-    chains: ["baseSepolia", "baseMainnet"],
+    chains: ["baseMainnet"],
     requiresWebSocket: false,
     tags: ["strategy"]
   },
@@ -72,7 +72,7 @@ export const GAMES_REGISTRY: GameConfig[] = [
     houseEdgePercent: 5,
     maxMultiplier: 8,
     active: true,
-    chains: ["baseSepolia", "baseMainnet"],
+    chains: ["baseMainnet"],
     requiresWebSocket: false,
     tags: ["strategy", "fast"]
   },
@@ -87,7 +87,7 @@ export const GAMES_REGISTRY: GameConfig[] = [
     houseEdgePercent: 5,
     maxMultiplier: 20,
     active: true,
-    chains: ["baseSepolia", "baseMainnet"],
+    chains: ["baseMainnet"],
     requiresWebSocket: false,
     tags: ["simple", "odds"]
   },
@@ -102,7 +102,7 @@ export const GAMES_REGISTRY: GameConfig[] = [
     houseEdgePercent: 5,
     maxMultiplier: 20,
     active: true,
-    chains: ["baseSepolia", "baseMainnet"],
+    chains: ["baseMainnet"],
     requiresWebSocket: false,
     tags: ["fast", "risk"]
   },
@@ -117,7 +117,7 @@ export const GAMES_REGISTRY: GameConfig[] = [
     houseEdgePercent: 5,
     maxMultiplier: 8,
     active: true,
-    chains: ["baseSepolia", "baseMainnet"],
+    chains: ["baseMainnet"],
     requiresWebSocket: false,
     tags: ["arcade", "spin"]
   },
@@ -132,7 +132,7 @@ export const GAMES_REGISTRY: GameConfig[] = [
     houseEdgePercent: 5,
     maxMultiplier: 25,
     active: true,
-    chains: ["baseSepolia", "baseMainnet"],
+    chains: ["baseMainnet"],
     requiresWebSocket: false,
     tags: ["arcade", "drop"]
   },
@@ -147,7 +147,7 @@ export const GAMES_REGISTRY: GameConfig[] = [
     houseEdgePercent: 5,
     maxMultiplier: 4,
     active: true,
-    chains: ["baseSepolia", "baseMainnet"],
+    chains: ["baseMainnet"],
     requiresWebSocket: false,
     tags: ["casual", "fast"]
   },
@@ -162,7 +162,7 @@ export const GAMES_REGISTRY: GameConfig[] = [
     houseEdgePercent: 5,
     maxMultiplier: 9,
     active: true,
-    chains: ["baseSepolia", "baseMainnet"],
+    chains: ["baseMainnet"],
     requiresWebSocket: false,
     tags: ["casual", "jackpot"]
   },
@@ -177,7 +177,7 @@ export const GAMES_REGISTRY: GameConfig[] = [
     houseEdgePercent: 5,
     maxMultiplier: 6,
     active: true,
-    chains: ["baseSepolia", "baseMainnet"],
+    chains: ["baseMainnet"],
     requiresWebSocket: false,
     tags: ["dice", "casual"]
   },
@@ -192,7 +192,7 @@ export const GAMES_REGISTRY: GameConfig[] = [
     houseEdgePercent: 5,
     maxMultiplier: 12,
     active: true,
-    chains: ["baseSepolia", "baseMainnet"],
+    chains: ["baseMainnet"],
     requiresWebSocket: false,
     tags: ["arcade", "odds"]
   },
@@ -207,7 +207,7 @@ export const GAMES_REGISTRY: GameConfig[] = [
     houseEdgePercent: 5,
     maxMultiplier: 30,
     active: true,
-    chains: ["baseSepolia", "baseMainnet"],
+    chains: ["baseMainnet"],
     requiresWebSocket: false,
     tags: ["casual", "jackpot"]
   },
@@ -222,7 +222,7 @@ export const GAMES_REGISTRY: GameConfig[] = [
     houseEdgePercent: 5,
     maxMultiplier: 2,
     active: true,
-    chains: ["baseSepolia", "baseMainnet"],
+    chains: ["baseMainnet"],
     requiresWebSocket: false,
     tags: ["simple", "fast"]
   },
@@ -237,7 +237,7 @@ export const GAMES_REGISTRY: GameConfig[] = [
     houseEdgePercent: 5,
     maxMultiplier: 25,
     active: true,
-    chains: ["baseSepolia", "baseMainnet"],
+    chains: ["baseMainnet"],
     requiresWebSocket: false,
     tags: ["arcade", "jackpot"]
   }

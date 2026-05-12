@@ -16,7 +16,7 @@ Last checked: 2026-05-04.
   - `CrashGame` uses a fair gross crash curve; the 3% house edge is applied once by `GameVault`.
   - `HiLoGame` rejects one-card edge choices that would exceed the 8x max payout instead of silently capping them.
   - `MinesGame` rejects reveal counts above the 20x max payout instead of silently capping them.
-- Base Sepolia addresses and ABIs are present for all active games plus `GameVault`.
+- Base mainnet addresses and ABIs are present for all active games plus `GameVault`.
 - Home game library has search, category filters, and per-game play counts.
 - Global stats, game stats, compact live feed, full live feed, profile stats, and player rounds use React Query with Supabase-first reads, on-chain fallback, stale times, interval refresh, and manual refresh.
 - Full live feed supports game filtering and cursor-style "Load older" pagination.
@@ -42,7 +42,7 @@ Last checked: 2026-05-04.
 - `npm run typecheck --workspace @baseplay/frontend`: passing.
 - `npm run build --workspace @baseplay/frontend`: passing.
 
-## Deployed On Base Sepolia
+## Deployed On Base mainnet
 
 - `GameVault`: `0x3f82c3435d24dD723C9361517C0818672380ba91`
 - `CoinFlipGame`: `0xdD69B92f6fAE6da3825b7d126Fe058e78E7F8482`
@@ -70,3 +70,5 @@ Last checked: 2026-05-04.
 - `Referral.sol` and `Leaderboard.sol` are not implemented. Decide whether to build them or keep progression/leaderboard fully off-chain in Supabase.
 - Farcaster Frame routes and per-game OG image routes are not implemented.
 - Mainnet still needs an independent security/risk review and a funded production VRF subscription before deploy.
+
+

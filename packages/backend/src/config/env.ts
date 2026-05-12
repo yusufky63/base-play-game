@@ -5,7 +5,6 @@ const schema = z.object({
   PORT: z.coerce.number().default(4000),
   SUPABASE_URL: z.string().url(),
   SUPABASE_SERVICE_KEY: z.string().min(1),
-  VRF_SUB_ID_SEPOLIA: z.string().min(1),
   VRF_SUB_ID_MAINNET: z.string().min(1),
   FRONTEND_URL: z.string().url().default("http://localhost:3000")
 });
@@ -25,7 +24,7 @@ if (!parsed.success) {
   throw new Error(
     [
       `[Config] Missing or invalid backend environment variables: ${details}.`,
-      "Set these in Railway Variables: SUPABASE_URL, SUPABASE_SERVICE_KEY, VRF_SUB_ID_SEPOLIA, VRF_SUB_ID_MAINNET.",
+      "Set these in Railway Variables: SUPABASE_URL, SUPABASE_SERVICE_KEY, VRF_SUB_ID_MAINNET.",
       "SUPABASE_URL may also be supplied as NEXT_PUBLIC_SUPABASE_URL, but SUPABASE_SERVICE_KEY must be server-only."
     ].join(" ")
   );

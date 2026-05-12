@@ -63,7 +63,7 @@ export function useGame(gameId: string, contractName: string, abi: Abi | null) {
     const targetChainId = walletChainId ?? selectedChainId ?? defaultChainId;
     const targetNetwork = getNetworkByChainId(targetChainId);
     if (!targetNetwork) {
-      toast({ tone: "error", title: "Unsupported network", description: "Switch to Base Sepolia or Base Mainnet before placing a wager." });
+      toast({ tone: "error", title: "Unsupported network", description: "Switch to Base mainnet before placing a wager." });
       throw new Error("Unsupported network");
     }
     if (walletChainId !== targetChainId) {

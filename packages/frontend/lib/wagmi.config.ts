@@ -1,17 +1,15 @@
 import { fallback, http } from "viem";
 import { createConfig } from "wagmi";
-import { base, baseSepolia } from "wagmi/chains";
+import { base } from "wagmi/chains";
 import { farcasterMiniApp } from "@farcaster/miniapp-wagmi-connector";
 import { baseAccount, coinbaseWallet, injected, walletConnect } from "wagmi/connectors";
-import { BASE_MAINNET_FRONTEND_RPC_URLS, BASE_SEPOLIA_FRONTEND_RPC_URLS } from "@baseplay/shared/config/networks";
+import { BASE_MAINNET_FRONTEND_RPC_URLS } from "@baseplay/shared/config/networks";
 import { BASEPLAY_BUILDER_CODE_SUFFIX } from "@/lib/builderCode";
 import { walletConnectProjectId } from "@/lib/env";
 
-const baseSepoliaTransports = BASE_SEPOLIA_FRONTEND_RPC_URLS.map((url) => http(url, { timeout: 8_000, retryCount: 1, retryDelay: 250 }));
-
 const baseMainnetTransports = BASE_MAINNET_FRONTEND_RPC_URLS.map((url) => http(url, { timeout: 8_000, retryCount: 1, retryDelay: 250 }));
 
-export const chains = [base, baseSepolia] as const;
+export const chains = [base] as const;
 
 export const wagmiConfig = createConfig({
   chains,
@@ -41,7 +39,6 @@ export const wagmiConfig = createConfig({
   },
   dataSuffix: BASEPLAY_BUILDER_CODE_SUFFIX,
   transports: {
-    [baseSepolia.id]: fallback(baseSepoliaTransports),
     [base.id]: fallback(baseMainnetTransports)
   }
 });

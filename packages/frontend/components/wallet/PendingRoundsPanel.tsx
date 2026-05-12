@@ -1,14 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, Clock3, ExternalLink, RefreshCw, RotateCcw } from "lucide-react";
 import { getNetworkByChainId } from "@baseplay/shared/config/networks";
 import { useClaimPendingRound, usePendingRounds, type PendingRound } from "@/hooks/usePendingRounds";
 
 export function PendingRoundsPanel({ compact = false, embedded = false }: { compact?: boolean; embedded?: boolean }) {
-  const [scanAll, setScanAll] = useState(false);
-  const pending = usePendingRounds({ scanAll: compact ? false : scanAll });
+  const pending = usePendingRounds();
   const refund = useClaimPendingRound();
   const rows = pending.data ?? [];
 
@@ -30,15 +28,6 @@ export function PendingRoundsPanel({ compact = false, embedded = false }: { comp
         >
           <RefreshCw size={13} className={pending.isFetching ? "animate-spin" : ""} />
         </button>
-        {!compact && (
-          <button
-            type="button"
-            onClick={() => setScanAll((value) => !value)}
-            className="rounded-md border border-[var(--border)] px-2.5 py-2 font-mono text-[10px] font-bold uppercase text-[var(--text-2)] hover:text-[var(--accent)]"
-          >
-            {scanAll ? "Active chain" : "Scan all networks"}
-          </button>
-        )}
       </div>
 
       <div className={compact ? "grid gap-2" : "divide-y divide-[var(--border)]"}>

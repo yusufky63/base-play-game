@@ -3,11 +3,11 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createPublicClient, fallback, formatEther, http, parseAbi } from "viem";
-import { base, baseSepolia } from "wagmi/chains";
+import { base } from "wagmi/chains";
 import { useAccount, useSwitchChain, useWriteContract } from "wagmi";
 import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
-import { BASE_MAINNET_FRONTEND_RPC_URLS, BASE_SEPOLIA_FRONTEND_RPC_URLS, getNetworkByChainId, type NetworkKey } from "@baseplay/shared/config/networks";
+import { BASE_MAINNET_FRONTEND_RPC_URLS, getNetworkByChainId } from "@baseplay/shared/config/networks";
 import { fetchBackendJson } from "@/lib/backend";
 import { defaultChainId } from "@/lib/env";
 import { parseContractError } from "@/lib/errors";
@@ -26,11 +26,6 @@ const clientByChainId = {
     chain: base,
     batch: { multicall: true },
     transport: fallback(BASE_MAINNET_FRONTEND_RPC_URLS.map((url) => http(url, { timeout: 10_000 })))
-  }),
-  84532: createPublicClient({
-    chain: baseSepolia,
-    batch: { multicall: true },
-    transport: fallback(BASE_SEPOLIA_FRONTEND_RPC_URLS.map((url) => http(url, { timeout: 10_000 })))
   })
 } as const;
 
@@ -40,7 +35,7 @@ export interface PendingRound {
   gamePath: string;
   contractName: string;
   contractAddress: `0x${string}`;
-  chainId: 8453 | 84532;
+  chainId: 8453;
   networkName: string;
   requestId: string;
   betAmountEth: string;
@@ -66,13 +61,13 @@ type BackendPendingResponse = {
   rows: BackendPendingRound[];
 };
 
-export function usePendingRounds({ scanAll = false }: { scanAll?: boolean } = {}) {
+export function usePendingRounds() {
   const { address } = useAccount();
   const player = useMemo(() => address?.toLowerCase() ?? null, [address]);
 
   return useQuery({
-    queryKey: ["pending-rounds", player ?? "none", scanAll ? "all" : "active"],
-    queryFn: () => fetchPendingRounds(address!, scanAll),
+    queryKey: ["pending-rounds", player ?? "none", "baseMainnet"],
+    queryFn: () => fetchPendingRounds(address!),
     enabled: Boolean(address),
     staleTime: 2 * 60_000,
     gcTime: 10 * 60_000,
@@ -117,17 +112,14 @@ export function useClaimPendingRound() {
   return { claim, isPending };
 }
 
-export function getPreferredPendingChainIds(scanAll = true) {
-  const stored = typeof window === "undefined" ? 0 : Number(window.localStorage.getItem("baseplay:chainId"));
-  const preferred = Number.isFinite(stored) && stored > 0 ? stored : defaultChainId;
-  if (!scanAll) return preferred === 8453 ? ([8453] as const) : ([84532] as const);
-  return preferred === 8453 ? ([8453, 84532] as const) : ([84532, 8453] as const);
+export function getPreferredPendingChainIds() {
+  return [defaultChainId] as const;
 }
 
-async function fetchPendingRounds(player: `0x${string}`, scanAll: boolean): Promise<PendingRound[]> {
-  const preferredChainId = getPreferredPendingChainIds(false)[0];
+async function fetchPendingRounds(player: `0x${string}`): Promise<PendingRound[]> {
+  const preferredChainId = getPreferredPendingChainIds()[0];
   const backend = await fetchBackendJson<BackendPendingResponse>(
-    `/api/player/${player}/pending-rounds?chainId=${preferredChainId}&scanAll=${scanAll ? "1" : "0"}`
+    `/api/player/${player}/pending-rounds?chainId=${preferredChainId}`
   ).catch(() => null);
   if (backend?.rows) {
     return backend.rows.map(fromBackendPendingRound);
@@ -135,12 +127,11 @@ async function fetchPendingRounds(player: `0x${string}`, scanAll: boolean): Prom
 
   const rows: PendingRound[] = [];
 
-  for (const chainId of getPreferredPendingChainIds(scanAll)) {
+  for (const chainId of getPreferredPendingChainIds()) {
     const client = clientByChainId[chainId];
-    const networkKey: NetworkKey = chainId === 8453 ? "baseMainnet" : "baseSepolia";
     const network = getNetworkByChainId(chainId);
     const latestBlock = await client.getBlockNumber();
-    const deployedGames = GAMES_REGISTRY.filter((entry) => entry.active && entry.chains.includes(networkKey))
+    const deployedGames = GAMES_REGISTRY.filter((entry) => entry.active && entry.chains.includes("baseMainnet"))
       .map((game) => ({
         game,
         contractAddress: CONTRACT_ADDRESSES[chainId]?.[game.contractName]

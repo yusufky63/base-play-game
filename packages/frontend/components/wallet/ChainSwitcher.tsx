@@ -2,13 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronDown, Circle } from "lucide-react";
-import { base, baseSepolia } from "wagmi/chains";
+import { base } from "wagmi/chains";
 import { useAccount, useSwitchChain } from "wagmi";
 import { useMounted } from "@/hooks/useMounted";
 import { defaultChainId } from "@/lib/env";
 
 const chainOptions = [
-  { chain: baseSepolia, label: "Base Sepolia", shortLabel: "Sepolia", tag: "testnet" },
   { chain: base, label: "Base Mainnet", shortLabel: "Base", tag: "mainnet" }
 ];
 

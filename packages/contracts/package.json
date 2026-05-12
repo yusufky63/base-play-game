@@ -4,16 +4,11 @@
   "version": "0.1.0",
   "scripts": {
     "compile": "hardhat compile",
-    "deploy:base-sepolia": "hardhat run scripts/deploy.ts --network baseSepolia",
     "deploy:base": "hardhat run scripts/deploy.ts --network base",
-    "deploy:missing:base-sepolia": "hardhat run scripts/deploy-missing-games.ts --network baseSepolia",
     "deploy:missing:base": "hardhat run scripts/deploy-missing-games.ts --network base",
     "resume:vault-v2:base": "hardhat run scripts/resume-vault-v2-migration.ts --network base",
     "set:vault-limits:base": "hardhat run scripts/set-vault-limits.ts --network base",
-    "set:vault-limits:base-sepolia": "hardhat run scripts/set-vault-limits.ts --network baseSepolia",
-    "verify:base-sepolia": "hardhat run scripts/verify-all.ts --network baseSepolia",
     "verify:base": "hardhat run scripts/verify-all.ts --network base",
-    "verify:blockscout:base-sepolia": "hardhat run scripts/verify-all-blockscout.ts --network baseSepolia",
     "verify:blockscout:base": "hardhat run scripts/verify-all-blockscout.ts --network base",
     "test": "hardhat test",
     "coverage": "hardhat coverage"

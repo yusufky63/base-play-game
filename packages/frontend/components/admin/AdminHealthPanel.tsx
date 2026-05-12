@@ -18,7 +18,6 @@ export function AdminHealthPanel() {
   const [indexers, setIndexers] = useState<IndexerHealth[]>([]);
   const [status, setStatus] = useState<"idle" | "ready" | "error">("idle");
   const [message, setMessage] = useState("Loading backend health");
-  const [activeNetworkGroup, setActiveNetworkGroup] = useState<"mainnet" | "testnet">("mainnet");
 
   useEffect(() => {
     let cancelled = false;
@@ -50,11 +49,7 @@ export function AdminHealthPanel() {
 
   const errored = indexers.filter((item) => item.status === "error").length;
   const watching = indexers.filter((item) => item.status === "watching").length;
-  const groupedIndexers = {
-    mainnet: indexers.filter((item) => !isTestnetChain(item.chainId)),
-    testnet: indexers.filter((item) => isTestnetChain(item.chainId))
-  };
-  const activeIndexers = groupedIndexers[activeNetworkGroup];
+  const activeIndexers = indexers.filter((item) => item.chainId === 8453);
   const activeErrored = activeIndexers.filter((item) => item.status === "error").length;
   const activeWatching = activeIndexers.filter((item) => item.status === "watching").length;
   const sortedIndexers = [...indexers].sort((a, b) => {
@@ -63,7 +58,7 @@ export function AdminHealthPanel() {
     if (a.chainId !== b.chainId) return a.chainId - b.chainId;
     return a.gameId.localeCompare(b.gameId);
   });
-  const visibleIndexers = sortedIndexers.filter((item) => (activeNetworkGroup === "testnet" ? isTestnetChain(item.chainId) : !isTestnetChain(item.chainId)));
+  const visibleIndexers = sortedIndexers.filter((item) => item.chainId === 8453);
 
   return (
     <section className="admin-note mt-4">
@@ -80,32 +75,9 @@ export function AdminHealthPanel() {
         {errored > 0 ? <AlertTriangle size={18} className="text-[var(--pending)]" /> : <CheckCircle2 size={18} className="text-[var(--win)]" />}
       </div>
 
-      <div className="admin-health-tabs" role="tablist" aria-label="RPC and indexer network group">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeNetworkGroup === "mainnet"}
-          className={activeNetworkGroup === "mainnet" ? "admin-health-tab admin-health-tab-active" : "admin-health-tab"}
-          onClick={() => setActiveNetworkGroup("mainnet")}
-        >
-          <span>Mainnet</span>
-          <small>{groupedIndexers.mainnet.length}</small>
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeNetworkGroup === "testnet"}
-          className={activeNetworkGroup === "testnet" ? "admin-health-tab admin-health-tab-active" : "admin-health-tab"}
-          onClick={() => setActiveNetworkGroup("testnet")}
-        >
-          <span>Testnets</span>
-          <small>{groupedIndexers.testnet.length}</small>
-        </button>
-      </div>
-
       {status === "ready" && (
         <div className="admin-health-group-summary">
-          {activeWatching} watching, {activeErrored} error, {activeIndexers.length} {activeNetworkGroup === "mainnet" ? "mainnet" : "testnet"} indexers
+          {activeWatching} watching, {activeErrored} error, {activeIndexers.length} mainnet indexers
         </div>
       )}
 
@@ -136,16 +108,12 @@ export function AdminHealthPanel() {
         )}
         {indexers.length > 0 && visibleIndexers.length === 0 && (
           <div className="rounded-md border border-dashed border-[var(--border)] bg-[var(--surface-2)] p-3 text-sm leading-6 text-[var(--text-2)]">
-            No {activeNetworkGroup === "mainnet" ? "mainnet" : "testnet"} watcher rows reported yet.
+            No mainnet watcher rows reported yet.
           </div>
         )}
       </div>
     </section>
   );
-}
-
-function isTestnetChain(chainId: number) {
-  return getNetworkByChainId(chainId)?.testnet ?? chainId !== 8453;
 }
 
 function getNetworkLabel(chainId: number) {

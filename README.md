@@ -60,7 +60,6 @@ Railway must define the backend-only variables before the service starts:
 ```bash
 SUPABASE_URL=https://buubouudfeyhltsqryam.supabase.co
 SUPABASE_SERVICE_KEY=<server-only service role key>
-VRF_SUB_ID_SEPOLIA=<base sepolia vrf subscription id>
 VRF_SUB_ID_MAINNET=<base mainnet vrf subscription id>
 FRONTEND_URL=https://baseplay.games
 ```
@@ -84,7 +83,7 @@ npm run dev:frontend
 
 | Area | Choice |
 |---|---|
-| Chain | Base Sepolia, then Base Mainnet |
+| Chain | Base Mainnet |
 | Currency | ETH only |
 | Min bet | 0.000055 ETH |
 | Max bet | 0.0005 ETH |
@@ -98,19 +97,19 @@ npm run dev:frontend
 
 | Game | Multiplier | MVP status |
 |------|------------|------------|
-| Coin Flip | 2x gross, house edge in vault | Base Sepolia deployed + tests |
-| Dice | 6x gross, house edge in vault | Base Sepolia deployed + tests |
-| Crash | up to 10x | Base Sepolia deployed + tests |
-| Mines | up to 20x | Base Sepolia deployed + tests |
-| Hi-Lo | up to 8x | Base Sepolia deployed + tests |
-| Over/Under | odds based | Base Sepolia deployed + tests |
-| Limbo | target based | Base Sepolia deployed + tests |
-| Wheel | risk table | Base Sepolia deployed + tests |
-| Plinko Lite | path table | Base Sepolia deployed + tests |
-| Color Pick | 4x gross | Base Sepolia deployed + tests |
-| Treasure Chest | tier table | Base Sepolia deployed + tests |
-| Lucky Seven | 6x gross | Base Sepolia deployed + tests |
-| Roulette Lite | up to 12x | Base Sepolia deployed + tests |
-| Scratch Card | up to 30x | Base Sepolia deployed + tests |
-| Rock Paper Scissors | 2x gross | Base Sepolia deployed + tests |
-| Slots | up to 25x | Base Sepolia deployed + tests |
+| Coin Flip | 2x gross, house edge in vault | Base mainnet live + tests |
+| Dice | 6x gross, house edge in vault | Base mainnet live + tests |
+| Crash | up to 10x | Base mainnet live + tests |
+| Mines | up to 20x | Base mainnet live + tests |
+| Hi-Lo | up to 8x | Base mainnet live + tests |
+| Over/Under | odds based | Base mainnet live + tests |
+| Limbo | target based | Base mainnet live + tests |
+| Wheel | risk table | Base mainnet live + tests |
+| Plinko Lite | path table | Base mainnet live + tests |
+| Color Pick | 4x gross | Base mainnet live + tests |
+| Treasure Chest | tier table | Base mainnet live + tests |
+| Lucky Seven | 6x gross | Base mainnet live + tests |
+| Roulette Lite | up to 12x | Base mainnet live + tests |
+| Scratch Card | up to 30x | Base mainnet live + tests |
+| Rock Paper Scissors | 2x gross | Base mainnet live + tests |
+| Slots | up to 25x | Base mainnet live + tests |

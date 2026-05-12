@@ -4,7 +4,7 @@
 
 ### Phase 1 — MVP (Weeks 1–6)
 
-Goal: 3 games working on Base Sepolia testnet.
+Goal: 3 games working on Base mainnet.
 
 ```
 CONTRACT WORK
@@ -20,8 +20,8 @@ CONTRACT WORK
 [ ] Write Hardhat test suite (target: >90% coverage)
 [ ] Run all tests: npx hardhat test
 [ ] Run Remix Static Analysis — fix all warnings
-[ ] Deploy to Base Sepolia (follow docs/03-deploy.md)
-[ ] Verify all contracts on sepolia.basescan.org
+[ ] Deploy to Base mainnet (follow docs/03-deploy.md)
+[ ] Verify all contracts on basescan.org
 [ ] Update packages/shared/config/addresses.ts
 
 DATABASE
@@ -74,7 +74,7 @@ INTEGRATION CHECKS
 [ ] LiveFeed updates in real time
 [ ] Leaderboard updates after each round
 [ ] Admin stats show correct numbers
-[ ] Chain switch works (Sepolia ↔ Mainnet toggle)
+[ ] Chain switch works (mainnet ↔ Mainnet toggle)
 [ ] Both light and dark mode render correctly
 [ ] Basename resolves in header
 [ ] Mobile layout works on 375px viewport
@@ -103,7 +103,7 @@ INTEGRATION CHECKS
 [ ] Admin: Games page (pause/resume per game)
 [ ] Admin: Vault page (balance + withdraw)
 [ ] Admin: Logs page (filtered transaction history)
-[ ] 48-hour testnet soak test
+[ ] 48-hour mainnet soak test
 ```
 
 ---
@@ -140,7 +140,7 @@ INTEGRATION CHECKS
 
 ---
 
-## Pre-Testnet Deploy Checklist
+## Pre-mainnet Deploy Checklist
 
 ```
 [ ] npx hardhat test — all passing
@@ -160,8 +160,8 @@ INTEGRATION CHECKS
 ## Pre-Mainnet Deploy Checklist
 
 ```
-[ ] All testnet checklist items completed
-[ ] 48+ hours of testnet operation with no issues
+[ ] All mainnet checklist items completed
+[ ] 48+ hours of mainnet operation with no issues
 [ ] Independent code review completed
 [ ] Owner wallet is a hardware wallet
 [ ] Initial vault liquidity ready (min 0.5 ETH)
@@ -233,3 +233,5 @@ INTEGRATION CHECKS
 [ ] Update addresses.ts
 [ ] Test chain switching in UI
 ```
+
+

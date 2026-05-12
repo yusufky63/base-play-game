@@ -7,15 +7,15 @@
 
 ```
 1. Open remix.ethereum.org
-2. Connect MetaMask → switch to Base Sepolia
-3. Get test ETH: faucet.quicknode.com/base/sepolia
-4. Get LINK tokens: faucets.chain.link → select Base Sepolia
-5. Create VRF Subscription: vrf.chain.link → Create Subscription
+2. Connect MetaMask and switch to Base mainnet
+3. Fund the deploy wallet with enough ETH for deployment and gas
+4. Create or fund the Base mainnet Chainlink VRF subscription
+5. Confirm the subscription ID is available as `VRF_SUB_ID_MAINNET`
 6. Fund subscription with at least 5 LINK
 7. Note your Subscription ID
 ```
 
-## Step 2 — Base Sepolia Constants
+## Step 2 — Base mainnet Constants
 
 ```
 VRF Coordinator:  0x5C210eF41CD1a72de73bF76eC39637bB0d3d7BEE
@@ -68,14 +68,14 @@ STEP 12 ── Copy ABIs to shared/abis/
   Paste into: packages/shared/abis/
 
 STEP 13 ── Update addresses.ts
-  packages/shared/config/addresses.ts → fill in all addresses for chainId 84532
+  packages/shared/config/addresses.ts → fill in all addresses for chainId 8453
 ```
 
 ## Step 4 — Basescan Verification
 
 ```bash
 # For each contract:
-# 1. Go to sepolia.basescan.org → search contract address
+# 1. Go to basescan.org → search contract address
 # 2. Contract tab → Verify and Publish
 # 3. Compiler: v0.8.24
 # 4. License: MIT
@@ -85,7 +85,7 @@ STEP 13 ── Update addresses.ts
 
 # Or use Remix Etherscan Plugin:
 # Remix → Plugin Manager → search "Etherscan" → Activate
-# Enter Basescan API key (get from sepolia.basescan.org/myapikey)
+# Enter Basescan API key (get from basescan.org/myapikey)
 # Select contract → Verify
 ```
 
@@ -106,3 +106,5 @@ Block Explorer:   basescan.org
 0.001  ETH = 1000000000000000 wei   ← maxBet
 0.5    ETH = 500000000000000000 wei ← initial vault liquidity
 ```
+
+

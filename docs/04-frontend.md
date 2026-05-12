@@ -35,8 +35,8 @@ Fails at startup if any required variable is missing.
 import { z } from "zod";
 
 const schema = z.object({
-  NEXT_PUBLIC_DEFAULT_CHAIN:     z.enum(["baseSepolia", "baseMainnet"]),
-  NEXT_PUBLIC_ALCHEMY_SEPOLIA:   z.string().url(),
+  NEXT_PUBLIC_DEFAULT_CHAIN:     z.enum(["baseMainnet"]),
+  NEXT_PUBLIC_ALCHEMY_mainnet:   z.string().url(),
   NEXT_PUBLIC_ALCHEMY_MAINNET:   z.string().url(),
   NEXT_PUBLIC_SUPABASE_URL:      z.string().url(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
@@ -47,7 +47,7 @@ const schema = z.object({
 
 export const env = schema.parse({
   NEXT_PUBLIC_DEFAULT_CHAIN:     process.env.NEXT_PUBLIC_DEFAULT_CHAIN,
-  NEXT_PUBLIC_ALCHEMY_SEPOLIA:   process.env.NEXT_PUBLIC_ALCHEMY_SEPOLIA,
+  NEXT_PUBLIC_ALCHEMY_mainnet:   process.env.NEXT_PUBLIC_ALCHEMY_mainnet,
   NEXT_PUBLIC_ALCHEMY_MAINNET:   process.env.NEXT_PUBLIC_ALCHEMY_MAINNET,
   NEXT_PUBLIC_SUPABASE_URL:      process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -64,7 +64,7 @@ export const env = schema.parse({
 ```ts
 // lib/wagmi.config.ts
 import { createConfig } from "wagmi";
-import { base, baseSepolia } from "wagmi/chains";
+import { base, baseMainnet } from "wagmi/chains";
 import { fallback, http } from "viem";
 import { connectorsForWallets } from "@rainbow-me/rainbowkit";
 import {
@@ -79,14 +79,14 @@ const connectors = connectorsForWallets([
 ], { appName: "BasePlay", projectId: env.NEXT_PUBLIC_WALLETCONNECT_ID });
 
 export const wagmiConfig = createConfig({
-  chains:     [baseSepolia, base],
+  chains:     [baseMainnet, base],
   connectors,
   ssr:        true,
   transports: {
-    [baseSepolia.id]: fallback([
-      http(env.NEXT_PUBLIC_ALCHEMY_SEPOLIA),
-      http("https://sepolia.base.org"),
-      http("https://base-sepolia-rpc.publicnode.com"),
+    [baseMainnet.id]: fallback([
+      http(env.NEXT_PUBLIC_ALCHEMY_mainnet),
+      http("https://mainnet.base.org"),
+      http("https://base-rpc.publicnode.com"),
     ]),
     [base.id]: fallback([
       http(env.NEXT_PUBLIC_ALCHEMY_MAINNET),
@@ -269,12 +269,12 @@ export function useMounted() {
 ```ts
 // hooks/useContractAddress.ts
 import { useAccount } from "wagmi";
-import { baseSepolia } from "wagmi/chains";
+import { baseMainnet } from "wagmi/chains";
 import { getContractAddress } from "@baseplay/shared/config/addresses";
 
 export function useContractAddress(contractName: string): `0x${string}` | null {
   const { chain } = useAccount();
-  const chainId   = chain?.id ?? baseSepolia.id;
+  const chainId   = chain?.id ?? baseMainnet.id;
   try {
     return getContractAddress(chainId, contractName);
   } catch {
@@ -423,12 +423,12 @@ export function useGame(gameId: string, abiName: string) {
 "use client";
 
 import { useSwitchChain, useAccount } from "wagmi";
-import { base, baseSepolia }          from "wagmi/chains";
+import { base, baseMainnet }          from "wagmi/chains";
 import { motion }                     from "framer-motion";
 import { useMounted }                 from "@/hooks/useMounted";
 
 const CHAINS = [
-  { chain: baseSepolia, label: "Sepolia", tag: "testnet" },
+  { chain: baseMainnet, label: "mainnet", tag: "mainnet" },
   { chain: base,        label: "Base",    tag: "mainnet" },
 ];
 
@@ -454,7 +454,7 @@ export function ChainSwitcher() {
           }`}
         >
           {label}
-          {tag === "testnet" && (
+          {tag === "mainnet" && (
             <span className="ml-1 opacity-40 text-[10px]">test</span>
           )}
         </motion.button>
@@ -654,3 +654,5 @@ export function parseContractError(err: unknown): GameError {
 | `/admin/vault` | Owner only | Balance, withdraw |
 | `/admin/logs` | Owner only | Transaction history |
 | `/api/frame/[game]` | Public | Farcaster Frame endpoint |
+
+

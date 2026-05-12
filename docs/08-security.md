@@ -82,10 +82,12 @@
 ```
 1. Run Hardhat test suite — all tests pass, coverage > 90%
 2. Run Remix Static Analysis — no high or critical warnings
-3. Deploy to testnet — run for 48+ hours with real transactions
+3. Deploy to mainnet — run for 48+ hours with real transactions
 4. Independent review — at minimum one other developer reads the contracts
 5. Owner wallet → hardware wallet (Ledger / Trezor)
 6. Consider Gnosis Safe multisig for owner address (2-of-3)
 7. Set up Chainlink VRF email alerts for low LINK balance
 8. Verify all contracts on Basescan before announcing
 ```
+
+

@@ -38,7 +38,7 @@ function FairnessModal({
 }) {
   const { chain } = useAccount();
   const network = getNetworkByChainId(chain?.id ?? defaultChainId);
-  const explorerBase = network?.blockExplorer ?? "https://sepolia.basescan.org";
+  const explorerBase = network?.blockExplorer ?? "https://basescan.org";
 
   return (
     <Modal open={open} onClose={onClose} title="Provably Fair">

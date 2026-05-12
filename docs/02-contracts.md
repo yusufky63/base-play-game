@@ -10,7 +10,7 @@
 ## Current Implementation Notes
 
 - The repository now supports Hardhat deploy scripts in addition to manual Remix deployment.
-- Active Sepolia game contracts: Coin Flip, Dice, Crash, Mines, Hi-Lo, Over/Under, Limbo, Wheel, Plinko Lite, Color Pick, Treasure Chest, Lucky Seven, Roulette Lite, Scratch Card, Rock Paper Scissors, Slots.
+- Active mainnet game contracts: Coin Flip, Dice, Crash, Mines, Hi-Lo, Over/Under, Limbo, Wheel, Plinko Lite, Color Pick, Treasure Chest, Lucky Seven, Roulette Lite, Scratch Card, Rock Paper Scissors, Slots.
 - Every game extends `BaseGame`, locks the player's choice before the VRF request, uses Chainlink VRF for settlement, and reserves the maximum gross payout through `GameVault` before accepting the bet.
 - `GameVault` owns bet limits, house edge, approved-game access, pause controls, and locked payout accounting.
 - Crash, Hi-Lo, and Mines were reviewed for payout consistency:
@@ -1169,3 +1169,5 @@ contract Referral is Ownable, ReentrancyGuard {
     }
 }
 ```
+
+

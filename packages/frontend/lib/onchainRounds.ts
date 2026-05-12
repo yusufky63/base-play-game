@@ -1,9 +1,9 @@
 import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
-import { BASE_SEPOLIA_FRONTEND_RPC_URLS } from "@baseplay/shared/config/networks";
+import { BASE_MAINNET_FRONTEND_RPC_URLS } from "@baseplay/shared/config/networks";
 import { netPayoutFromGross } from "@baseplay/shared/utils/payout";
 import { createPublicClient, fallback, formatEther, http, parseAbi } from "viem";
-import { baseSepolia } from "viem/chains";
+import { base } from "viem/chains";
 
 const ROUND_SETTLED_ABI = parseAbi([
   "event RoundSettled(address indexed player, uint256 indexed requestId, uint256 betAmount, uint256 payout, bool won)"
@@ -27,8 +27,8 @@ export interface OnchainRound {
 }
 
 const client = createPublicClient({
-  chain: baseSepolia,
-  transport: fallback(BASE_SEPOLIA_FRONTEND_RPC_URLS.map((url) => http(url, { timeout: 10_000 })))
+  chain: base,
+  transport: fallback(BASE_MAINNET_FRONTEND_RPC_URLS.map((url) => http(url, { timeout: 10_000 })))
 });
 
 export async function fetchRecentOnchainRounds({
@@ -48,11 +48,11 @@ export async function fetchRecentOnchainRounds({
 } = {}): Promise<OnchainRound[]> {
   const latestBlock = await client.getBlockNumber();
   const fromBlock = latestBlock > FRONTEND_LOG_LOOKBACK_BLOCKS ? latestBlock - FRONTEND_LOG_LOOKBACK_BLOCKS : 0n;
-  const deployedGames = GAMES_REGISTRY.filter((game) => CONTRACT_ADDRESSES[84532]?.[game.contractName] && (!gameId || game.id === gameId));
+  const deployedGames = GAMES_REGISTRY.filter((game) => CONTRACT_ADDRESSES[8453]?.[game.contractName] && (!gameId || game.id === gameId));
   const rows: OnchainRound[] = [];
 
   for (const game of deployedGames) {
-    const address = CONTRACT_ADDRESSES[84532][game.contractName];
+    const address = CONTRACT_ADDRESSES[8453][game.contractName];
     const logs = await client.getContractEvents({
       address,
       abi: ROUND_SETTLED_ABI,
@@ -73,7 +73,7 @@ export async function fetchRecentOnchainRounds({
         vrf_request_id: args.requestId.toString(),
         player: args.player,
         game_id: game.id,
-        chain_id: 84532,
+        chain_id: 8453,
         bet_amount: Number(formatEther(args.betAmount)),
         payout: netPayoutFromGross(Number(formatEther(args.payout))),
         won: Boolean(args.won),

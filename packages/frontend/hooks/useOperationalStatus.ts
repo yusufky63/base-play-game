@@ -49,7 +49,7 @@ export type OperationalState = {
   playDisabledLabel: string;
 };
 
-type SupportedChainId = 8453 | 84532;
+type SupportedChainId = 8453;
 type BackendContractStatus = {
   status: "ok";
   chainId: SupportedChainId;
@@ -237,7 +237,7 @@ function buildFallbackStatus(chainId: number, status: OperationalStatus): Operat
 
 function toSupportedChainId(chainId: number | undefined): SupportedChainId {
   const resolved = getNetworkByChainId(chainId ?? 0)?.chainId ?? defaultChainId;
-  return resolved === 8453 ? 8453 : 84532;
+  return resolved === 8453 ? 8453 : defaultChainId;
 }
 
 function decorateStatus(base: Omit<OperationalState, "title" | "description" | "playDisabledLabel">): OperationalState {
