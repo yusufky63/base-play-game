@@ -23,7 +23,7 @@ export class GameError extends Error {
 export function parseContractError(error: unknown): GameError {
   const message = error instanceof Error ? error.message : String(error ?? "");
 
-  if (message.includes("User rejected") || message.includes("user rejected")) {
+  if (/user rejected|user denied|denied transaction|tx signature/i.test(message)) {
     return new GameError(GameErrorCode.TX_REJECTED, "Transaction rejected", error);
   }
   if (message.includes("insufficient")) {

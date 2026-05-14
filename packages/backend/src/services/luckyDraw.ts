@@ -114,12 +114,16 @@ const luckyDrawReadClient = createPublicClient({
 
 export async function getLuckyDrawSummary(address: string): Promise<LuckyDrawSummary> {
   const player = normalizeAddress(address);
-  const [config, progress, recentResults, eligibleProofs] = await Promise.all([
+  const [config, progress, recentResults] = await Promise.all([
     getLuckyDrawConfig(),
     getLuckyDrawProgress(player),
-    getLuckyDrawResults(player, 8),
-    getEligibleProofs(player)
+    getLuckyDrawResults(player, 8)
   ]);
+  const normalizedConfig = normalizeConfig(config);
+  const eligibleProofs = await getEligibleProofs(player, {
+    roundsRequired: normalizedConfig.roundsRequired,
+    claimedDrawsToSkip: progress?.lifetime_draws_claimed ?? 0
+  });
 
   return buildSummary(player, config, progress, recentResults, eligibleProofs);
 }
@@ -294,43 +298,57 @@ async function getLuckyDrawResults(player: string, limit: number) {
   return (data ?? []) as LuckyDrawResultRow[];
 }
 
-async function getEligibleProofs(player: string): Promise<LuckyDrawProof[]> {
+async function getEligibleProofs(
+  player: string,
+  options: { roundsRequired: number; claimedDrawsToSkip: number }
+): Promise<LuckyDrawProof[]> {
   const contractByGameId = new Map(
     GAMES_REGISTRY.map((game) => [
       game.id,
       CONTRACT_ADDRESSES[8453]?.[game.contractName]
     ]).filter((entry): entry is [string, string] => Boolean(entry[1]))
   );
+  const roundsRequired = Math.max(1, Math.floor(options.roundsRequired));
+  const offchainClaimedProofs = Math.max(0, Math.floor(options.claimedDrawsToSkip)) * roundsRequired;
+  const batchSize = 200;
+  const maxRows = Math.min(5_000, Math.max(500, (offchainClaimedProofs + roundsRequired) * 3 + batchSize));
+  const proofs: LuckyDrawProof[] = [];
+  let eligibleProofs: LuckyDrawProof[] = [];
 
-  const { data, error } = await supabaseAdmin
-    .from("lucky_draw_rounds")
-    .select("round_id, game_id, counted_at, game_rounds!inner(vrf_request_id, chain_id)")
-    .eq("player", player)
-    .order("counted_at", { ascending: true })
-    .limit(100);
+  for (let offset = 0; offset < maxRows && eligibleProofs.length < roundsRequired; offset += batchSize) {
+    const { data, error } = await supabaseAdmin
+      .from("lucky_draw_rounds")
+      .select("round_id, game_id, counted_at, game_rounds!inner(vrf_request_id, chain_id)")
+      .eq("player", player)
+      .order("counted_at", { ascending: true })
+      .range(offset, offset + batchSize - 1);
 
-  if (error) throw httpError(error.message, 500);
+    if (error) throw httpError(error.message, 500);
+    const rows = (data ?? []) as Array<{
+      round_id: string;
+      game_id: string;
+      game_rounds?: { vrf_request_id?: string | null; chain_id?: number | null } | Array<{ vrf_request_id?: string | null; chain_id?: number | null }>;
+    }>;
 
-  const proofs = ((data ?? []) as Array<{
-    round_id: string;
-    game_id: string;
-    game_rounds?: { vrf_request_id?: string | null; chain_id?: number | null } | Array<{ vrf_request_id?: string | null; chain_id?: number | null }>;
-  }>)
-    .map((row) => {
+    for (const row of rows) {
       const joined = Array.isArray(row.game_rounds) ? row.game_rounds[0] : row.game_rounds;
       const contractAddress = contractByGameId.get(row.game_id);
       const requestId = joined?.vrf_request_id;
-      if (!contractAddress || !requestId || joined?.chain_id !== 8453) return null;
-      return {
+      if (!contractAddress || !requestId || joined?.chain_id !== 8453) continue;
+      proofs.push({
         roundId: row.round_id,
         gameId: row.game_id,
         contractAddress,
         requestId
-      };
-    })
-    .filter((row): row is LuckyDrawProof => Boolean(row));
+      });
+    }
 
-  return filterConsumedProofs(proofs);
+    const unconsumedProofs = await filterConsumedProofs(proofs);
+    eligibleProofs = unconsumedProofs.slice(offchainClaimedProofs);
+    if (rows.length < batchSize) break;
+  }
+
+  return eligibleProofs;
 }
 
 async function filterConsumedProofs(proofs: LuckyDrawProof[]) {
@@ -376,8 +394,10 @@ function buildSummary(
     updated_at: new Date(0).toISOString()
   };
   const roundsRequired = Math.max(1, config.roundsRequired);
-  const qualifiedRounds = Math.min(progress.qualified_rounds, roundsRequired);
-  const roundsUntilNext = progress.available_draws > 0 ? 0 : Math.max(0, roundsRequired - qualifiedRounds);
+  const proofBackedDraws = Math.floor(eligibleProofs.length / roundsRequired);
+  const availableDraws = Math.min(progress.available_draws, proofBackedDraws);
+  const qualifiedRounds = availableDraws > 0 ? roundsRequired : Math.min(progress.qualified_rounds, roundsRequired);
+  const roundsUntilNext = availableDraws > 0 ? 0 : Math.max(0, roundsRequired - qualifiedRounds);
 
   return {
     player,
@@ -389,7 +409,7 @@ function buildSummary(
     config,
     progress: {
       qualifiedRounds,
-      availableDraws: progress.available_draws,
+      availableDraws,
       lifetimeDrawsEarned: progress.lifetime_draws_earned,
       lifetimeDrawsClaimed: progress.lifetime_draws_claimed,
       totalPrizeEth: Number(progress.total_prize_eth),

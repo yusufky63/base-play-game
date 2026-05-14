@@ -28,6 +28,10 @@ export function LuckyDrawCard({ address: addressOverride, compact = false }: { a
     if (claim.isPending || result) setShowDraw(true);
   }, [claim.isPending, result]);
 
+  useEffect(() => {
+    if (claim.error && !claim.isPending && !result) setShowDraw(false);
+  }, [claim.error, claim.isPending, result]);
+
   function startDraw() {
     if (!canDraw || claim.isPending) return;
     setShowDraw(true);
@@ -246,8 +250,15 @@ function cleanError(message: string | null) {
   if (!message) return "The draw could not be completed. Try again in a moment.";
   try {
     const parsed = JSON.parse(message) as { error?: string };
-    return parsed.error ?? message;
+    return cleanErrorText(parsed.error ?? message);
   } catch {
-    return message;
+    return cleanErrorText(message);
   }
+}
+
+function cleanErrorText(message: string) {
+  if (/user rejected|user denied|denied transaction|tx signature|request arguments/i.test(message)) {
+    return "Transaction rejected";
+  }
+  return message.split("Request Arguments:")[0].split("Docs:")[0].trim().slice(0, 180);
 }
