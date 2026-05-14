@@ -92,6 +92,8 @@ export default function AdminLuckyDrawPage() {
     try {
       const data = await fetchBackendJson<AdminOpsState>("/api/admin/ops");
       if (data) setOps(data);
+    } catch (error) {
+      console.warn("[BasePlay] Admin ops status unavailable", error);
     } finally {
       setOpsLoading(false);
     }
