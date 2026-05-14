@@ -85,6 +85,22 @@ export type LuckyDrawProof = {
   requestId: string;
 };
 
+export type LuckyDrawPublicHistory = {
+  updatedAt: string;
+  chainId: 8453;
+  contractAddress: string | null;
+  rows: Array<{
+    player: string;
+    requestId: string;
+    prizeIndex: number;
+    prizeAmountWei: string;
+    prizeAmountEth: number;
+    txHash: string;
+    status: "claimable" | "claimed";
+    blockNumber: string;
+  }>;
+};
+
 const DEFAULT_PRIZES = [
   { usd: 0.1, weight: 62_000 },
   { usd: 0.5, weight: 25_000 },
@@ -106,7 +122,15 @@ const DEFAULT_CONFIG: LuckyDrawConfigRow = {
 };
 
 const FALLBACK_ADMIN_ADDRESSES = ["0xeaa823ab4c4ee00283d8ed7be713ddf8a5ba0fac"];
-const LUCKY_DRAW_ABI = parseAbi(["function consumedRounds(bytes32 roundKey) view returns (bool)"]);
+const LUCKY_DRAW_ABI = parseAbi([
+  "function consumedRounds(bytes32 roundKey) view returns (bool)",
+  "event DrawResolved(address indexed player, uint256 indexed requestId, uint16 prizeIndex, uint256 prizeAmount, uint256 randomWord)",
+  "event PrizeClaimed(address indexed player, uint256 indexed requestId, uint256 amount)"
+]);
+const LUCKY_DRAW_HISTORY_FROM_BLOCK = BigInt(process.env.LUCKY_DRAW_HISTORY_FROM_BLOCK ?? "45990000");
+const LUCKY_DRAW_HISTORY_CHUNK_BLOCKS = 10_000n;
+const LUCKY_DRAW_HISTORY_TTL_MS = 5 * 60_000;
+let luckyDrawHistoryCache: { expiresAt: number; data: LuckyDrawPublicHistory } | null = null;
 const luckyDrawReadClient = createPublicClient({
   chain: base,
   transport: createPublicFirstTransport(BASE_MAINNET_BACKEND_RPC_URLS, { timeout: 10_000 })
@@ -132,6 +156,67 @@ export async function claimLuckyDraw(address: string, input: unknown) {
   normalizeAddress(address);
   void input;
   throw httpError("Lucky Draw claims are now settled on-chain through the LuckyDraw contract", 410);
+}
+
+export async function getLuckyDrawPublicHistory(limit = 50): Promise<LuckyDrawPublicHistory> {
+  const luckyDrawAddress = CONTRACT_ADDRESSES[8453]?.LuckyDraw ?? null;
+  if (!luckyDrawAddress) {
+    return { updatedAt: new Date().toISOString(), chainId: 8453, contractAddress: null, rows: [] };
+  }
+
+  const now = Date.now();
+  if (luckyDrawHistoryCache && luckyDrawHistoryCache.expiresAt > now) {
+    return {
+      ...luckyDrawHistoryCache.data,
+      rows: luckyDrawHistoryCache.data.rows.slice(0, limit)
+    };
+  }
+
+  const latestBlock = await luckyDrawReadClient.getBlockNumber();
+  const fromBlock = LUCKY_DRAW_HISTORY_FROM_BLOCK > latestBlock ? latestBlock : LUCKY_DRAW_HISTORY_FROM_BLOCK;
+  const [resolvedLogs, claimedLogs] = await Promise.all([
+    getLuckyDrawEventLogs(luckyDrawAddress, "DrawResolved", fromBlock, latestBlock),
+    getLuckyDrawEventLogs(luckyDrawAddress, "PrizeClaimed", fromBlock, latestBlock)
+  ]);
+  const claimed = new Set(
+    claimedLogs
+      .map((log) => (log.args as { requestId?: bigint } | undefined)?.requestId)
+      .filter((requestId): requestId is bigint => typeof requestId === "bigint")
+      .map((requestId) => requestId.toString())
+  );
+
+  const rows = resolvedLogs
+    .map((log) => {
+      const args = log.args as {
+        player?: string;
+        requestId?: bigint;
+        prizeIndex?: number | bigint;
+        prizeAmount?: bigint;
+      } | undefined;
+      if (!args?.player || typeof args.requestId !== "bigint" || typeof args.prizeAmount !== "bigint") return null;
+      const requestId = args.requestId.toString();
+      return {
+        player: getAddress(args.player).toLowerCase(),
+        requestId,
+        prizeIndex: Number(args.prizeIndex ?? 0),
+        prizeAmountWei: args.prizeAmount.toString(),
+        prizeAmountEth: Number(args.prizeAmount) / 1e18,
+        txHash: log.transactionHash ?? "",
+        status: claimed.has(requestId) ? "claimed" as const : "claimable" as const,
+        blockNumber: log.blockNumber?.toString() ?? "0"
+      };
+    })
+    .filter((row): row is LuckyDrawPublicHistory["rows"][number] => Boolean(row))
+    .sort((a, b) => Number(BigInt(b.blockNumber) - BigInt(a.blockNumber)));
+
+  const data = {
+    updatedAt: new Date().toISOString(),
+    chainId: 8453 as const,
+    contractAddress: luckyDrawAddress,
+    rows
+  };
+  luckyDrawHistoryCache = { expiresAt: now + LUCKY_DRAW_HISTORY_TTL_MS, data };
+  return { ...data, rows: rows.slice(0, limit) };
 }
 
 async function verifyPlayerClaimSignature(player: string, input: { player?: unknown; message?: unknown; signature?: unknown }) {
@@ -370,6 +455,31 @@ async function filterConsumedProofs(proofs: LuckyDrawProof[]) {
   } catch {
     return proofs;
   }
+}
+
+async function getLuckyDrawEventLogs(
+  address: `0x${string}`,
+  eventName: "DrawResolved" | "PrizeClaimed",
+  fromBlock: bigint,
+  latestBlock: bigint
+) {
+  const logs: Array<{
+    args?: Record<string, unknown>;
+    transactionHash?: `0x${string}` | null;
+    blockNumber?: bigint | null;
+  }> = [];
+  for (let cursor = fromBlock; cursor <= latestBlock; cursor += LUCKY_DRAW_HISTORY_CHUNK_BLOCKS + 1n) {
+    const toBlock = cursor + LUCKY_DRAW_HISTORY_CHUNK_BLOCKS > latestBlock ? latestBlock : cursor + LUCKY_DRAW_HISTORY_CHUNK_BLOCKS;
+    const chunk = await luckyDrawReadClient.getContractEvents({
+      address,
+      abi: LUCKY_DRAW_ABI,
+      eventName,
+      fromBlock: cursor,
+      toBlock
+    });
+    logs.push(...chunk);
+  }
+  return logs;
 }
 
 function roundKey(proof: LuckyDrawProof) {

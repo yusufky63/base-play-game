@@ -83,6 +83,22 @@ export type LuckyDrawAdminState = {
   recentResults: LuckyDrawResult[];
 };
 
+export type LuckyDrawHistory = {
+  updatedAt: string;
+  chainId: 8453;
+  contractAddress: string | null;
+  rows: Array<{
+    player: string;
+    requestId: string;
+    prizeIndex: number;
+    prizeAmountWei: string;
+    prizeAmountEth: number;
+    txHash: string;
+    status: "claimable" | "claimed";
+    blockNumber: string;
+  }>;
+};
+
 export function useLuckyDraw(address?: string | null, { enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ["lucky-draw", address?.toLowerCase() ?? "none"],
@@ -93,6 +109,20 @@ export function useLuckyDraw(address?: string | null, { enabled = true }: { enab
     },
     enabled: Boolean(address) && enabled,
     staleTime: 60_000,
+    gcTime: 30 * 60_000,
+    refetchOnWindowFocus: false
+  });
+}
+
+export function useLuckyDrawHistory(limit = 50) {
+  return useQuery({
+    queryKey: ["lucky-draw-history", limit],
+    queryFn: async () => {
+      const data = await fetchBackendJson<LuckyDrawHistory>(`/api/lucky-draw/history?limit=${limit}`);
+      if (!data) throw new Error("Backend is not configured");
+      return data;
+    },
+    staleTime: 5 * 60_000,
     gcTime: 30 * 60_000,
     refetchOnWindowFocus: false
   });
@@ -155,6 +185,7 @@ export function useClaimLuckyDraw(address?: string | null) {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["lucky-draw", address?.toLowerCase() ?? "none"] });
+      queryClient.invalidateQueries({ queryKey: ["lucky-draw-history"] });
       toast({
         tone: "success",
         title: `Lucky Draw: ${formatEth(data.result.prizeAmountEth)} ETH`,
@@ -199,6 +230,7 @@ export function useClaimLuckyDrawPrize(address?: string | null) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lucky-draw", address?.toLowerCase() ?? "none"] });
+      queryClient.invalidateQueries({ queryKey: ["lucky-draw-history"] });
       toast({ tone: "success", title: "Lucky Draw prize claimed" });
     },
     onError: (error) => {

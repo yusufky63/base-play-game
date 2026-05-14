@@ -7610,6 +7610,241 @@ select {
   color: var(--win);
 }
 
+.lucky-draw-page {
+  display: grid;
+  gap: 22px;
+}
+
+.lucky-draw-hero {
+  display: grid;
+  align-items: end;
+  gap: 18px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 24px;
+}
+
+.lucky-draw-hero-copy {
+  display: grid;
+  gap: 12px;
+}
+
+.lucky-draw-hero-metrics,
+.lucky-draw-side-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.lucky-draw-play-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.6fr);
+  gap: 16px;
+}
+
+.lucky-draw-stage,
+.lucky-draw-side,
+.lucky-draw-history {
+  border-radius: 8px;
+}
+
+.lucky-draw-stage {
+  overflow: hidden;
+  padding: 18px;
+}
+
+.lucky-draw-stage-head,
+.lucky-draw-history-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.lucky-draw-page-reel {
+  margin-top: 18px;
+  min-height: 142px;
+}
+
+.lucky-draw-reel-idle .lucky-draw-reel-track {
+  animation: lucky-draw-idle 24s linear infinite;
+}
+
+@keyframes lucky-draw-idle {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-640px);
+  }
+}
+
+.lucky-draw-page-reel .lucky-draw-reel-item {
+  min-width: 154px;
+  padding: 22px 16px;
+}
+
+.lucky-draw-page-reel .lucky-draw-reel-item span {
+  font-size: 26px;
+}
+
+.lucky-draw-inline-status {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-2) 82%, transparent);
+  padding: 14px;
+}
+
+.lucky-draw-inline-status span,
+.lucky-draw-page-metric span {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.lucky-draw-inline-status strong,
+.lucky-draw-page-metric strong {
+  display: block;
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+  color: var(--text-1);
+}
+
+.lucky-draw-page-metric {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-2) 78%, transparent);
+  padding: 12px;
+}
+
+.lucky-draw-side {
+  align-self: start;
+  padding: 16px;
+}
+
+.lucky-draw-side-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.lucky-draw-side-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 14px;
+}
+
+.lucky-draw-history {
+  overflow: hidden;
+  padding: 18px;
+}
+
+.lucky-draw-history-list {
+  margin-top: 16px;
+  display: grid;
+}
+
+.lucky-draw-history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--border);
+  padding: 13px 0;
+}
+
+.lucky-draw-history-row strong,
+.lucky-draw-history-row span {
+  display: block;
+}
+
+.lucky-draw-history-row strong {
+  font-family: var(--font-mono);
+  color: var(--text-1);
+}
+
+.lucky-draw-history-row span {
+  margin-top: 3px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-3);
+}
+
+.lucky-draw-history-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.lucky-draw-status {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.lucky-draw-status-claimable {
+  border-color: color-mix(in srgb, var(--win) 34%, var(--border));
+  color: var(--win);
+}
+
+.lucky-draw-status-claimed {
+  color: var(--text-3);
+}
+
+.lucky-draw-empty {
+  margin-top: 16px;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  color: var(--text-2);
+}
+
+@media (min-width: 768px) {
+  .lucky-draw-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 0.65fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .lucky-draw-play-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .lucky-draw-hero-metrics,
+  .lucky-draw-side-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lucky-draw-stage,
+  .lucky-draw-side,
+  .lucky-draw-history {
+    padding: 14px;
+  }
+
+  .lucky-draw-page-reel .lucky-draw-reel-item {
+    min-width: 132px;
+    padding: 18px 12px;
+  }
+
+  .lucky-draw-history-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
 .admin-field {
   display: grid;
   gap: 6px;

@@ -11,7 +11,7 @@ import { getAdminOpsState } from "./services/adminOps.js";
 import { getCachedContractStatus, getPendingRoundsForPlayer, toSupportedChainId } from "./services/chainReads.js";
 import { startCrashEngine } from "./services/crashEngine.js";
 import { getIndexerHealth, initEventListeners } from "./services/eventListener.js";
-import { claimLuckyDraw, getLuckyDrawAdminState, getLuckyDrawSummary, updateLuckyDrawConfig, updateLuckyDrawResultStatus, verifyAdminSignature } from "./services/luckyDraw.js";
+import { claimLuckyDraw, getLuckyDrawAdminState, getLuckyDrawPublicHistory, getLuckyDrawSummary, updateLuckyDrawConfig, updateLuckyDrawResultStatus, verifyAdminSignature } from "./services/luckyDraw.js";
 import { claimReferral, getReferralSummary } from "./services/referrals.js";
 
 const app = express();
@@ -79,6 +79,15 @@ app.get("/api/player/:address/referrals", referralRateLimit, async (req, res, ne
 app.get("/api/player/:address/lucky-draw", luckyDrawRateLimit, async (req, res, next) => {
   try {
     res.json(await getLuckyDrawSummary(req.params.address));
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/api/lucky-draw/history", luckyDrawRateLimit, async (req, res, next) => {
+  try {
+    const limit = Number(req.query.limit ?? 50);
+    res.json(await getLuckyDrawPublicHistory(Number.isFinite(limit) ? Math.min(100, Math.max(1, Math.floor(limit))) : 50));
   } catch (error) {
     next(error);
   }

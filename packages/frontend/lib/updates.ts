@@ -2,7 +2,7 @@ export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> 
   {
     date: "May 15, 2026",
     title: "On-chain Lucky Draw",
-    body: "Lucky Draw now verifies settled round proofs on-chain with VRF, skips legacy claimed rounds, and keeps rejected wallet requests out of the draw modal."
+    body: "Lucky Draw now has a dedicated page with inline reel animation, public on-chain reward history, and proof-safe draw state."
   },
   {
     date: "May 14, 2026",

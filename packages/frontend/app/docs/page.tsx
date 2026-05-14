@@ -100,7 +100,7 @@ const rewardNotes = [
   {
     icon: <Gift size={18} />,
     title: "Lucky Draw",
-    body: "Every 10 qualifying settled rounds unlocks one Lucky Draw for the same connected wallet. The claim sends settled round proofs to the LuckyDraw contract when proof data and the contract address are deployed, uses Chainlink VRF for the reward tier, shows an animated ETH reward reel while the result resolves, and pays from a separately funded draw contract."
+    body: "Every 10 qualifying settled rounds unlocks one Lucky Draw for the same connected wallet. The dedicated Lucky Draw page sends settled round proofs to the LuckyDraw contract, keeps the ETH reward reel running inline while Chainlink VRF resolves, shows public on-chain reward history, and pays from a separately funded draw contract."
   }
 ];
 
@@ -179,7 +179,7 @@ const faqs = [
   },
   {
     question: "How does Lucky Draw work?",
-    answer: "Lucky Draw is a promotional reward loop, not a wagered game round. After 10 qualifying settled rounds, the connected wallet submits those round request IDs to the LuckyDraw contract. The contract verifies every proof against the approved game contracts, blocks reused rounds, snapshots the prize table, requests Chainlink VRF, and makes the resolved ETH prize claimable on-chain. Pending, failed, refunded, duplicate, wrong-wallet, already consumed, or legacy off-chain claimed rounds do not create valid draw proofs."
+    answer: "Lucky Draw is a promotional reward loop, not a wagered game round. After 10 qualifying settled rounds, the connected wallet opens the dedicated Lucky Draw page and submits those round request IDs to the LuckyDraw contract. The contract verifies every proof against the approved game contracts, blocks reused rounds, snapshots the prize table, requests Chainlink VRF, and makes the resolved ETH prize claimable on-chain. Pending, failed, refunded, duplicate, wrong-wallet, already consumed, or legacy off-chain claimed rounds do not create valid draw proofs."
   },
   {
     question: "How is Lucky Draw operated?",
@@ -392,6 +392,7 @@ export default async function DocsPage({ searchParams }: { searchParams?: Promis
             </div>
             <div className="docs-link-row mt-4">
               <DocLink href="/quests" label="Open quests" />
+              <DocLink href="/lucky-draw" label="Open Lucky Draw" />
               <DocLink href="/profile" label="Open profile badges" />
             </div>
             <div className="docs-grid-two mt-4">

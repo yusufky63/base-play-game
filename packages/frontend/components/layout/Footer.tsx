@@ -41,6 +41,7 @@ export function Footer() {
           <div className="footer-link-grid">
             <FooterLink href="/docs">Docs</FooterLink>
             <FooterLink href="/quests">Quests</FooterLink>
+            <FooterLink href="/lucky-draw">Lucky Draw</FooterLink>
             <FooterLink href="/updates">Updates</FooterLink>
             <FooterLink href="/live-feed">Live Feed</FooterLink>
             <FooterLink href="/leaderboard">Leaderboard</FooterLink>
