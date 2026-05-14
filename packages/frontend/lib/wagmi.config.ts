@@ -1,7 +1,7 @@
 import { createConfig } from "wagmi";
 import { base } from "wagmi/chains";
 import { farcasterMiniApp } from "@farcaster/miniapp-wagmi-connector";
-import { baseAccount, coinbaseWallet, injected, walletConnect } from "wagmi/connectors";
+import { coinbaseWallet, injected, walletConnect } from "wagmi/connectors";
 import { BASE_MAINNET_FRONTEND_RPC_URLS } from "@baseplay/shared/config/networks";
 import { BASEPLAY_BUILDER_CODE_SUFFIX } from "@/lib/builderCode";
 import { walletConnectProjectId } from "@/lib/env";
@@ -14,8 +14,6 @@ export const wagmiConfig = createConfig({
   ssr: true,
   connectors: [
     farcasterMiniApp(),
-    baseAccount({ appName: "BasePlay", preference: { options: "all" } }),
-    injected({ target: "metaMask" }),
     injected(),
     coinbaseWallet({ appName: "BasePlay" }),
     walletConnect({

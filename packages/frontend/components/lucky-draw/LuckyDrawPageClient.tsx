@@ -110,22 +110,19 @@ export function LuckyDrawPageClient() {
             <Sparkles size={17} />
             <span>Reward details</span>
           </div>
-          <div className="lucky-draw-rule">
-            <strong>{requiredProofs} settled rounds unlock one draw</strong>
-            <span>Approved game proofs resolve on Base with Chainlink VRF.</span>
-          </div>
-          <div className="lucky-draw-detail-strip">
-            <Metric label="Max prize" value={`${formatEth(Math.max(...prizes.map((prize) => prize.eth)))} ETH`} />
-            <Metric label="Network" value="Base" />
-            <Metric label="Status" value={data?.config.enabled === false ? "Paused" : "Live"} />
-          </div>
-          <div className="lucky-draw-prize-strip">
-            {prizes.slice(0, 6).map((prize) => (
-              <div key={`${prize.usd}-${prize.weight}`} className="lucky-draw-prize">
-                <span>${prize.usd.toFixed(prize.usd < 1 ? 2 : 0)}</span>
-                <small>{formatEth(prize.eth)} ETH</small>
-              </div>
-            ))}
+          <div className="lucky-draw-info-list">
+            <div>
+              <span>Unlock</span>
+              <strong>{requiredProofs} settled rounds</strong>
+            </div>
+            <div>
+              <span>Reward range</span>
+              <strong>{formatEth(Math.min(...prizes.map((prize) => prize.eth)))} - {formatEth(Math.max(...prizes.map((prize) => prize.eth)))} ETH</strong>
+            </div>
+            <div>
+              <span>Settlement</span>
+              <strong>VRF result, on-chain claim</strong>
+            </div>
           </div>
         </aside>
       </section>

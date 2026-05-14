@@ -18,15 +18,16 @@ export function getWalletConnectorOptions(connectors: readonly WalletConnector[]
   const visible = connectors.filter((connector) => {
     if (!isInFarcaster && connector.id === "farcaster") return false;
     if (!isInFarcaster && connector.id === "baseAccount") return false;
-    if (connector.id === "metaMask" && !hasMetaMaskProvider()) return false;
+    if (isMetaMaskConnector(connector) && !hasMetaMaskProvider()) return false;
     if (connector.id === "injected" && !hasStandaloneInjectedProvider()) return false;
     return true;
   });
   const unique = new Map<string, WalletConnector>();
 
   for (const connector of visible) {
-    const key = normalizeConnectorId(connector.id);
-    if (!unique.has(key)) unique.set(key, connector);
+    const key = normalizeConnectorId(connector);
+    const current = unique.get(key);
+    if (!current || (!current.icon && connector.icon)) unique.set(key, connector);
   }
 
   return Array.from(unique.values()).sort((left, right) => getConnectorPriority(left, isInFarcaster) - getConnectorPriority(right, isInFarcaster));
@@ -47,7 +48,7 @@ export function getReconnectConnectorCandidates(connectors: readonly WalletConne
 
   const pendingConnectorId = getPendingWalletConnectorId();
   if (pendingConnectorId) {
-    const pendingConnector = connectors.find((connector) => connectorIdsMatch(connector.id, pendingConnectorId));
+    const pendingConnector = connectors.find((connector) => connectorIdsMatch(connector, pendingConnectorId));
     return pendingConnector ? [pendingConnector] : [];
   }
 
@@ -62,7 +63,7 @@ export function getWalletConnectorLabel(connector: WalletConnector) {
   if (connector.id === "coinbaseWalletSDK" || connector.id === "coinbaseWallet") return "Coinbase Wallet";
   if (connector.id === "baseAccount") return "Base Account";
   if (connector.id === "farcaster") return "Farcaster Wallet";
-  if (connector.id === "metaMask") return "MetaMask";
+  if (isMetaMaskConnector(connector)) return "MetaMask";
   if (connector.id === "injected") return "Browser wallet";
   return connector.name;
 }
@@ -72,7 +73,7 @@ export function getWalletConnectorDescription(connector: WalletConnector) {
   if (connector.id === "coinbaseWalletSDK" || connector.id === "coinbaseWallet") return "Use Coinbase Wallet or the native Base App wallet.";
   if (connector.id === "baseAccount") return "Use Base Account when you explicitly want it.";
   if (connector.id === "farcaster") return "Use the wallet provided by Farcaster.";
-  if (connector.id === "metaMask") return "Use MetaMask if it is injected in this browser.";
+  if (isMetaMaskConnector(connector)) return "Use MetaMask if it is injected in this browser.";
   if (connector.id === "injected") return "Use the wallet injected into this browser.";
   return "Connect with this wallet provider.";
 }
@@ -83,7 +84,7 @@ export function getWalletConnectorIconKey(connector: WalletConnector) {
   if (connector.id === "coinbaseWalletSDK" || connector.id === "coinbaseWallet") return "coinbase";
   if (connector.id === "baseAccount") return "base";
   if (connector.id === "farcaster") return "farcaster";
-  if (connector.id === "metaMask") return "metamask";
+  if (isMetaMaskConnector(connector)) return "metamask";
   return "injected";
 }
 
@@ -92,7 +93,7 @@ export function getWalletConnectorIconLabel(connector: WalletConnector) {
   if (connector.id === "coinbaseWalletSDK" || connector.id === "coinbaseWallet") return "CB";
   if (connector.id === "baseAccount") return "BA";
   if (connector.id === "farcaster") return "FC";
-  if (connector.id === "metaMask") return "MM";
+  if (isMetaMaskConnector(connector)) return "MM";
   return "W";
 }
 
@@ -141,19 +142,23 @@ export function hasManualWalletDisconnectHold() {
   return false;
 }
 
-function normalizeConnectorId(id: string) {
-  if (id === "metaMask") return "injected";
-  if (id === "coinbaseWallet") return "coinbaseWalletSDK";
-  return id;
+function normalizeConnectorId(connector: WalletConnector | string) {
+  if (typeof connector === "string") {
+    if (connector === "coinbaseWallet") return "coinbaseWalletSDK";
+    return connector;
+  }
+  if (isMetaMaskConnector(connector)) return "metaMask";
+  if (connector.id === "coinbaseWallet") return "coinbaseWalletSDK";
+  return connector.id;
 }
 
-function connectorIdsMatch(left: string, right: string) {
-  return left === right || normalizeConnectorId(left) === normalizeConnectorId(right);
+function connectorIdsMatch(left: WalletConnector, right: string) {
+  return left.id === right || normalizeConnectorId(left) === normalizeConnectorId(right);
 }
 
 function getConnectorPriority(connector: WalletConnector, isInFarcaster: boolean) {
   if (isInFarcaster && connector.id === "farcaster") return 0;
-  if (connector.id === "metaMask") return 1;
+  if (isMetaMaskConnector(connector)) return 1;
   if (connector.id === "walletConnect") return 2;
   if (connector.id === "coinbaseWalletSDK" || connector.id === "coinbaseWallet") return 3;
   if (connector.id === "injected") return 4;
@@ -168,6 +173,10 @@ function hasInjectedProvider() {
 
 function hasMetaMaskProvider() {
   return getEthereumProviders().some((provider) => Boolean(provider.isMetaMask));
+}
+
+function isMetaMaskConnector(connector: WalletConnector) {
+  return /metamask/i.test(`${connector.id} ${connector.name}`);
 }
 
 function hasStandaloneInjectedProvider() {
