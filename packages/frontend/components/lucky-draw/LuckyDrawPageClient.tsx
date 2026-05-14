@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Gift, Loader2, ShieldCheck, Sparkles, Ticket, Trophy } from "lucide-react";
+import { Gift, Loader2, Sparkles, Ticket, Trophy } from "lucide-react";
 import { useAccount } from "wagmi";
 import {
   useClaimLuckyDraw,
@@ -107,16 +107,19 @@ export function LuckyDrawPageClient() {
 
         <aside className="lucky-draw-side panel">
           <div className="lucky-draw-side-head">
-            <ShieldCheck size={17} />
-            <span>Current setup</span>
+            <Sparkles size={17} />
+            <span>Reward details</span>
           </div>
-          <div className="lucky-draw-side-grid">
-            <Metric label="Required" value={`${requiredProofs} rounds`} />
+          <div className="lucky-draw-rule">
+            <strong>{requiredProofs} settled rounds unlock one draw</strong>
+            <span>Approved game proofs resolve on Base with Chainlink VRF.</span>
+          </div>
+          <div className="lucky-draw-detail-strip">
             <Metric label="Max prize" value={`${formatEth(Math.max(...prizes.map((prize) => prize.eth)))} ETH`} />
             <Metric label="Network" value="Base" />
             <Metric label="Status" value={data?.config.enabled === false ? "Paused" : "Live"} />
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-2">
+          <div className="lucky-draw-prize-strip">
             {prizes.slice(0, 6).map((prize) => (
               <div key={`${prize.usd}-${prize.weight}`} className="lucky-draw-prize">
                 <span>${prize.usd.toFixed(prize.usd < 1 ? 2 : 0)}</span>
@@ -155,7 +158,7 @@ export function LuckyDrawPageClient() {
                 <div key={`${row.requestId}-${row.txHash}`} className="lucky-draw-history-row">
                   <div className="min-w-0">
                     <strong>{formatEth(row.prizeAmountEth)} ETH</strong>
-                    <span>{shortAddress(row.player)} · #{row.requestId.slice(0, 8)}</span>
+                    <span>{shortAddress(row.player)} - #{row.requestId.slice(0, 8)}</span>
                   </div>
                   <div className="lucky-draw-history-actions">
                     <span className={`lucky-draw-status lucky-draw-status-${row.status}`}>{row.status}</span>

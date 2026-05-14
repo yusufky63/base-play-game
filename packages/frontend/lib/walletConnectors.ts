@@ -17,8 +17,9 @@ export function openWalletModal() {
 export function getWalletConnectorOptions(connectors: readonly WalletConnector[], isInFarcaster = false) {
   const visible = connectors.filter((connector) => {
     if (!isInFarcaster && connector.id === "farcaster") return false;
+    if (!isInFarcaster && connector.id === "baseAccount") return false;
     if (connector.id === "metaMask" && !hasMetaMaskProvider()) return false;
-    if (connector.id === "injected" && !hasInjectedProvider()) return false;
+    if (connector.id === "injected" && !hasStandaloneInjectedProvider()) return false;
     return true;
   });
   const unique = new Map<string, WalletConnector>();
@@ -152,9 +153,10 @@ function connectorIdsMatch(left: string, right: string) {
 
 function getConnectorPriority(connector: WalletConnector, isInFarcaster: boolean) {
   if (isInFarcaster && connector.id === "farcaster") return 0;
-  if (connector.id === "injected" || connector.id === "metaMask") return 1;
+  if (connector.id === "metaMask") return 1;
   if (connector.id === "walletConnect") return 2;
   if (connector.id === "coinbaseWalletSDK" || connector.id === "coinbaseWallet") return 3;
+  if (connector.id === "injected") return 4;
   if (connector.id === "baseAccount") return 4;
   return 9;
 }
@@ -166,6 +168,12 @@ function hasInjectedProvider() {
 
 function hasMetaMaskProvider() {
   return getEthereumProviders().some((provider) => Boolean(provider.isMetaMask));
+}
+
+function hasStandaloneInjectedProvider() {
+  const providers = getEthereumProviders();
+  if (providers.length === 0) return false;
+  return providers.some((provider) => !provider.isMetaMask && !provider.isCoinbaseWallet && !provider.isBaseApp && !provider.isBaseWallet);
 }
 
 function isNativeBaseWalletEnvironment() {

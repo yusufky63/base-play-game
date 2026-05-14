@@ -7741,6 +7741,45 @@ select {
   margin-top: 14px;
 }
 
+.lucky-draw-rule {
+  margin-top: 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+  padding: 13px;
+}
+
+.lucky-draw-rule strong,
+.lucky-draw-rule span {
+  display: block;
+}
+
+.lucky-draw-rule strong {
+  color: var(--text-1);
+  font-size: 14px;
+}
+
+.lucky-draw-rule span {
+  margin-top: 5px;
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lucky-draw-detail-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.lucky-draw-prize-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
 .lucky-draw-history {
   overflow: hidden;
   padding: 18px;
@@ -7823,9 +7862,19 @@ select {
 }
 
 @media (max-width: 640px) {
-  .lucky-draw-hero-metrics,
-  .lucky-draw-side-grid {
-    grid-template-columns: 1fr;
+  .lucky-draw-hero-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .lucky-draw-detail-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .lucky-draw-prize-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
   }
 
   .lucky-draw-stage,
@@ -7837,6 +7886,27 @@ select {
   .lucky-draw-page-reel .lucky-draw-reel-item {
     min-width: 132px;
     padding: 18px 12px;
+  }
+
+  .lucky-draw-page-metric,
+  .lucky-draw-prize {
+    padding: 8px 7px;
+  }
+
+  .lucky-draw-hero-metrics .lucky-draw-page-metric,
+  .lucky-draw-detail-strip .lucky-draw-page-metric {
+    border-color: transparent;
+    background: transparent;
+    padding: 0;
+  }
+
+  .lucky-draw-page-metric strong,
+  .lucky-draw-prize span {
+    font-size: 11px;
+  }
+
+  .lucky-draw-rule {
+    padding: 11px;
   }
 
   .lucky-draw-history-row {
