@@ -120,12 +120,14 @@ npm run dev:frontend
 
 ## Lucky Draw
 
-Lucky Draw is a promotional reward loop, separate from game settlement. Every 10 qualifying settled rounds unlocks one draw for the player. The default prize tiers are `$0.10`, `$0.50`, `$1`, `$2.50`, `$5`, and `$10`, converted to ETH using the admin-configured ETH/USD reference, currently `$2300`.
+Lucky Draw is a promotional reward loop, separate from wager settlement. Every 10 qualifying settled rounds unlocks one draw for the player. The frontend/backend prepare settled round proofs, and the `LuckyDraw` contract verifies those proofs against approved game contracts before requesting Chainlink VRF. Default reward tiers mirror `$0.10`, `$0.50`, `$1`, `$2.50`, `$5`, and `$10` converted to ETH at the admin reference price.
 
 Security model:
 
 - Pending, refunded, failed, or duplicate rounds do not count.
-- Draw claims require a wallet signature from the player, so another caller cannot spend a player's draw.
-- Supabase updates are atomic through `fn_claim_lucky_draw`.
-- Public clients can only read Lucky Draw config/progress/results; writes and the counted-round ledger stay backend/service-role only.
-- `/admin/lucky-draw` manages pause state, round requirement, minimum bet, ETH reference price, prize weights, and payout status.
+- The contract verifies each submitted round belongs to `msg.sender`, is settled, meets the minimum eligible bet, and has not been consumed before.
+- The prize table is snapshotted when the draw request is made, so later admin changes cannot alter a pending draw.
+- Chainlink VRF chooses the prize tier; the player claims the resolved ETH reward from the funded `LuckyDraw` contract.
+- Supabase tracks progress and prepares proof candidates, but no longer creates Lucky Draw randomness or payout records for new claims.
+- `/admin/lucky-draw` manages pause state, round requirement, minimum bet, ETH reference price, and on-chain prize weights.
+- Base mainnet `LuckyDraw`: `0x9b4b322302C1EA7E6e9f0d26F7F1a647E5D8185A`. The admin page also shows VRF subscription balances, consumer readiness, and LuckyDraw treasury fund/withdraw controls.

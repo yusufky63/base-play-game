@@ -1,12 +1,12 @@
 # 12 - Current Status
 
-Last checked: 2026-05-14.
+Last checked: 2026-05-15.
 
 ## Implemented
 
 - Frontend routes: `/`, 16 game pages, `/leaderboard`, `/live-feed`, `/profile`, `/profile/[address]`, `/docs`, `/updates`, `/base-app`, and `/admin/*`, including `/admin/lucky-draw`.
 - Active games: Coin Flip, Dice, Crash, Mines, Hi-Lo, Over/Under, Limbo, Wheel, Plinko Lite, Color Pick, Treasure Chest, Lucky Seven, Roulette Lite, Scratch Card, Rock Paper Scissors, Slots.
-- Contracts: `GameVault`, `VRFConsumer`, `BaseGame`, and all 16 game contracts above.
+- Contracts: `GameVault`, `VRFConsumer`, `BaseGame`, all 16 game contracts above, and `LuckyDraw`.
 - New utility contracts:
   - `RouletteLiteGame`: 12-slot roulette with exact, color, and range bets. Max gross payout 12x.
   - `ScratchCardGame`: no client choice; VRF selects prize tier. Max gross payout 30x.
@@ -22,12 +22,12 @@ Last checked: 2026-05-14.
 - Full live feed supports game filtering and cursor-style "Load older" pagination.
 - Public profile exists at `/profile` and `/profile/[address]`; leaderboard/feed addresses link to profiles.
 - Supabase migration `005_profile_stats_and_feed_pagination.sql` adds aggregate stats, player-game stats, weekly ranked view, RLS, Data API grants, indexes, backfill, and aggregate triggers.
-- Supabase Lucky Draw migrations add ETH-denominated draw progress/results, public read-only draw tables, private counted-round ledger, atomic claim function, and tightened anon/auth grants.
+- Supabase Lucky Draw migrations add draw progress, public read-only draw tables, a private counted-round ledger, tightened anon/auth grants, and a migration that disables the old off-chain claim function.
 - Shared Supabase type definitions include the new tables/views.
 - Backend builds with Express, Socket.io, Redis, Supabase client, rate limiting, event listener, and crash engine.
 - Basename display is wired through a local API resolver with short address fallback.
 - Toasts, live feed fallback polling, fairness modal request/tx wiring, and refund UI are implemented.
-- Lucky Draw is implemented as a promotional backend/Supabase flow: every 10 qualifying settled rounds unlocks one wallet-signed draw, admin-configurable from `/admin/lucky-draw`.
+- Lucky Draw is implemented as a promotional on-chain VRF flow: every 10 qualifying settled rounds unlocks one contract draw, the contract verifies settled round proofs against approved game contracts, snapshots prize weights, requests Chainlink VRF, and makes the resolved ETH prize claimable.
 
 ## Verification
 
@@ -63,10 +63,11 @@ Last checked: 2026-05-14.
 - `ScratchCardGame`: `0xA9868B0511726522Ddf463489B51B7B7dC9Cd235`
 - `RockPaperScissorsGame`: `0x40983083BcE51b7d36F17Ab8a84A0Ad078430F5b`
 - `SlotsGame`: `0x6f3F319E2cfe256aaCf573D035CDB06c6fF7dd5C`
+- `LuckyDraw`: `0x9b4b322302C1EA7E6e9f0d26F7F1a647E5D8185A`
 
 ## Still Open
 
-- Lucky Draw rewards are ETH-denominated records and payout status is admin-tracked. A separate funded payout contract would be required for fully automatic on-chain promotional payouts.
+- Fund `LuckyDraw` reward liquidity before publicly enabling high-volume draw claims.
 - Basescan verification is not automated yet.
 - `Referral.sol` and `Leaderboard.sol` are not implemented. Decide whether to build them or keep progression/leaderboard fully off-chain in Supabase.
 - Farcaster Frame routes and per-game OG image routes are not implemented.

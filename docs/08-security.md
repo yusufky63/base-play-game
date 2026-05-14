@@ -75,6 +75,19 @@
 [x] Verified on Basescan (source code public)
 ```
 
+### LuckyDraw.sol
+
+```
+[x] Contract verifies each draw proof by reading approved game `rounds(requestId)` state.
+[x] Proofs must belong to `msg.sender`, be settled, meet `minEligibleBet`, and match the stored request ID.
+[x] `consumedRounds` prevents duplicate use of the same game/request ID pair.
+[x] Prize table and max prize are snapshotted at request time, so owner changes cannot alter a pending draw result.
+[x] Chainlink VRF resolves the prize tier; backend/Supabase does not generate randomness.
+[x] Prize payout uses pull-based `claimPrize()` instead of transferring inside the VRF callback.
+[x] Pending reserve and claimable reserve are accounted before owner withdrawals.
+[x] Expired unresolved draws can be cancelled after `DRAW_TIMEOUT_BLOCKS`, releasing proof locks.
+```
+
 ---
 
 ## Pre-Mainnet Security Steps

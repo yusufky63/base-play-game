@@ -17,7 +17,8 @@ export const CONTRACT_ADDRESSES: Record<number, Record<string, `0x${string}`>> =
     RouletteLiteGame: "0x6f3f319e2cfe256aacf573d035cdb06c6ff7dd5c",
     ScratchCardGame: "0x2d1178376eb23053b5474ebad8437fc2018ee469",
     RockPaperScissorsGame: "0x40cc80d6a4f14d958c692998d9279d8e6aac8eeb",
-    SlotsGame: "0x89290afe9f2b11d482d2684ce1d299da58b05c7a"
+    SlotsGame: "0x89290afe9f2b11d482d2684ce1d299da58b05c7a",
+    LuckyDraw: "0x9b4b322302C1EA7E6e9f0d26F7F1a647E5D8185A"
   }
 };
 

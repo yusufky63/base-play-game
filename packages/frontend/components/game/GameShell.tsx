@@ -72,20 +72,22 @@ export function GameShell({
         </div>
       )}
 
-      <div className="game-shell-grid grid gap-4 lg:grid-cols-[1fr_320px]">
-        <div className="game-primary-area">
-          {children}
+      <div className="game-shell-grid grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="game-main-stack">
+          <div className="game-primary-area">
+            {children}
+          </div>
+          <div className="game-how-area">
+            <HowItWorks gameId={gameId} />
+          </div>
+          <div className="game-contract-area">
+            <GameContractPanel gameId={gameId} />
+          </div>
         </div>
         <div className="game-side-stack">
           {side}
           <LuckyDrawCard compact />
           <ReferralShareCard />
-        </div>
-        <div className="game-how-area">
-          <HowItWorks gameId={gameId} />
-        </div>
-        <div className="game-contract-area">
-          <GameContractPanel gameId={gameId} />
         </div>
       </div>
     </main>

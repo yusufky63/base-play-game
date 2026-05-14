@@ -19,6 +19,9 @@ const DEFAULT_VAULT_FUNDING: Record<number, string> = {
 const DEFAULT_NATIVE_SUBSCRIPTION_FUNDING: Record<number, string> = {
   8453: "0.001"
 };
+const DEFAULT_LUCKY_DRAW_FUNDING: Record<number, string> = {
+  8453: "0"
+};
 const VAULT_CONTRACT_NAME = process.env.VAULT_CONTRACT_NAME || "GameVaultV2";
 const VRF_SUBSCRIPTION_ABI = [
   "function createSubscription() external returns (uint256)",
@@ -122,6 +125,21 @@ async function main() {
   const slots = await ethers.deployContract("SlotsGame", constructorArgs);
   await slots.waitForDeployment();
 
+  const luckyDraw = await ethers.deployContract("LuckyDraw", [
+    COORDINATORS[chainId],
+    KEY_HASHES[chainId],
+    subscriptionId,
+    250_000,
+    REQUEST_CONFIRMATIONS
+  ]);
+  await luckyDraw.waitForDeployment();
+  const luckyDrawFunding = process.env.LUCKY_DRAW_FUND_ETH_MAINNET ?? DEFAULT_LUCKY_DRAW_FUNDING[chainId] ?? "0";
+  if (parseEther(luckyDrawFunding) > 0n) {
+    const fundTx = await luckyDraw.fund({ value: parseEther(luckyDrawFunding) });
+    await fundTx.wait();
+    console.log(`[Deploy] Funded LuckyDraw with ${luckyDrawFunding} ETH.`);
+  }
+
   const deployedVaultAddress = await vault.getAddress();
   const addresses = {
     GameVault: deployedVaultAddress,
@@ -141,15 +159,23 @@ async function main() {
     RouletteLiteGame: await rouletteLite.getAddress(),
     ScratchCardGame: await scratchCard.getAddress(),
     RockPaperScissorsGame: await rockPaperScissors.getAddress(),
-    SlotsGame: await slots.getAddress()
+    SlotsGame: await slots.getAddress(),
+    LuckyDraw: await luckyDraw.getAddress()
   };
 
-  for (const address of Object.entries(addresses).filter(([name]) => !name.startsWith("GameVault")).map(([, address]) => address)) {
+  const gameAddresses = Object.entries(addresses)
+    .filter(([name]) => !name.startsWith("GameVault") && name !== "LuckyDraw")
+    .map(([, address]) => address);
+
+  for (const address of gameAddresses) {
     const tx = await vault.approveGame(address);
     await tx.wait();
   }
 
-  for (const address of Object.entries(addresses).filter(([name]) => !name.startsWith("GameVault")).map(([, address]) => address)) {
+  const approveDrawTx = await luckyDraw.setApprovedGames(gameAddresses, true);
+  await approveDrawTx.wait();
+
+  for (const address of [...gameAddresses, addresses.LuckyDraw]) {
     const tx = await coordinator.addConsumer(subscriptionId, address);
     await tx.wait();
   }
@@ -298,6 +324,7 @@ function copyAbiAlias(contractName: string, aliasName: string) {
 function contractPath(contractName: string) {
   if (contractName === "GameVault") return "core/GameVault.sol";
   if (contractName === "GameVaultV2") return "core/GameVaultV2.sol";
+  if (contractName === "LuckyDraw") return "rewards/LuckyDraw.sol";
   return `games/${contractName}.sol`;
 }
 

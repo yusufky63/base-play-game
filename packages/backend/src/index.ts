@@ -7,6 +7,7 @@ import { Server } from "socket.io";
 import { env } from "./config/env.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { adminRateLimit, apiRateLimit, chainReadRateLimit, luckyDrawClaimRateLimit, luckyDrawRateLimit, referralRateLimit } from "./middleware/rateLimit.js";
+import { getAdminOpsState } from "./services/adminOps.js";
 import { getCachedContractStatus, getPendingRoundsForPlayer, toSupportedChainId } from "./services/chainReads.js";
 import { startCrashEngine } from "./services/crashEngine.js";
 import { getIndexerHealth, initEventListeners } from "./services/eventListener.js";
@@ -94,6 +95,14 @@ app.post("/api/player/:address/lucky-draw/claim", luckyDrawClaimRateLimit, async
 app.get("/api/admin/lucky-draw", adminRateLimit, async (_req, res, next) => {
   try {
     res.json(await getLuckyDrawAdminState());
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/api/admin/ops", adminRateLimit, async (_req, res, next) => {
+  try {
+    res.json(await getAdminOpsState());
   } catch (error) {
     next(error);
   }

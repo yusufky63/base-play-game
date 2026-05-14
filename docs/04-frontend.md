@@ -663,6 +663,6 @@ Lucky Draw appears in two player-facing surfaces:
 - Game pages show a compact animated `LuckyDrawCard` in the side stack below the bet controls.
 - Profile pages include a `Lucky Draw` tab with progress, available draws, lifetime draw counts, recent results, and prize tiers.
 
-The card reads `/api/player/:address/lucky-draw` through the backend and only enables `Open Lucky Draw` when the connected wallet has an available draw. Claiming signs a short wallet message before the backend calls the Supabase atomic claim function. Admin controls live at `/admin/lucky-draw` and require an allowed admin wallet plus a signed admin message.
+The card reads `/api/player/:address/lucky-draw` through the backend for progress and settled round proof candidates. `Open Lucky Draw` is only enabled when the connected wallet matches the profile, the contract is configured, the wallet has an available draw, and enough indexed settled round proofs exist. Opening a draw submits those proofs to the `LuckyDraw` contract, keeps the animated reward reel running while Chainlink VRF resolves the request, and then shows a contract `Claim prize` action for the resolved ETH reward. Admin controls live at `/admin/lucky-draw`; saving config updates backend display data and, when `LuckyDraw` is deployed, sends owner transactions for on-chain round requirements, minimum eligible bet, pause state, and prize weights.
 
 

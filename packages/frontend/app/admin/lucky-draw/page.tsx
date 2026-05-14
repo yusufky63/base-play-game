@@ -1,23 +1,71 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Gift, Loader2, Pause, Play, Save } from "lucide-react";
+import { Banknote, ExternalLink, Gift, Loader2, Pause, Play, RefreshCw, Save, ShieldCheck, WalletCards } from "lucide-react";
+import { formatEther, parseEther, type Abi } from "viem";
+import { usePublicClient, useSendTransaction, useSwitchChain, useWriteContract } from "wagmi";
+import luckyDrawAbi from "@baseplay/shared/abis/LuckyDraw.json";
 import { AdminMetric, AdminShell } from "@/components/admin/AdminShell";
 import { useLuckyDrawAdmin, useUpdateLuckyDrawConfig, useUpdateLuckyDrawResult, type LuckyDrawPrize } from "@/hooks/useLuckyDraw";
+import { fetchBackendJson } from "@/lib/backend";
+import { BASEPLAY_BUILDER_CODE_SUFFIX } from "@/lib/builderCode";
 import { shortenAddress } from "@/lib/formatters";
+import { getDefaultNetworkConfig } from "@/lib/networkConfig";
 
 type PrizeForm = Pick<LuckyDrawPrize, "usd" | "weight">;
+type AdminOpsState = {
+  status: "ok";
+  chainId: 8453;
+  updatedAt: string;
+  vrf: {
+    coordinator: `0x${string}`;
+    subscriptionId: string;
+    linkBalance: string;
+    nativeBalanceEth: string;
+    requestCount: string;
+    owner: string;
+    consumers: string[];
+    pendingRequestExists: boolean;
+    luckyDrawConsumerReady: boolean;
+  };
+  luckyDraw: {
+    address: `0x${string}` | null;
+    deployed: boolean;
+    availableLiquidityEth?: string;
+    totalPendingReserveEth?: string;
+    totalClaimablePrizesEth?: string;
+    maxPrizeAmountEth?: string;
+    roundsRequired?: string;
+    minEligibleBetEth?: string;
+    paused?: boolean;
+    owner?: string | null;
+  };
+};
+
+const defaultNetwork = getDefaultNetworkConfig();
+const vrfAbi = [
+  { type: "function", name: "fundSubscriptionWithNative", stateMutability: "payable", inputs: [{ name: "subId", type: "uint256" }], outputs: [] }
+] as const;
 
 export default function AdminLuckyDrawPage() {
   const admin = useLuckyDrawAdmin();
   const updateConfig = useUpdateLuckyDrawConfig();
   const updateResult = useUpdateLuckyDrawResult();
+  const publicClient = usePublicClient();
+  const { switchChainAsync } = useSwitchChain();
+  const { writeContractAsync, isPending: isWritePending } = useWriteContract();
+  const { sendTransactionAsync, isPending: isSendPending } = useSendTransaction();
   const [enabled, setEnabled] = useState(true);
   const [roundsRequired, setRoundsRequired] = useState(10);
   const [minBetEth, setMinBetEth] = useState(0);
   const [ethUsdReference, setEthUsdReference] = useState(2300);
   const [pausedReason, setPausedReason] = useState("");
   const [prizes, setPrizes] = useState<PrizeForm[]>([]);
+  const [ops, setOps] = useState<AdminOpsState | null>(null);
+  const [opsLoading, setOpsLoading] = useState(false);
+  const [luckyDrawFundEth, setLuckyDrawFundEth] = useState("0.02");
+  const [luckyDrawWithdrawEth, setLuckyDrawWithdrawEth] = useState("0.005");
+  const [vrfFundEth, setVrfFundEth] = useState("0.01");
   const totalWeight = useMemo(() => prizes.reduce((sum, prize) => sum + Number(prize.weight || 0), 0), [prizes]);
   const claimableCount = admin.data?.recentResults.filter((result) => result.status === "claimable").length ?? 0;
   const claimableEth = admin.data?.recentResults
@@ -35,6 +83,20 @@ export default function AdminLuckyDrawPage() {
     setPrizes(config.prizes.map((prize) => ({ usd: prize.usd, weight: prize.weight })));
   }, [admin.data?.config]);
 
+  useEffect(() => {
+    void refreshOps();
+  }, []);
+
+  async function refreshOps() {
+    setOpsLoading(true);
+    try {
+      const data = await fetchBackendJson<AdminOpsState>("/api/admin/ops");
+      if (data) setOps(data);
+    } finally {
+      setOpsLoading(false);
+    }
+  }
+
   function saveConfig() {
     updateConfig.mutate({
       enabled,
@@ -46,12 +108,68 @@ export default function AdminLuckyDrawPage() {
     });
   }
 
+  async function ensureBase() {
+    await switchChainAsync({ chainId: defaultNetwork.chainId });
+  }
+
+  async function fundLuckyDraw() {
+    if (!ops?.luckyDraw.address) return;
+    const value = parseEthInput(luckyDrawFundEth);
+    if (value === null) return;
+    await ensureBase();
+    const hash = await sendTransactionAsync({ to: ops.luckyDraw.address, value });
+    await publicClient?.waitForTransactionReceipt({ hash });
+    await refreshOps();
+  }
+
+  async function withdrawLuckyDraw() {
+    if (!ops?.luckyDraw.address) return;
+    const value = parseEthInput(luckyDrawWithdrawEth);
+    if (value === null) return;
+    await ensureBase();
+    const hash = await writeContractAsync({
+      address: ops.luckyDraw.address,
+      abi: luckyDrawAbi as Abi,
+      functionName: "withdrawAvailable",
+      args: [value],
+      dataSuffix: BASEPLAY_BUILDER_CODE_SUFFIX
+    });
+    await publicClient?.waitForTransactionReceipt({ hash });
+    await refreshOps();
+  }
+
+  async function fundVrfNative() {
+    if (!ops?.vrf) return;
+    const value = parseEthInput(vrfFundEth);
+    if (value === null) return;
+    await ensureBase();
+    const hash = await writeContractAsync({
+      address: ops.vrf.coordinator,
+      abi: vrfAbi,
+      functionName: "fundSubscriptionWithNative",
+      args: [BigInt(ops.vrf.subscriptionId)],
+      value,
+      dataSuffix: BASEPLAY_BUILDER_CODE_SUFFIX
+    });
+    await publicClient?.waitForTransactionReceipt({ hash });
+    await refreshOps();
+  }
+
+  function parseEthInput(value: string) {
+    try {
+      const parsed = parseEther(value);
+      return parsed > 0n ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+
   return (
-    <AdminShell title="Lucky Draw" description="Manage the 10-round draw loop, ETH reference pricing, prize weights, and payout queue.">
+    <AdminShell title="Lucky Draw" description="Manage the on-chain VRF draw loop, ETH reference pricing, prize weights, pause state, and historical payout rows.">
       <div className="grid gap-3 md:grid-cols-3">
         <AdminMetric label="Status" value={enabled ? "Enabled" : "Paused"} detail={enabled ? "New qualifying rounds can unlock draws" : pausedReason || "Draw claims are paused"} tone={enabled ? "win" : "pending"} />
-        <AdminMetric label="Claimable" value={String(claimableCount)} detail={`${formatEth(claimableEth)} ETH awaiting payout`} tone={claimableCount > 0 ? "pending" : undefined} />
-        <AdminMetric label="Reference" value={`$${ethUsdReference}`} detail="Used to convert USD prize tiers into ETH-denominated rewards" />
+        <AdminMetric label="Historical queue" value={String(claimableCount)} detail={`${formatEth(claimableEth)} ETH from pre-contract rows`} tone={claimableCount > 0 ? "pending" : undefined} />
+        <AdminMetric label="Reference" value={`$${ethUsdReference}`} detail="Used to convert USD prize tiers into on-chain ETH reward amounts" />
       </div>
 
       <section className="mt-4 grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
@@ -62,7 +180,7 @@ export default function AdminLuckyDrawPage() {
                 <Gift size={14} className="text-[var(--accent)]" />
                 Draw config
               </div>
-              <h2 className="mt-2 display-heading text-xl font-bold text-[var(--text-1)]">Reward controls</h2>
+              <h2 className="mt-2 display-heading text-xl font-bold text-[var(--text-1)]">On-chain reward controls</h2>
             </div>
             <button type="button" onClick={() => setEnabled((current) => !current)} className="play-button-ghost inline-flex h-9 items-center gap-2 rounded-md px-3 text-xs font-bold">
               {enabled ? <Pause size={14} /> : <Play size={14} />}
@@ -117,7 +235,7 @@ export default function AdminLuckyDrawPage() {
         <div className="panel overflow-hidden">
           <div className="border-b border-[var(--border)] px-4 py-3">
             <h2 className="display-heading text-xl font-bold text-[var(--text-1)]">Recent draws</h2>
-            <p className="mt-1 text-xs text-[var(--text-2)]">Mark ETH payouts after sending the reward transaction from the payout wallet.</p>
+            <p className="mt-1 text-xs text-[var(--text-2)]">Historical off-chain rows from the pre-contract flow. New Lucky Draw rewards are claimed from the contract.</p>
           </div>
           <div className="divide-y divide-[var(--border)]">
             {admin.isLoading && <div className="p-4 text-sm text-[var(--text-2)]">Loading Lucky Draw state...</div>}
@@ -142,7 +260,95 @@ export default function AdminLuckyDrawPage() {
           </div>
         </div>
       </section>
+
+      <section className="mt-4 grid gap-4 lg:grid-cols-[1fr_1fr]">
+        <div className="panel p-4">
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2 font-mono text-[10px] font-bold uppercase text-[var(--text-3)]">
+                <ShieldCheck size={14} className="text-[var(--accent)]" />
+                VRF operations
+              </div>
+              <h2 className="mt-2 display-heading text-xl font-bold text-[var(--text-1)]">Subscription health</h2>
+            </div>
+            <button type="button" onClick={() => void refreshOps()} className="play-button-ghost inline-flex h-9 items-center gap-2 rounded-md px-3 text-xs font-bold">
+              <RefreshCw size={14} className={opsLoading ? "animate-spin" : ""} />
+              Refresh
+            </button>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <OpsMetric label="Native balance" value={`${ops?.vrf.nativeBalanceEth ?? "-"} ETH`} />
+            <OpsMetric label="LINK balance" value={`${ops?.vrf.linkBalance ?? "-"} LINK`} />
+            <OpsMetric label="Requests" value={ops?.vrf.requestCount ?? "-"} />
+            <OpsMetric label="Pending" value={ops?.vrf.pendingRequestExists ? "Yes" : "No"} tone={ops?.vrf.pendingRequestExists ? "pending" : "win"} />
+          </div>
+          <div className="mt-3 rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3 text-xs leading-5 text-[var(--text-2)]">
+            <div>Sub ID: <span className="font-mono text-[var(--text-1)]">{ops?.vrf.subscriptionId ?? "-"}</span></div>
+            <div>Owner: <span className="font-mono text-[var(--text-1)]">{ops?.vrf.owner ? shortenAddress(ops.vrf.owner, 6) : "-"}</span></div>
+            <div>LuckyDraw consumer: <span className={ops?.vrf.luckyDrawConsumerReady ? "text-[var(--win)]" : "text-[var(--lose)]"}>{ops?.vrf.luckyDrawConsumerReady ? "Ready" : "Missing"}</span></div>
+          </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
+            <input value={vrfFundEth} onChange={(event) => setVrfFundEth(event.target.value)} className="admin-table-input h-10" aria-label="VRF native funding amount" />
+            <button type="button" onClick={() => void fundVrfNative()} disabled={!ops?.vrf || isWritePending} className="primary-action h-10 rounded-md px-4 text-sm font-bold text-white disabled:opacity-45">
+              Fund VRF native
+            </button>
+          </div>
+          <a href="https://vrf.chain.link/base" target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-2 text-xs font-bold text-[var(--accent)]">
+            Open Chainlink VRF panel <ExternalLink size={13} />
+          </a>
+        </div>
+
+        <div className="panel p-4">
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2 font-mono text-[10px] font-bold uppercase text-[var(--text-3)]">
+                <WalletCards size={14} className="text-[var(--accent)]" />
+                LuckyDraw vault
+              </div>
+              <h2 className="mt-2 display-heading text-xl font-bold text-[var(--text-1)]">Reward treasury</h2>
+            </div>
+            <Banknote size={18} className="text-[var(--accent)]" />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <OpsMetric label="Available" value={`${ops?.luckyDraw.availableLiquidityEth ?? "-"} ETH`} tone="win" />
+            <OpsMetric label="Pending reserve" value={`${ops?.luckyDraw.totalPendingReserveEth ?? "-"} ETH`} tone="pending" />
+            <OpsMetric label="Claimable" value={`${ops?.luckyDraw.totalClaimablePrizesEth ?? "-"} ETH`} tone="pending" />
+            <OpsMetric label="Max prize" value={`${ops?.luckyDraw.maxPrizeAmountEth ?? "-"} ETH`} />
+          </div>
+          <div className="mt-3 rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3 text-xs leading-5 text-[var(--text-2)]">
+            <div>Address: <span className="font-mono text-[var(--text-1)]">{ops?.luckyDraw.address ? shortenAddress(ops.luckyDraw.address, 6) : "Not deployed"}</span></div>
+            <div>Status: <span className={ops?.luckyDraw.paused ? "text-[var(--pending)]" : "text-[var(--win)]"}>{ops?.luckyDraw.paused ? "Paused" : "Active"}</span></div>
+            <div>Rounds required: <span className="font-mono text-[var(--text-1)]">{ops?.luckyDraw.roundsRequired ?? "-"}</span></div>
+          </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
+            <input value={luckyDrawFundEth} onChange={(event) => setLuckyDrawFundEth(event.target.value)} className="admin-table-input h-10" aria-label="Lucky Draw funding amount" />
+            <button type="button" onClick={() => void fundLuckyDraw()} disabled={!ops?.luckyDraw.address || isSendPending} className="primary-action h-10 rounded-md px-4 text-sm font-bold text-white disabled:opacity-45">
+              Fund draw
+            </button>
+          </div>
+          <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_auto]">
+            <input value={luckyDrawWithdrawEth} onChange={(event) => setLuckyDrawWithdrawEth(event.target.value)} className="admin-table-input h-10" aria-label="Lucky Draw withdraw amount" />
+            <button type="button" onClick={() => void withdrawLuckyDraw()} disabled={!ops?.luckyDraw.address || isWritePending} className="play-button-ghost h-10 rounded-md px-4 text-sm font-bold disabled:opacity-45">
+              Withdraw available
+            </button>
+          </div>
+          {ops?.luckyDraw.address && (
+            <a href={`${defaultNetwork.network.blockExplorer}/address/${ops.luckyDraw.address}`} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-2 text-xs font-bold text-[var(--accent)]">
+              Open LuckyDraw contract <ExternalLink size={13} />
+            </a>
+          )}
+        </div>
+      </section>
     </AdminShell>
+  );
+}
+
+function OpsMetric({ label, value, tone }: { label: string; value: string; tone?: "win" | "pending" | "loss" }) {
+  return (
+    <div className="lucky-draw-mini-metric">
+      <span>{label}</span>
+      <strong className={tone === "win" ? "text-[var(--win)]" : tone === "pending" ? "text-[var(--pending)]" : tone === "loss" ? "text-[var(--lose)]" : undefined}>{value}</strong>
+    </div>
   );
 }
 

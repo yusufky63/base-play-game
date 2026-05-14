@@ -61,7 +61,7 @@ const playerNotes = [
   {
     icon: <Sparkles size={18} />,
     title: "Clean Home hero",
-    body: "The Home hero uses a static full-width band without an animated Pixel Blast background, while tabs, game cards, round status panels, contract panels, buttons, filters, and mobile help sections stay compact with thinner neutral borders and consistent card shadows."
+    body: "The Home hero uses a static full-width band without an animated Pixel Blast background, while tabs, game cards, round status panels, contract panels, buttons, filters, and mobile help sections stay compact with thinner neutral borders and consistent card shadows. Desktop game pages keep the contract card, play area, and How it works panel in a stable left-column stack so accordion changes do not stretch the play area."
   }
 ];
 
@@ -100,7 +100,7 @@ const rewardNotes = [
   {
     icon: <Gift size={18} />,
     title: "Lucky Draw",
-    body: "Every 10 qualifying settled rounds unlocks one Lucky Draw. Draws are ETH-denominated using the admin-configured ETH/USD reference, prize weights can be adjusted from the admin panel, and payout records stay separate from game settlement and referrals."
+    body: "Every 10 qualifying settled rounds unlocks one Lucky Draw for the same connected wallet. The claim sends settled round proofs to the LuckyDraw contract when proof data and the contract address are deployed, uses Chainlink VRF for the reward tier, shows an animated ETH reward reel while the result resolves, and pays from a separately funded draw contract."
   }
 ];
 
@@ -179,11 +179,15 @@ const faqs = [
   },
   {
     question: "How does Lucky Draw work?",
-    answer: "Lucky Draw is a promotional reward loop, not a game round. After 10 qualifying settled rounds, the connected wallet receives one draw. The backend claims it through an atomic Supabase function, records the ETH-denominated prize and entropy hash, and the admin payout queue tracks whether the reward is claimable, paid, or voided. Pending, failed, refunded, or duplicate rounds do not create draw progress."
+    answer: "Lucky Draw is a promotional reward loop, not a wagered game round. After 10 qualifying settled rounds, the connected wallet submits those round request IDs to the LuckyDraw contract. The contract verifies every proof against the approved game contracts, blocks reused rounds, snapshots the prize table, requests Chainlink VRF, and makes the resolved ETH prize claimable on-chain. Pending, failed, refunded, duplicate, or wrong-wallet rounds do not create valid draw proofs."
+  },
+  {
+    question: "How is Lucky Draw operated?",
+    answer: "The admin Lucky Draw page shows VRF subscription health, native and LINK balances, pending request status, consumer readiness, LuckyDraw available liquidity, pending reserve, claimable prizes, max prize, owner, and pause state. Admins can fund the VRF subscription with native ETH, fund the LuckyDraw reward treasury, withdraw available LuckyDraw liquidity, and update round requirements, minimum eligible bet, pause state, and prize weights through owner wallet transactions."
   },
   {
     question: "Can Lucky Draw odds or rewards be changed?",
-    answer: "Yes. Admin controls can pause the feature, change the required round count, set a minimum bet, update the ETH/USD reference, and edit prize weights. The default tiers are $0.10, $0.50, $1, $2.50, $5, and $10 converted to ETH at the configured reference price."
+    answer: "Yes. Admin controls can pause the feature, change the required round count, set a minimum eligible bet, update the ETH/USD reference used by the UI, and edit on-chain prize amounts and weights. A draw uses the prize table snapshot from request time, so admin changes after a player opens a draw cannot alter that pending result."
   },
   {
     question: "Can public clients read referral history directly?",

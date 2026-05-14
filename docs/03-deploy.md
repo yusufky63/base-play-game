@@ -26,6 +26,17 @@ Confirmations:    3
 
 ## Step 3 — Deploy Order
 
+Hardhat production path:
+
+```bash
+npm run deploy:base --workspace @baseplay/contracts
+
+# If the games are already deployed and only LuckyDraw is missing:
+npm run deploy:lucky-draw:base --workspace @baseplay/contracts
+```
+
+`deploy:lucky-draw:base` deploys `LuckyDraw`, optionally funds it with `LUCKY_DRAW_FUND_ETH_MAINNET`, approves all configured game contracts as proof sources, adds `LuckyDraw` to the Base mainnet VRF subscription, copies the ABI, and writes `CONTRACT_ADDRESSES[8453].LuckyDraw`.
+
 ```
 STEP 1 ── GameVault.sol
   Constructor args: (none)

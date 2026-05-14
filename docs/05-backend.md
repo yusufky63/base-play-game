@@ -40,13 +40,14 @@ Backend endpoints:
 | `GET /api/player/:address/pending-rounds` | chain read | Refund/pending round scan |
 | `POST /api/referrals/claim` | referral | Signed referral claim |
 | `GET /api/player/:address/referrals` | referral | Referral summary |
-| `GET /api/player/:address/lucky-draw` | Lucky Draw | Draw progress, config, recent results |
-| `POST /api/player/:address/lucky-draw/claim` | Lucky Draw claim | Wallet-signed draw claim |
+| `GET /api/player/:address/lucky-draw` | Lucky Draw | Draw progress, config, and settled round proof candidates |
+| `POST /api/player/:address/lucky-draw/claim` | Lucky Draw claim | Deprecated; returns 410 because new claims are on-chain |
 | `GET /api/admin/lucky-draw` | admin | Admin draw state |
+| `GET /api/admin/ops` | admin | VRF subscription and LuckyDraw treasury health |
 | `POST /api/admin/lucky-draw/config` | admin | Wallet-signed draw config update |
 | `POST /api/admin/lucky-draw/result` | admin | Wallet-signed payout status update |
 
-Lucky Draw is a promotional reward flow, not an on-chain game contract. It uses Supabase service-role writes, atomic SQL functions, player wallet signatures for claims, and admin wallet signatures for config or payout status changes. Reward results are ETH-denominated records; actual payout status is tracked from `/admin/lucky-draw`.
+Lucky Draw is now a promotional on-chain VRF reward flow. Supabase still tracks progress and prepares settled round proof candidates, but it does not create randomness or payout rows for new claims. The player sends proof candidates to the `LuckyDraw` contract, which verifies settled rounds against approved game contracts, blocks reused rounds, snapshots the prize table, requests Chainlink VRF, and makes the resolved ETH prize claimable on-chain. Admin config writes are mirrored through `/admin/lucky-draw` and the contract owner functions.
 
 ---
 

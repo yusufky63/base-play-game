@@ -1,5 +1,10 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
+    date: "May 15, 2026",
+    title: "On-chain Lucky Draw",
+    body: "Lucky Draw now verifies settled round proofs in a VRF contract, uses an animated reward reel while the result resolves, and adds admin VRF plus reward treasury controls."
+  },
+  {
     date: "May 14, 2026",
     title: "Lucky Draw rewards",
     body: "Players now unlock an ETH-denominated Lucky Draw after every 10 qualifying settled rounds, with admin controls for pause state, prize weights, ETH reference pricing, and payout status."

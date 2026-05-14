@@ -1,9 +1,16 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAccount, useSignMessage } from "wagmi";
+import { parseEther, parseEventLogs, type Abi } from "viem";
+import { base } from "wagmi/chains";
+import { useAccount, usePublicClient, useSignMessage, useSwitchChain, useWriteContract } from "wagmi";
+import luckyDrawAbi from "@baseplay/shared/abis/LuckyDraw.json";
+import { getContractAddress } from "@baseplay/shared/config/addresses";
 import { fetchBackendJson } from "@/lib/backend";
+import { BASEPLAY_BUILDER_CODE_SUFFIX } from "@/lib/builderCode";
+import { parseContractError } from "@/lib/errors";
 import { useToast } from "@/components/ui/ToastProvider";
+import { openWalletModal } from "@/lib/walletConnectors";
 
 export type LuckyDrawPrize = {
   usd: number;
@@ -29,6 +36,11 @@ export type LuckyDrawResult = {
 
 export type LuckyDrawSummary = {
   player: string;
+  onchain: {
+    chainId: 8453;
+    contractAddress: string | null;
+    configured: boolean;
+  };
   config: {
     enabled: boolean;
     roundsRequired: number;
@@ -47,7 +59,23 @@ export type LuckyDrawSummary = {
     roundsUntilNext: number;
     progressPct: number;
   };
+  eligibleProofs: LuckyDrawProof[];
   recentResults: LuckyDrawResult[];
+};
+
+export type LuckyDrawProof = {
+  roundId: string;
+  gameId: string;
+  contractAddress: string;
+  requestId: string;
+};
+
+export type OnchainLuckyDrawResult = {
+  requestId: string;
+  prizeIndex: number;
+  prizeAmountWei: string;
+  prizeAmountEth: number;
+  txHash: string | null;
 };
 
 export type LuckyDrawAdminState = {
@@ -73,38 +101,113 @@ export function useLuckyDraw(address?: string | null, { enabled = true }: { enab
 export function useClaimLuckyDraw(address?: string | null) {
   const queryClient = useQueryClient();
   const toast = useToast();
-  const { signMessageAsync, isPending: isSigning } = useSignMessage();
+  const account = useAccount();
+  const publicClient = usePublicClient();
+  const { switchChainAsync, isPending: isSwitchPending } = useSwitchChain();
+  const { writeContractAsync, isPending: isWritePending } = useWriteContract();
 
   const mutation = useMutation({
-    mutationFn: async () => {
-      if (!address) throw new Error("Connect wallet first");
-      const clientSeed = `${address}:${Date.now()}:${Math.random().toString(16).slice(2)}`;
-      const message = buildAdminMessage("lucky-draw-claim", address);
-      const signature = await signMessageAsync({ message });
-      const data = await fetchBackendJson<{ status: "claimed"; result: LuckyDrawResult; summary: LuckyDrawSummary }>(
-        `/api/player/${address}/lucky-draw/claim`,
-        {
-          method: "POST",
-          body: JSON.stringify({ player: address, message, signature, clientSeed })
-        }
-      );
-      if (!data) throw new Error("Backend is not configured");
-      return data;
+    mutationFn: async (proofs: LuckyDrawProof[]) => {
+      if (!address || !account.address) {
+        openWalletModal();
+        throw new Error("Connect wallet first");
+      }
+      if (account.address.toLowerCase() !== address.toLowerCase()) throw new Error("Connect the wallet that earned this draw");
+      if (!publicClient) throw new Error("Network RPC is not ready");
+      if (proofs.length === 0) throw new Error("No eligible settled rounds are available yet");
+
+      const contractAddress = getLuckyDrawContractAddress();
+      if (!contractAddress) throw new Error("Lucky Draw contract is not deployed yet");
+
+      if (account.chain?.id !== base.id) {
+        await switchChainAsync({ chainId: base.id });
+      }
+
+      toast({ tone: "info", title: "Opening Lucky Draw", description: "Confirm the draw request in your wallet." });
+      const hash = await writeContractAsync({
+        address: contractAddress,
+        abi: luckyDrawAbi as Abi,
+        functionName: "requestDraw",
+        args: [
+          proofs.map((proof) => ({
+            game: proof.contractAddress as `0x${string}`,
+            requestId: BigInt(proof.requestId)
+          }))
+        ],
+        dataSuffix: BASEPLAY_BUILDER_CODE_SUFFIX
+      });
+
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      const requestLog = parseEventLogs({
+        abi: luckyDrawAbi as Abi,
+        logs: receipt.logs,
+        eventName: "DrawRequested"
+      })[0];
+      const requestId = (requestLog?.args as { requestId?: bigint } | undefined)?.requestId;
+      if (typeof requestId !== "bigint") throw new Error("Draw request id was not found in transaction logs");
+
+      toast({ tone: "info", title: "Waiting for VRF", description: "The reward reel will keep spinning until Chainlink VRF resolves the draw." });
+      const result = await waitForDrawResolved({ publicClient, contractAddress, requestId, fromBlock: receipt.blockNumber });
+      return {
+        status: "resolved" as const,
+        result
+      };
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(["lucky-draw", address?.toLowerCase() ?? "none"], data.summary);
+      queryClient.invalidateQueries({ queryKey: ["lucky-draw", address?.toLowerCase() ?? "none"] });
       toast({
         tone: "success",
-        title: `Lucky Draw: ${formatEth(data.result.prize_eth)} ETH`,
-        description: `$${Number(data.result.prize_usd).toFixed(2)} reward is claimable.`
+        title: `Lucky Draw: ${formatEth(data.result.prizeAmountEth)} ETH`,
+        description: "VRF resolved the draw. Claim the prize from the result card."
       });
     },
     onError: (error) => {
-      toast({ tone: "error", title: "Lucky Draw failed", description: error instanceof Error ? cleanBackendError(error.message) : undefined });
+      const parsed = parseContractError(error);
+      toast({ tone: "error", title: "Lucky Draw failed", description: parsed.message });
     }
   });
 
-  return { ...mutation, isPending: mutation.isPending || isSigning };
+  return { ...mutation, isPending: mutation.isPending || isWritePending || isSwitchPending };
+}
+
+export function useClaimLuckyDrawPrize(address?: string | null) {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  const account = useAccount();
+  const { switchChainAsync, isPending: isSwitchPending } = useSwitchChain();
+  const { writeContractAsync, isPending } = useWriteContract();
+
+  const mutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      if (!address || !account.address) {
+        openWalletModal();
+        throw new Error("Connect wallet first");
+      }
+      if (account.address.toLowerCase() !== address.toLowerCase()) throw new Error("Connect the wallet that owns this prize");
+      const contractAddress = getLuckyDrawContractAddress();
+      if (!contractAddress) throw new Error("Lucky Draw contract is not deployed yet");
+      if (account.chain?.id !== base.id) {
+        await switchChainAsync({ chainId: base.id });
+      }
+      return writeContractAsync({
+        address: contractAddress,
+        abi: luckyDrawAbi as Abi,
+        functionName: "claimPrize",
+        args: [BigInt(requestId)],
+        dataSuffix: BASEPLAY_BUILDER_CODE_SUFFIX
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lucky-draw", address?.toLowerCase() ?? "none"] });
+      toast({ tone: "success", title: "Lucky Draw prize claimed" });
+    },
+    onError: (error) => {
+      const parsed = parseContractError(error);
+      toast({ tone: "error", title: "Prize claim failed", description: parsed.message });
+    },
+  });
+
+  return { ...mutation, isPending: mutation.isPending || isPending || isSwitchPending };
 }
 
 export function useLuckyDrawAdmin() {
@@ -122,8 +225,12 @@ export function useLuckyDrawAdmin() {
 
 export function useUpdateLuckyDrawConfig() {
   const queryClient = useQueryClient();
-  const { address } = useAccount();
+  const account = useAccount();
+  const { address } = account;
   const { signMessageAsync, isPending: isSigning } = useSignMessage();
+  const { switchChainAsync, isPending: isSwitchPending } = useSwitchChain();
+  const { writeContractAsync, isPending: isWritePending } = useWriteContract();
+  const publicClient = usePublicClient();
   const toast = useToast();
 
   const mutation = useMutation({
@@ -136,6 +243,46 @@ export function useUpdateLuckyDrawConfig() {
       prizes: Array<{ usd: number; weight: number }>;
     }) => {
       if (!address) throw new Error("Connect admin wallet first");
+      const contractAddress = getLuckyDrawContractAddress();
+      if (contractAddress) {
+        if (account.chain?.id !== base.id) {
+          await switchChainAsync({ chainId: base.id });
+        }
+        await writeContractAsync({
+          address: contractAddress,
+          abi: luckyDrawAbi as Abi,
+          functionName: "setDrawConfig",
+          args: [BigInt(config.roundsRequired), parseEther(formatEtherInput(config.minBetEth))],
+          dataSuffix: BASEPLAY_BUILDER_CODE_SUFFIX
+        });
+        await writeContractAsync({
+          address: contractAddress,
+          abi: luckyDrawAbi as Abi,
+          functionName: "setPrizeTable",
+          args: [
+            config.prizes.map((prize) => ({
+              amount: parseEther(formatEtherInput(prize.usd / Math.max(1, config.ethUsdReference))),
+              weight: Number(prize.weight)
+            }))
+          ],
+          dataSuffix: BASEPLAY_BUILDER_CODE_SUFFIX
+        });
+        const paused = publicClient
+          ? await publicClient.readContract({
+              address: contractAddress,
+              abi: luckyDrawAbi as Abi,
+              functionName: "paused"
+            })
+          : null;
+        if (typeof paused === "boolean" && paused === config.enabled) {
+          await writeContractAsync({
+            address: contractAddress,
+            abi: luckyDrawAbi as Abi,
+            functionName: config.enabled ? "unpause" : "pause",
+            dataSuffix: BASEPLAY_BUILDER_CODE_SUFFIX
+          });
+        }
+      }
       const message = buildAdminMessage("lucky-draw-config", address);
       const signature = await signMessageAsync({ message });
       const data = await fetchBackendJson<LuckyDrawAdminState>("/api/admin/lucky-draw/config", {
@@ -154,7 +301,7 @@ export function useUpdateLuckyDrawConfig() {
     }
   });
 
-  return { ...mutation, isPending: mutation.isPending || isSigning };
+  return { ...mutation, isPending: mutation.isPending || isSigning || isWritePending || isSwitchPending };
 }
 
 export function useUpdateLuckyDrawResult() {
@@ -207,4 +354,67 @@ function cleanBackendError(message: string) {
 
 function formatEth(value: number) {
   return Number(value).toLocaleString(undefined, { maximumFractionDigits: 8 });
+}
+
+function formatEtherInput(value: number) {
+  return Number(value || 0).toFixed(18).replace(/0+$/, "").replace(/\.$/, "") || "0";
+}
+
+function getLuckyDrawContractAddress(): `0x${string}` | null {
+  try {
+    return getContractAddress(base.id, "LuckyDraw");
+  } catch {
+    return null;
+  }
+}
+
+async function waitForDrawResolved({
+  publicClient,
+  contractAddress,
+  requestId,
+  fromBlock
+}: {
+  publicClient: NonNullable<ReturnType<typeof usePublicClient>>;
+  contractAddress: `0x${string}`;
+  requestId: bigint;
+  fromBlock: bigint;
+}): Promise<OnchainLuckyDrawResult> {
+  const startedAt = Date.now();
+  const delays = [8_000, 12_000, 18_000, 25_000, 35_000, 45_000];
+  let cursor = fromBlock;
+
+  for (const delay of delays) {
+    const latestBlock = await publicClient.getBlockNumber();
+    if (cursor <= latestBlock) {
+      const logs = await publicClient.getContractEvents({
+        address: contractAddress,
+        abi: luckyDrawAbi as Abi,
+        eventName: "DrawResolved",
+        args: { requestId },
+        fromBlock: cursor,
+        toBlock: latestBlock
+      } as any);
+      const log = logs[0] as { args?: Record<string, unknown>; transactionHash?: string } | undefined;
+      const prizeAmount = log?.args?.prizeAmount;
+      const prizeIndex = log?.args?.prizeIndex;
+      if (typeof prizeAmount === "bigint" && (typeof prizeIndex === "number" || typeof prizeIndex === "bigint")) {
+        return {
+          requestId: requestId.toString(),
+          prizeIndex: Number(prizeIndex),
+          prizeAmountWei: prizeAmount.toString(),
+          prizeAmountEth: Number(prizeAmount) / 1e18,
+          txHash: log?.transactionHash ?? null
+        };
+      }
+      cursor = latestBlock + 1n;
+    }
+    if (Date.now() - startedAt > 150_000) break;
+    await sleep(delay);
+  }
+
+  throw new Error("Lucky Draw VRF result is still pending. Keep the page open or check again soon.");
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
 }

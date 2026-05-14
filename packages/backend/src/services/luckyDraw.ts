@@ -1,5 +1,10 @@
-import { getAddress, isAddress, verifyMessage } from "viem";
+import { createPublicClient, encodePacked, getAddress, isAddress, keccak256, parseAbi, verifyMessage } from "viem";
+import { base } from "viem/chains";
+import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
+import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
+import { BASE_MAINNET_BACKEND_RPC_URLS } from "@baseplay/shared/config/networks";
 import { supabaseAdmin } from "../supabase/client.js";
+import { createPublicFirstTransport } from "./rpc.js";
 
 type LuckyDrawConfigRow = {
   id: number;
@@ -46,6 +51,11 @@ export type LuckyDrawPrize = {
 
 export type LuckyDrawSummary = {
   player: string;
+  onchain: {
+    chainId: 8453;
+    contractAddress: string | null;
+    configured: boolean;
+  };
   config: {
     enabled: boolean;
     roundsRequired: number;
@@ -64,7 +74,15 @@ export type LuckyDrawSummary = {
     roundsUntilNext: number;
     progressPct: number;
   };
+  eligibleProofs: LuckyDrawProof[];
   recentResults: LuckyDrawResultRow[];
+};
+
+export type LuckyDrawProof = {
+  roundId: string;
+  gameId: string;
+  contractAddress: string;
+  requestId: string;
 };
 
 const DEFAULT_PRIZES = [
@@ -88,41 +106,28 @@ const DEFAULT_CONFIG: LuckyDrawConfigRow = {
 };
 
 const FALLBACK_ADMIN_ADDRESSES = ["0xeaa823ab4c4ee00283d8ed7be713ddf8a5ba0fac"];
+const LUCKY_DRAW_ABI = parseAbi(["function consumedRounds(bytes32 roundKey) view returns (bool)"]);
+const luckyDrawReadClient = createPublicClient({
+  chain: base,
+  transport: createPublicFirstTransport(BASE_MAINNET_BACKEND_RPC_URLS, { timeout: 10_000 })
+});
 
 export async function getLuckyDrawSummary(address: string): Promise<LuckyDrawSummary> {
   const player = normalizeAddress(address);
-  const [config, progress, recentResults] = await Promise.all([
+  const [config, progress, recentResults, eligibleProofs] = await Promise.all([
     getLuckyDrawConfig(),
     getLuckyDrawProgress(player),
-    getLuckyDrawResults(player, 8)
+    getLuckyDrawResults(player, 8),
+    getEligibleProofs(player)
   ]);
 
-  return buildSummary(player, config, progress, recentResults);
+  return buildSummary(player, config, progress, recentResults, eligibleProofs);
 }
 
 export async function claimLuckyDraw(address: string, input: unknown) {
-  const player = normalizeAddress(address);
-  const body = input as { player?: unknown; message?: unknown; signature?: unknown; clientSeed?: unknown };
-  await verifyPlayerClaimSignature(player, body);
-  const config = await getLuckyDrawConfig();
-  if (!config.enabled) throw httpError("Lucky Draw is paused", 409);
-
-  const { data, error } = await supabaseAdmin.rpc("fn_claim_lucky_draw", {
-    p_player: player,
-    p_client_seed: typeof body.clientSeed === "string" ? body.clientSeed.slice(0, 96) : null
-  });
-
-  if (error) {
-    const message = error.message.includes("No Lucky Draw available") ? "No Lucky Draw available" : error.message;
-    throw httpError(message, message.includes("No Lucky Draw") ? 409 : 500);
-  }
-
-  const result = data as LuckyDrawResultRow;
-  return {
-    status: "claimed" as const,
-    result,
-    summary: await getLuckyDrawSummary(player)
-  };
+  normalizeAddress(address);
+  void input;
+  throw httpError("Lucky Draw claims are now settled on-chain through the LuckyDraw contract", 410);
 }
 
 async function verifyPlayerClaimSignature(player: string, input: { player?: unknown; message?: unknown; signature?: unknown }) {
@@ -240,7 +245,7 @@ function parseSignedMessage(message: string, expectedAction: string) {
   const timestampRaw = lines.find((line) => line.startsWith("Timestamp: "))?.replace("Timestamp: ", "").trim();
   const timestamp = timestampRaw ? Date.parse(timestampRaw) : Number.NaN;
   if (!action || !address || !isAddress(address) || !Number.isFinite(timestamp)) {
-    throw httpError("Invalid admin message", 401);
+    throw httpError("Invalid signed message", 401);
   }
   if (action !== expectedAction) throw httpError("Invalid signed action", 401);
   return { action, address: getAddress(address), timestamp };
@@ -289,7 +294,77 @@ async function getLuckyDrawResults(player: string, limit: number) {
   return (data ?? []) as LuckyDrawResultRow[];
 }
 
-function buildSummary(player: string, configRow: LuckyDrawConfigRow, progressRow: LuckyDrawProgressRow | null, recentResults: LuckyDrawResultRow[]): LuckyDrawSummary {
+async function getEligibleProofs(player: string): Promise<LuckyDrawProof[]> {
+  const contractByGameId = new Map(
+    GAMES_REGISTRY.map((game) => [
+      game.id,
+      CONTRACT_ADDRESSES[8453]?.[game.contractName]
+    ]).filter((entry): entry is [string, string] => Boolean(entry[1]))
+  );
+
+  const { data, error } = await supabaseAdmin
+    .from("lucky_draw_rounds")
+    .select("round_id, game_id, counted_at, game_rounds!inner(vrf_request_id, chain_id)")
+    .eq("player", player)
+    .order("counted_at", { ascending: true })
+    .limit(100);
+
+  if (error) throw httpError(error.message, 500);
+
+  const proofs = ((data ?? []) as Array<{
+    round_id: string;
+    game_id: string;
+    game_rounds?: { vrf_request_id?: string | null; chain_id?: number | null } | Array<{ vrf_request_id?: string | null; chain_id?: number | null }>;
+  }>)
+    .map((row) => {
+      const joined = Array.isArray(row.game_rounds) ? row.game_rounds[0] : row.game_rounds;
+      const contractAddress = contractByGameId.get(row.game_id);
+      const requestId = joined?.vrf_request_id;
+      if (!contractAddress || !requestId || joined?.chain_id !== 8453) return null;
+      return {
+        roundId: row.round_id,
+        gameId: row.game_id,
+        contractAddress,
+        requestId
+      };
+    })
+    .filter((row): row is LuckyDrawProof => Boolean(row));
+
+  return filterConsumedProofs(proofs);
+}
+
+async function filterConsumedProofs(proofs: LuckyDrawProof[]) {
+  const luckyDrawAddress = CONTRACT_ADDRESSES[8453]?.LuckyDraw;
+  if (!luckyDrawAddress || proofs.length === 0) return proofs;
+
+  try {
+    const checks = await luckyDrawReadClient.multicall({
+      allowFailure: true,
+      contracts: proofs.map((proof) => ({
+        address: luckyDrawAddress,
+        abi: LUCKY_DRAW_ABI,
+        functionName: "consumedRounds",
+        args: [roundKey(proof)]
+      }))
+    });
+
+    return proofs.filter((_, index) => checks[index]?.status !== "success" || checks[index]?.result !== true);
+  } catch {
+    return proofs;
+  }
+}
+
+function roundKey(proof: LuckyDrawProof) {
+  return keccak256(encodePacked(["address", "uint256"], [proof.contractAddress as `0x${string}`, BigInt(proof.requestId)]));
+}
+
+function buildSummary(
+  player: string,
+  configRow: LuckyDrawConfigRow,
+  progressRow: LuckyDrawProgressRow | null,
+  recentResults: LuckyDrawResultRow[],
+  eligibleProofs: LuckyDrawProof[]
+): LuckyDrawSummary {
   const config = normalizeConfig(configRow);
   const progress = progressRow ?? {
     player,
@@ -306,6 +381,11 @@ function buildSummary(player: string, configRow: LuckyDrawConfigRow, progressRow
 
   return {
     player,
+    onchain: {
+      chainId: 8453,
+      contractAddress: CONTRACT_ADDRESSES[8453]?.LuckyDraw ?? null,
+      configured: Boolean(CONTRACT_ADDRESSES[8453]?.LuckyDraw)
+    },
     config,
     progress: {
       qualifiedRounds,
@@ -316,6 +396,7 @@ function buildSummary(player: string, configRow: LuckyDrawConfigRow, progressRow
       roundsUntilNext,
       progressPct: Math.min(100, (qualifiedRounds / roundsRequired) * 100)
     },
+    eligibleProofs,
     recentResults
   };
 }

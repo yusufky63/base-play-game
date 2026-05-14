@@ -1183,6 +1183,13 @@ select {
   gap: 16px;
 }
 
+.game-main-stack {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .game-stage:has(.result-callout) {
   margin-bottom: 96px;
 }
@@ -1210,6 +1217,10 @@ select {
 
   .game-primary-area {
     order: 1;
+  }
+
+  .game-main-stack {
+    display: contents;
   }
 
   .game-side-stack {
@@ -6884,26 +6895,16 @@ select {
 @media (min-width: 1024px) {
   .game-shell-grid {
     gap: 12px;
-  }
-
-  .game-primary-area {
-    grid-column: 1;
-    grid-row: 2;
+    align-items: start;
   }
 
   .game-side-stack {
     grid-column: 2;
-    grid-row: 1 / span 3;
-  }
-
-  .game-how-area {
-    grid-column: 1;
-    grid-row: 3;
+    align-self: start;
   }
 
   .game-contract-area {
-    grid-column: 1;
-    grid-row: 1;
+    order: -1;
   }
 }
 
@@ -7448,6 +7449,165 @@ select {
   font-size: 12px;
   font-weight: 800;
   color: var(--text-1);
+}
+
+.lucky-draw-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(3, 7, 18, 0.68);
+  padding: 18px;
+  backdrop-filter: blur(10px);
+}
+
+.lucky-draw-modal {
+  position: relative;
+  width: min(520px, 100%);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--border));
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(43, 126, 255, 0.28), transparent 34%),
+    linear-gradient(180deg, var(--surface), var(--surface-2));
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34), var(--card-shadow-3d);
+  padding: 22px;
+  text-align: center;
+}
+
+.lucky-draw-close {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  display: flex;
+  height: 32px;
+  width: 32px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-2);
+}
+
+.lucky-draw-close:disabled {
+  opacity: 0.45;
+}
+
+.lucky-draw-reel {
+  position: relative;
+  margin-top: 18px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--surface-2) 84%, transparent);
+  padding: 14px 0;
+}
+
+.lucky-draw-reel::before,
+.lucky-draw-reel::after {
+  position: absolute;
+  top: 0;
+  z-index: 2;
+  height: 100%;
+  width: 72px;
+  content: "";
+  pointer-events: none;
+}
+
+.lucky-draw-reel::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--surface-2), transparent);
+}
+
+.lucky-draw-reel::after {
+  right: 0;
+  background: linear-gradient(270deg, var(--surface-2), transparent);
+}
+
+.lucky-draw-reel-track {
+  display: flex;
+  gap: 10px;
+  width: max-content;
+  padding-inline: 50%;
+  transform: translateX(0);
+}
+
+.lucky-draw-reel-spinning .lucky-draw-reel-track {
+  animation: lucky-draw-spin 1.1s linear infinite;
+}
+
+@keyframes lucky-draw-spin {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-320px);
+  }
+}
+
+.lucky-draw-reel-item {
+  display: grid;
+  min-width: 118px;
+  gap: 4px;
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--border));
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 12px;
+  box-shadow: var(--card-shadow-3d);
+}
+
+.lucky-draw-reel-item span {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--text-1);
+}
+
+.lucky-draw-reel-item small {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-3);
+}
+
+.lucky-draw-reel-marker {
+  position: absolute;
+  left: 50%;
+  top: 6px;
+  bottom: 6px;
+  z-index: 3;
+  width: 2px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+.lucky-draw-result {
+  margin-top: 16px;
+  border: 1px solid color-mix(in srgb, var(--win) 28%, var(--border));
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--win) 10%, var(--surface));
+  padding: 14px;
+}
+
+.lucky-draw-result span,
+.lucky-draw-result small {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.lucky-draw-result strong {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 24px;
+  color: var(--win);
 }
 
 .admin-field {

@@ -13,6 +13,7 @@
 - Active mainnet game contracts: Coin Flip, Dice, Crash, Mines, Hi-Lo, Over/Under, Limbo, Wheel, Plinko Lite, Color Pick, Treasure Chest, Lucky Seven, Roulette Lite, Scratch Card, Rock Paper Scissors, Slots.
 - Every game extends `BaseGame`, locks the player's choice before the VRF request, uses Chainlink VRF for settlement, and reserves the maximum gross payout through `GameVault` before accepting the bet.
 - `GameVault` owns bet limits, house edge, approved-game access, pause controls, and locked payout accounting.
+- `LuckyDraw` is a separate funded promotional reward contract. It verifies settled round proofs against approved game contracts, prevents proof reuse, snapshots the prize table at request time, requests Chainlink VRF, and exposes a pull-based `claimPrize()` for the resolved ETH reward.
 - Crash, Hi-Lo, and Mines were reviewed for payout consistency:
   - Crash gross curve is fair before vault edge.
   - Hi-Lo rejects choices with only one winning card because fair payout would exceed the 8x cap.
