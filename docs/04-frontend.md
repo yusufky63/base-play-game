@@ -651,8 +651,18 @@ export function parseContractError(err: unknown): GameError {
 | `/updates` | Public | Product updates |
 | `/admin` | Owner only | Dashboard stats |
 | `/admin/games` | Owner only | Pause/resume, update limits |
+| `/admin/lucky-draw` | Owner only | Lucky Draw pause/config/prize weights/payout status |
 | `/admin/vault` | Owner only | Balance, withdraw |
 | `/admin/logs` | Owner only | Transaction history |
 | `/api/frame/[game]` | Public | Farcaster Frame endpoint |
+
+## Lucky Draw UI
+
+Lucky Draw appears in two player-facing surfaces:
+
+- Game pages show a compact animated `LuckyDrawCard` in the side stack below the bet controls.
+- Profile pages include a `Lucky Draw` tab with progress, available draws, lifetime draw counts, recent results, and prize tiers.
+
+The card reads `/api/player/:address/lucky-draw` through the backend and only enables `Open Lucky Draw` when the connected wallet has an available draw. Claiming signs a short wallet message before the backend calls the Supabase atomic claim function. Admin controls live at `/admin/lucky-draw` and require an allowed admin wallet plus a signed admin message.
 
 

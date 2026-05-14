@@ -7355,6 +7355,140 @@ select {
   }
 }
 
+.lucky-draw-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(43, 126, 255, 0.2), transparent 34%),
+    linear-gradient(145deg, var(--surface), var(--surface-2));
+  box-shadow: var(--card-shadow-3d);
+  padding: 16px;
+}
+
+.lucky-draw-card-compact {
+  padding: 14px;
+}
+
+.lucky-draw-ribbon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 220%;
+  padding-top: 12px;
+  color: rgba(43, 126, 255, 0.14);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  transform: rotate(-10deg) translateX(0);
+  animation: lucky-draw-ribbon 18s linear infinite;
+  pointer-events: none;
+}
+
+.lucky-draw-ribbon span {
+  flex: 0 0 auto;
+  border: 1px solid rgba(43, 126, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(43, 126, 255, 0.05);
+  padding: 4px 10px;
+}
+
+@keyframes lucky-draw-ribbon {
+  from {
+    transform: rotate(-10deg) translateX(0);
+  }
+  to {
+    transform: rotate(-10deg) translateX(-50%);
+  }
+}
+
+.lucky-draw-icon {
+  display: flex;
+  height: 38px;
+  width: 38px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow: var(--card-shadow-3d);
+}
+
+.lucky-draw-mini-metric,
+.lucky-draw-prize {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 9px;
+}
+
+.lucky-draw-mini-metric span,
+.lucky-draw-prize small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-3);
+}
+
+.lucky-draw-mini-metric strong,
+.lucky-draw-prize span {
+  display: block;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-1);
+}
+
+.admin-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.admin-field span {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.admin-field input,
+.admin-table-input {
+  height: 38px;
+  min-width: 0;
+  border: 1px solid var(--border-2);
+  border-radius: 7px;
+  background: var(--surface);
+  padding: 0 10px;
+  color: var(--text-1);
+  outline: none;
+}
+
+.admin-table-input {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.admin-field input:focus,
+.admin-table-input:focus {
+  border-color: var(--accent);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .profile-tabs .profile-tab,
   .profile-tab-panel {

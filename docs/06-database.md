@@ -229,6 +229,10 @@ export const supabaseAdmin = createClient<Database>(
 | `game_stats` | Trigger/backfill | Public | Per-game aggregate counts and economics |
 | `player_game_stats` | Trigger/backfill | Public | Per-player per-game totals for profiles |
 | `leaderboard_weekly_ranked` | View | Public | Weekly XP and profit ranks |
+| `lucky_draw_config` | Backend/admin | Public read | Draw status, required rounds, ETH reference, prize weights |
+| `lucky_draw_progress` | Trigger/function | Public read | Per-player qualified rounds and available draw count |
+| `lucky_draw_rounds` | Trigger/function | Backend only | Private counted-round ledger, one row per qualifying round |
+| `lucky_draw_results` | Function/admin | Public read | ETH-denominated draw result and payout status |
 
 ---
 
@@ -268,5 +272,21 @@ Adds the production data layer for cached global stats, game counts, profile sum
 - `GRANT SELECT` is included for `anon` and `authenticated` because new Supabase tables may not be exposed to the Data API automatically.
 
 Operational note: the migration file exists locally, but applying it to the remote project requires an authenticated Supabase MCP/CLI session.
+
+---
+
+## Lucky Draw Schema
+
+Lucky Draw is handled in Supabase and backend code, separate from game contracts and vault settlement.
+
+- Migration `20260514091500_lucky_draw.sql` adds `lucky_draw_config`, `lucky_draw_progress`, `lucky_draw_rounds`, `lucky_draw_results`, `fn_update_lucky_draw_progress()`, and `fn_claim_lucky_draw(text, text)`.
+- Migration `20260514093000_tighten_lucky_draw_grants.sql` removes broad public grants and leaves `anon`/`authenticated` with `SELECT` only on public draw tables.
+- All Lucky Draw tables have RLS enabled.
+- `lucky_draw_rounds` is not exposed to public clients.
+- Player claims require a wallet signature in the backend before calling the SQL function.
+- The SQL function locks the player's progress row, consumes exactly one available draw, writes the reward row, and updates lifetime prize totals atomically.
+- Default rewards are `$0.10`, `$0.50`, `$1`, `$2.50`, `$5`, and `$10`, converted to ETH using `lucky_draw_config.eth_usd_reference`, currently `2300`.
+
+Production migration status: applied to Supabase project `base-game` (`buubouudfeyhltsqryam`) through MCP on 2026-05-14.
 
 

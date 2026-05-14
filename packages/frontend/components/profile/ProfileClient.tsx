@@ -14,8 +14,9 @@ import { formatEth, formatUsd, shortenAddress } from "@/lib/formatters";
 import { levelProgress } from "@/lib/progression";
 import { PendingRoundsPanel } from "@/components/wallet/PendingRoundsPanel";
 import { useToast } from "@/components/ui/ToastProvider";
+import { LuckyDrawCard } from "@/components/lucky-draw/LuckyDrawCard";
 
-type ProfileTab = "profile" | "games" | "rounds" | "badges" | "referrals" | "refunds";
+type ProfileTab = "profile" | "games" | "rounds" | "badges" | "referrals" | "lucky-draw" | "refunds";
 
 export function ProfileClient({ address }: { address: string }) {
   const account = useAccount();
@@ -49,6 +50,7 @@ export function ProfileClient({ address }: { address: string }) {
     { id: "rounds", label: "Rounds" },
     { id: "badges", label: "Badges" },
     { id: "referrals", label: "Referrals" },
+    { id: "lucky-draw", label: "Lucky Draw" },
     ...(isConnectedProfile ? [{ id: "refunds" as const, label: "Refunds" }] : [])
   ];
 
@@ -337,6 +339,18 @@ export function ProfileClient({ address }: { address: string }) {
               </div>
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === "lucky-draw" && (
+          <div className="profile-tab-panel">
+            <div className="profile-panel-heading">
+              <h2 className="display-heading text-lg font-bold text-[var(--text-1)]">Lucky Draw</h2>
+              <span>10 settled rounds unlock one draw</span>
+            </div>
+            <div className="p-4">
+              <LuckyDrawCard address={validAddress} />
+            </div>
           </div>
         )}
 

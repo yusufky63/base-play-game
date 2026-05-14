@@ -12,7 +12,7 @@ const docNav = [
   { id: "games", label: "Games", title: "Games", description: "Active games and their player-facing rules." },
   { id: "contracts", label: "Contracts", title: "Public contracts", description: "Explorer links for game and vault contracts." },
   { id: "account", label: "Account", title: "Wallet, stats, and safety", description: "Wallet identity, live data, XP, and safety notes." },
-  { id: "rewards", label: "Rewards", title: "XP, quests, badges, and referrals", description: "How player progression works without affecting payouts." },
+  { id: "rewards", label: "Rewards", title: "XP, quests, badges, referrals, and Lucky Draw", description: "How player progression and promotional rewards work without changing game settlement." },
   { id: "faq", label: "Q&A", title: "Questions and answers", description: "Common player questions about results and mechanics." }
 ] as const;
 
@@ -96,6 +96,11 @@ const rewardNotes = [
     icon: <Radio size={18} />,
     title: "Referrals",
     body: "Referral links award small capped XP to the referrer after referred players settle rounds. Referral never pays ETH and never touches the vault."
+  },
+  {
+    icon: <Gift size={18} />,
+    title: "Lucky Draw",
+    body: "Every 10 qualifying settled rounds unlocks one Lucky Draw. Draws are ETH-denominated using the admin-configured ETH/USD reference, prize weights can be adjusted from the admin panel, and payout records stay separate from game settlement and referrals."
   }
 ];
 
@@ -171,6 +176,14 @@ const faqs = [
   {
     question: "Do referral rewards pay ETH?",
     answer: "No. Referral rewards are only XP and badge progression. They do not create claimable ETH, rebates, or vault liabilities."
+  },
+  {
+    question: "How does Lucky Draw work?",
+    answer: "Lucky Draw is a promotional reward loop, not a game round. After 10 qualifying settled rounds, the connected wallet receives one draw. The backend claims it through an atomic Supabase function, records the ETH-denominated prize and entropy hash, and the admin payout queue tracks whether the reward is claimable, paid, or voided. Pending, failed, refunded, or duplicate rounds do not create draw progress."
+  },
+  {
+    question: "Can Lucky Draw odds or rewards be changed?",
+    answer: "Yes. Admin controls can pause the feature, change the required round count, set a minimum bet, update the ETH/USD reference, and edit prize weights. The default tiers are $0.10, $0.50, $1, $2.50, $5, and $10 converted to ETH at the configured reference price."
   },
   {
     question: "Can public clients read referral history directly?",
@@ -364,7 +377,7 @@ export default async function DocsPage({ searchParams }: { searchParams?: Promis
 
           {selectedSection === "rewards" && (
           <section className="docs-block">
-            <SectionHeading eyebrow="Progression" title="XP, quests, badges, and referrals" icon={<Gift size={18} />} />
+            <SectionHeading eyebrow="Progression" title="XP, quests, badges, referrals, and Lucky Draw" icon={<Gift size={18} />} />
             <p className="docs-lede">
               Progression is separate from game odds. It gives players profile goals and shareable achievements without changing the contract result, payout, or vault accounting.
             </p>

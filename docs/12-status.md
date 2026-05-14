@@ -1,10 +1,10 @@
 # 12 - Current Status
 
-Last checked: 2026-05-04.
+Last checked: 2026-05-14.
 
 ## Implemented
 
-- Frontend routes: `/`, 16 game pages, `/leaderboard`, `/live-feed`, `/profile`, `/profile/[address]`, `/docs`, `/updates`, `/base-app`, and `/admin/*`.
+- Frontend routes: `/`, 16 game pages, `/leaderboard`, `/live-feed`, `/profile`, `/profile/[address]`, `/docs`, `/updates`, `/base-app`, and `/admin/*`, including `/admin/lucky-draw`.
 - Active games: Coin Flip, Dice, Crash, Mines, Hi-Lo, Over/Under, Limbo, Wheel, Plinko Lite, Color Pick, Treasure Chest, Lucky Seven, Roulette Lite, Scratch Card, Rock Paper Scissors, Slots.
 - Contracts: `GameVault`, `VRFConsumer`, `BaseGame`, and all 16 game contracts above.
 - New utility contracts:
@@ -22,10 +22,12 @@ Last checked: 2026-05-04.
 - Full live feed supports game filtering and cursor-style "Load older" pagination.
 - Public profile exists at `/profile` and `/profile/[address]`; leaderboard/feed addresses link to profiles.
 - Supabase migration `005_profile_stats_and_feed_pagination.sql` adds aggregate stats, player-game stats, weekly ranked view, RLS, Data API grants, indexes, backfill, and aggregate triggers.
+- Supabase Lucky Draw migrations add ETH-denominated draw progress/results, public read-only draw tables, private counted-round ledger, atomic claim function, and tightened anon/auth grants.
 - Shared Supabase type definitions include the new tables/views.
 - Backend builds with Express, Socket.io, Redis, Supabase client, rate limiting, event listener, and crash engine.
 - Basename display is wired through a local API resolver with short address fallback.
 - Toasts, live feed fallback polling, fairness modal request/tx wiring, and refund UI are implemented.
+- Lucky Draw is implemented as a promotional backend/Supabase flow: every 10 qualifying settled rounds unlocks one wallet-signed draw, admin-configurable from `/admin/lucky-draw`.
 
 ## Verification
 
@@ -64,11 +66,10 @@ Last checked: 2026-05-04.
 
 ## Still Open
 
-- Supabase remote migration has not been applied because the MCP server currently returns `Auth required`. Run `codex mcp login supabase`, then apply `packages/backend/supabase/migrations/005_profile_stats_and_feed_pagination.sql`.
-- Base mainnet addresses are empty; mainnet deploy is blocked until `VRF_SUB_ID_MAINNET`, production liquidity, and final review are ready.
+- Lucky Draw rewards are ETH-denominated records and payout status is admin-tracked. A separate funded payout contract would be required for fully automatic on-chain promotional payouts.
 - Basescan verification is not automated yet.
 - `Referral.sol` and `Leaderboard.sol` are not implemented. Decide whether to build them or keep progression/leaderboard fully off-chain in Supabase.
 - Farcaster Frame routes and per-game OG image routes are not implemented.
-- Mainnet still needs an independent security/risk review and a funded production VRF subscription before deploy.
+- Mainnet still benefits from an independent security/risk review before larger promotion.
 
 

@@ -6,10 +6,11 @@ import { createServer } from "node:http";
 import { Server } from "socket.io";
 import { env } from "./config/env.js";
 import { errorHandler } from "./middleware/errorHandler.js";
-import { apiRateLimit, chainReadRateLimit, referralRateLimit } from "./middleware/rateLimit.js";
+import { adminRateLimit, apiRateLimit, chainReadRateLimit, luckyDrawClaimRateLimit, luckyDrawRateLimit, referralRateLimit } from "./middleware/rateLimit.js";
 import { getCachedContractStatus, getPendingRoundsForPlayer, toSupportedChainId } from "./services/chainReads.js";
 import { startCrashEngine } from "./services/crashEngine.js";
 import { getIndexerHealth, initEventListeners } from "./services/eventListener.js";
+import { claimLuckyDraw, getLuckyDrawAdminState, getLuckyDrawSummary, updateLuckyDrawConfig, updateLuckyDrawResultStatus, verifyAdminSignature } from "./services/luckyDraw.js";
 import { claimReferral, getReferralSummary } from "./services/referrals.js";
 
 const app = express();
@@ -69,6 +70,48 @@ app.post("/api/referrals/claim", referralRateLimit, async (req, res, next) => {
 app.get("/api/player/:address/referrals", referralRateLimit, async (req, res, next) => {
   try {
     res.json(await getReferralSummary(req.params.address));
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/api/player/:address/lucky-draw", luckyDrawRateLimit, async (req, res, next) => {
+  try {
+    res.json(await getLuckyDrawSummary(req.params.address));
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post("/api/player/:address/lucky-draw/claim", luckyDrawClaimRateLimit, async (req, res, next) => {
+  try {
+    res.json(await claimLuckyDraw(req.params.address, req.body));
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/api/admin/lucky-draw", adminRateLimit, async (_req, res, next) => {
+  try {
+    res.json(await getLuckyDrawAdminState());
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post("/api/admin/lucky-draw/config", adminRateLimit, async (req, res, next) => {
+  try {
+    await verifyAdminSignature(req.body, "lucky-draw-config");
+    res.json(await updateLuckyDrawConfig(req.body?.config));
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post("/api/admin/lucky-draw/result", adminRateLimit, async (req, res, next) => {
+  try {
+    await verifyAdminSignature(req.body, "lucky-draw-result");
+    res.json(await updateLuckyDrawResultStatus(req.body?.result));
   } catch (error) {
     next(error);
   }

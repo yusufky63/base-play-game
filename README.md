@@ -4,6 +4,8 @@ Mini onchain games on Base L2. Provably fair, instant payouts. $0.50-$3 bets.
 
 **Tagline:** Mini games. Real stakes. On Base.
 
+Production is Base mainnet only. Testnet/Sepolia paths are intentionally removed from the app and backend.
+
 ## Documentation Index
 
 | # | Document | Contents |
@@ -62,6 +64,7 @@ SUPABASE_URL=https://buubouudfeyhltsqryam.supabase.co
 SUPABASE_SERVICE_KEY=<server-only service role key>
 VRF_SUB_ID_MAINNET=<base mainnet vrf subscription id>
 FRONTEND_URL=https://baseplay.games
+BACKEND_ADMIN_ADDRESSES=<comma-separated admin wallets for Lucky Draw controls>
 ```
 
 Verify the live Supabase REST schema after migrations:
@@ -92,6 +95,7 @@ npm run dev:frontend
 | Database | Supabase PostgreSQL + Realtime |
 | Backend | Node.js + Express + Socket.io |
 | Contracts | Solidity 0.8.24 + Hardhat tests |
+| Promotions | ETH-denominated Lucky Draw after 10 qualifying settled rounds |
 
 ## Games
 
@@ -113,3 +117,15 @@ npm run dev:frontend
 | Scratch Card | up to 30x | Base mainnet live + tests |
 | Rock Paper Scissors | 2x gross | Base mainnet live + tests |
 | Slots | up to 25x | Base mainnet live + tests |
+
+## Lucky Draw
+
+Lucky Draw is a promotional reward loop, separate from game settlement. Every 10 qualifying settled rounds unlocks one draw for the player. The default prize tiers are `$0.10`, `$0.50`, `$1`, `$2.50`, `$5`, and `$10`, converted to ETH using the admin-configured ETH/USD reference, currently `$2300`.
+
+Security model:
+
+- Pending, refunded, failed, or duplicate rounds do not count.
+- Draw claims require a wallet signature from the player, so another caller cannot spend a player's draw.
+- Supabase updates are atomic through `fn_claim_lucky_draw`.
+- Public clients can only read Lucky Draw config/progress/results; writes and the counted-round ledger stay backend/service-role only.
+- `/admin/lucky-draw` manages pause state, round requirement, minimum bet, ETH reference price, prize weights, and payout status.

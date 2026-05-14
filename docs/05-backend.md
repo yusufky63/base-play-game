@@ -6,6 +6,50 @@
 
 ---
 
+## Current Production Backend
+
+The production backend is `packages/backend`, runs on Base mainnet only, and does not require or check any Sepolia environment variables.
+
+Required Railway/backend variables:
+
+```bash
+NODE_ENV=production
+PORT=4000
+FRONTEND_URL=https://baseplay.games
+SUPABASE_URL=https://buubouudfeyhltsqryam.supabase.co
+SUPABASE_SERVICE_KEY=<server-only service role key>
+VRF_SUB_ID_MAINNET=<base mainnet vrf subscription id>
+BACKEND_ADMIN_ADDRESSES=<comma-separated admin wallets>
+```
+
+Optional RPC/load variables:
+
+```bash
+BASE_MAINNET_BACKEND_RPC_URLS=https://mainnet.base.org,https://base-rpc.publicnode.com,https://base-mainnet.g.alchemy.com/v2/<key>
+INDEXER_POLL_MS=120000
+INDEXER_ERROR_POLL_MS=60000
+```
+
+Backend endpoints:
+
+| Endpoint | Rate limit | Purpose |
+|---|---:|---|
+| `GET /health` | none | Service health |
+| `GET /api/indexer/health` | API | Mainnet event indexer health |
+| `GET /api/contracts/status` | chain read | Cached vault and game status |
+| `GET /api/player/:address/pending-rounds` | chain read | Refund/pending round scan |
+| `POST /api/referrals/claim` | referral | Signed referral claim |
+| `GET /api/player/:address/referrals` | referral | Referral summary |
+| `GET /api/player/:address/lucky-draw` | Lucky Draw | Draw progress, config, recent results |
+| `POST /api/player/:address/lucky-draw/claim` | Lucky Draw claim | Wallet-signed draw claim |
+| `GET /api/admin/lucky-draw` | admin | Admin draw state |
+| `POST /api/admin/lucky-draw/config` | admin | Wallet-signed draw config update |
+| `POST /api/admin/lucky-draw/result` | admin | Wallet-signed payout status update |
+
+Lucky Draw is a promotional reward flow, not an on-chain game contract. It uses Supabase service-role writes, atomic SQL functions, player wallet signatures for claims, and admin wallet signatures for config or payout status changes. Reward results are ETH-denominated records; actual payout status is tracked from `/admin/lucky-draw`.
+
+---
+
 ## Dependencies
 
 ```bash

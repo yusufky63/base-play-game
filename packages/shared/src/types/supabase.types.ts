@@ -277,6 +277,68 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["player_badges"]["Row"]>;
         Relationships: [];
       };
+      lucky_draw_config: {
+        Row: {
+          id: number;
+          enabled: boolean;
+          rounds_required: number;
+          min_bet_eth: number;
+          eth_usd_reference: number;
+          prize_table: Json;
+          paused_reason: string | null;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["lucky_draw_config"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["lucky_draw_config"]["Row"]>;
+        Relationships: [];
+      };
+      lucky_draw_progress: {
+        Row: {
+          player: string;
+          qualified_rounds: number;
+          available_draws: number;
+          lifetime_draws_earned: number;
+          lifetime_draws_claimed: number;
+          total_prize_eth: number;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["lucky_draw_progress"]["Row"]> & { player: string };
+        Update: Partial<Database["public"]["Tables"]["lucky_draw_progress"]["Row"]>;
+        Relationships: [];
+      };
+      lucky_draw_rounds: {
+        Row: {
+          round_id: string;
+          player: string;
+          game_id: string;
+          bet_amount: number;
+          counted_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["lucky_draw_rounds"]["Row"]> &
+          Pick<Database["public"]["Tables"]["lucky_draw_rounds"]["Row"], "round_id" | "player" | "game_id" | "bet_amount">;
+        Update: Partial<Database["public"]["Tables"]["lucky_draw_rounds"]["Row"]>;
+        Relationships: [];
+      };
+      lucky_draw_results: {
+        Row: {
+          id: string;
+          player: string;
+          prize_usd: number;
+          prize_eth: number;
+          eth_usd_reference: number;
+          status: "claimable" | "paid" | "voided";
+          entropy_hash: string;
+          client_seed: string | null;
+          payout_tx_hash: string | null;
+          created_at: string;
+          paid_at: string | null;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["lucky_draw_results"]["Row"]> &
+          Pick<Database["public"]["Tables"]["lucky_draw_results"]["Row"], "player" | "prize_usd" | "prize_eth" | "eth_usd_reference" | "entropy_hash">;
+        Update: Partial<Database["public"]["Tables"]["lucky_draw_results"]["Row"]>;
+        Relationships: [];
+      };
     };
     Views: {
       leaderboard_weekly_ranked: {
@@ -323,7 +385,15 @@ export interface Database {
         Relationships: [];
       };
     };
-    Functions: Record<string, never>;
+    Functions: {
+      fn_claim_lucky_draw: {
+        Args: {
+          p_player: string;
+          p_client_seed: string | null;
+        };
+        Returns: Database["public"]["Tables"]["lucky_draw_results"]["Row"];
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

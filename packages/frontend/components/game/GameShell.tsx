@@ -6,6 +6,7 @@ import { getGame } from "@baseplay/shared/config/games.registry";
 import { GameContractPanel } from "@/components/game/GameContractPanel";
 import { FairnessButton } from "@/components/game/FairnessModal";
 import { HowItWorks } from "@/components/game/HowItWorks";
+import { LuckyDrawCard } from "@/components/lucky-draw/LuckyDrawCard";
 import { RoundStatus } from "@/components/game/RoundStatus";
 import { ReferralShareCard } from "@/components/share/ReferralShareCard";
 import type { VRFState } from "@/hooks/useVRF";
@@ -77,6 +78,7 @@ export function GameShell({
         </div>
         <div className="game-side-stack">
           {side}
+          <LuckyDrawCard compact />
           <ReferralShareCard />
         </div>
         <div className="game-how-area">
