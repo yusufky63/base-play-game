@@ -7629,6 +7629,16 @@ select {
   color: var(--win);
 }
 
+.lucky-draw-result em {
+  display: block;
+  margin-top: 3px;
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
+}
+
 .lucky-draw-page {
   --lucky-draw-content-width: 80rem;
   display: grid;
@@ -7678,6 +7688,13 @@ select {
   overflow: hidden;
   width: min(var(--lucky-draw-content-width), 100%);
   padding: 18px;
+}
+
+.lucky-draw-chain-stack {
+  display: grid;
+  width: min(var(--lucky-draw-content-width), 100%);
+  justify-self: center;
+  gap: 12px;
 }
 
 .lucky-draw-stage-head,

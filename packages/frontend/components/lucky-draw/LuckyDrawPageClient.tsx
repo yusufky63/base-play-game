@@ -1,8 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Gift, Loader2, Sparkles, Ticket, Trophy } from "lucide-react";
+import { ExternalLink, Gift, Loader2, Sparkles, Ticket, Trophy } from "lucide-react";
 import { useAccount } from "wagmi";
+import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
+import { getNetworkByChainId } from "@baseplay/shared/config/networks";
+import { RoundStatus } from "@/components/game/RoundStatus";
+import { useEthUsdPrice } from "@/hooks/useEthUsdPrice";
 import {
   useClaimLuckyDraw,
   useClaimLuckyDrawPrize,
@@ -12,6 +16,8 @@ import {
   type LuckyDrawPrize,
   type OnchainLuckyDrawResult
 } from "@/hooks/useLuckyDraw";
+import { defaultChainId } from "@/lib/env";
+import { formatUsd as formatUsdValue, shortenAddress } from "@/lib/formatters";
 import { openWalletModal } from "@/lib/walletConnectors";
 
 const HISTORY_PAGE_SIZE = 8;
@@ -33,6 +39,11 @@ export function LuckyDrawPageClient() {
   const canDraw = Boolean(address && data?.config.enabled && data?.onchain.configured && data.progress.availableDraws > 0 && eligibleProofs.length >= requiredProofs);
   const result = claim.data?.result ?? null;
   const prizes = data?.config.prizes ?? DEFAULT_PRIZES;
+  const ethUsd = useEthUsdPrice(Boolean(result));
+  const resultUsd = result ? result.prizeAmountEth * (ethUsd ?? data?.config.ethUsdReference ?? 0) : null;
+  const connectedChainId = account.chain?.id ?? defaultChainId;
+  const chainId = getNetworkByChainId(connectedChainId) ? connectedChainId : defaultChainId;
+  const vrfState = claim.isPending ? "pending_vrf" : result ? "settled" : "idle";
   const ownHistoryRows = (ownHistory.data?.rows ?? []).filter((row) => address && row.player.toLowerCase() === address.toLowerCase());
   const ownHistoryTotal =
     typeof ownHistory.data?.total === "number" && ownHistoryRows.length === (ownHistory.data?.rows.length ?? 0)
@@ -88,7 +99,7 @@ export function LuckyDrawPageClient() {
           <RewardReel prizes={prizes} spinning={claim.isPending} />
 
           {result ? (
-            <DrawResult result={result} claimPending={prizeClaim.isPending} onClaimPrize={(requestId) => prizeClaim.mutate(requestId)} />
+            <DrawResult result={result} resultUsd={resultUsd} claimPending={prizeClaim.isPending} onClaimPrize={(requestId) => prizeClaim.mutate(requestId)} />
           ) : (
             <div className="lucky-draw-inline-status">
               <span>{claim.isPending ? "VRF pending" : data?.progress.availableDraws ? "Unlocked" : "Progress"}</span>
@@ -116,6 +127,11 @@ export function LuckyDrawPageClient() {
             {!address ? "Connect wallet" : claim.isPending ? "Drawing..." : canDraw ? "Open Lucky Draw" : draw.isLoading ? "Loading..." : "No draw ready"}
           </button>
         </div>
+      </section>
+
+      <section className="lucky-draw-chain-stack">
+        <RoundStatus state={vrfState} requestId={result?.requestId ?? null} txHash={result?.txHash ?? null} />
+        <LuckyDrawContractPanel chainId={chainId} />
       </section>
 
       <section className="lucky-draw-details">
@@ -233,10 +249,12 @@ function RewardReel({ prizes, spinning }: { prizes: LuckyDrawPrize[]; spinning: 
 
 function DrawResult({
   result,
+  resultUsd,
   claimPending,
   onClaimPrize
 }: {
   result: OnchainLuckyDrawResult;
+  resultUsd: number | null;
   claimPending: boolean;
   onClaimPrize: (requestId: string) => void;
 }) {
@@ -244,6 +262,7 @@ function DrawResult({
     <div className="lucky-draw-result">
       <span>You won</span>
       <strong>{formatEth(result.prizeAmountEth)} ETH</strong>
+      {resultUsd !== null && resultUsd > 0 && <em>{formatUsdValue(resultUsd)}</em>}
       <small>VRF request #{result.requestId}</small>
       <button
         type="button"
@@ -255,6 +274,34 @@ function DrawResult({
         Claim prize
       </button>
     </div>
+  );
+}
+
+function LuckyDrawContractPanel({ chainId }: { chainId: number }) {
+  const network = getNetworkByChainId(chainId) ?? getNetworkByChainId(defaultChainId);
+  const luckyDrawAddress = CONTRACT_ADDRESSES[network?.chainId ?? defaultChainId]?.LuckyDraw;
+
+  if (!network || !luckyDrawAddress) return null;
+
+  return (
+    <section className="contract-panel" aria-label="Public Lucky Draw contract address">
+      <div>
+        <div className="font-mono text-[10px] font-bold uppercase text-[var(--text-3)]">Contracts on {network.name}</div>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <a
+            href={`${network.blockExplorer}/address/${luckyDrawAddress}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="contract-link"
+            title="LuckyDraw contract on explorer"
+          >
+            <span>LuckyDraw</span>
+            <strong>{shortenAddress(luckyDrawAddress, 5)}</strong>
+            <ExternalLink size={12} />
+          </a>
+        </div>
+      </div>
+    </section>
   );
 }
 
