@@ -89,6 +89,10 @@ export type LuckyDrawPublicHistory = {
   updatedAt: string;
   chainId: 8453;
   contractAddress: string | null;
+  limit: number;
+  offset: number;
+  total: number;
+  hasMore: boolean;
   rows: Array<{
     player: string;
     requestId: string;
@@ -158,18 +162,18 @@ export async function claimLuckyDraw(address: string, input: unknown) {
   throw httpError("Lucky Draw claims are now settled on-chain through the LuckyDraw contract", 410);
 }
 
-export async function getLuckyDrawPublicHistory(limit = 50): Promise<LuckyDrawPublicHistory> {
+export async function getLuckyDrawPublicHistory(options: { limit?: number; offset?: number; player?: string | null } = {}): Promise<LuckyDrawPublicHistory> {
+  const limit = Math.min(100, Math.max(1, Math.floor(options.limit ?? 50)));
+  const offset = Math.max(0, Math.floor(options.offset ?? 0));
+  const player = options.player ? normalizeAddress(options.player) : null;
   const luckyDrawAddress = CONTRACT_ADDRESSES[8453]?.LuckyDraw ?? null;
   if (!luckyDrawAddress) {
-    return { updatedAt: new Date().toISOString(), chainId: 8453, contractAddress: null, rows: [] };
+    return { updatedAt: new Date().toISOString(), chainId: 8453, contractAddress: null, limit, offset, total: 0, hasMore: false, rows: [] };
   }
 
   const now = Date.now();
   if (luckyDrawHistoryCache && luckyDrawHistoryCache.expiresAt > now) {
-    return {
-      ...luckyDrawHistoryCache.data,
-      rows: luckyDrawHistoryCache.data.rows.slice(0, limit)
-    };
+    return paginateLuckyDrawHistory(luckyDrawHistoryCache.data, { limit, offset, player });
   }
 
   const latestBlock = await luckyDrawReadClient.getBlockNumber();
@@ -213,10 +217,31 @@ export async function getLuckyDrawPublicHistory(limit = 50): Promise<LuckyDrawPu
     updatedAt: new Date().toISOString(),
     chainId: 8453 as const,
     contractAddress: luckyDrawAddress,
+    limit: rows.length,
+    offset: 0,
+    total: rows.length,
+    hasMore: false,
     rows
   };
   luckyDrawHistoryCache = { expiresAt: now + LUCKY_DRAW_HISTORY_TTL_MS, data };
-  return { ...data, rows: rows.slice(0, limit) };
+  return paginateLuckyDrawHistory(data, { limit, offset, player });
+}
+
+function paginateLuckyDrawHistory(
+  data: LuckyDrawPublicHistory,
+  options: { limit: number; offset: number; player: string | null }
+): LuckyDrawPublicHistory {
+  const rows = options.player ? data.rows.filter((row) => row.player.toLowerCase() === options.player) : data.rows;
+  const total = rows.length;
+  const pageRows = rows.slice(options.offset, options.offset + options.limit);
+  return {
+    ...data,
+    limit: options.limit,
+    offset: options.offset,
+    total,
+    hasMore: options.offset + options.limit < total,
+    rows: pageRows
+  };
 }
 
 async function verifyPlayerClaimSignature(player: string, input: { player?: unknown; message?: unknown; signature?: unknown }) {

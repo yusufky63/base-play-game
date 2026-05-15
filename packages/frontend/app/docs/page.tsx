@@ -100,7 +100,7 @@ const rewardNotes = [
   {
     icon: <Gift size={18} />,
     title: "Lucky Draw",
-    body: "Every 10 qualifying settled rounds unlocks one Lucky Draw for the same connected wallet. The dedicated Lucky Draw page sends settled round proofs to the LuckyDraw contract, keeps a continuous ETH reward reel running inline while Chainlink VRF resolves, uses the full max-width desktop layout, shows flat reward details below the draw area, lists public on-chain reward history, and pays from a separately funded draw contract. On mobile game pages, the compact Lucky Draw entry follows the main play controls instead of pushing the game area down."
+    body: "Every 10 qualifying settled rounds unlocks one Lucky Draw for the same connected wallet. The dedicated Lucky Draw page sends settled round proofs to the LuckyDraw contract, keeps a continuous ETH reward reel running inline while Chainlink VRF resolves, uses the full max-width desktop layout, shows flat reward details below the draw area, separates the connected wallet's own rewards from paginated public on-chain reward history, and pays from a separately funded draw contract. On mobile game pages, the compact Lucky Draw entry follows the main play controls instead of pushing the game area down."
   }
 ];
 

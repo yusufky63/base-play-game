@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Gift, Loader2, Sparkles, Ticket, Trophy } from "lucide-react";
 import { useAccount } from "wagmi";
@@ -8,16 +9,23 @@ import {
   useClaimLuckyDrawPrize,
   useLuckyDraw,
   useLuckyDrawHistory,
+  type LuckyDrawHistory,
   type LuckyDrawPrize,
   type OnchainLuckyDrawResult
 } from "@/hooks/useLuckyDraw";
 import { openWalletModal } from "@/lib/walletConnectors";
 
+const HISTORY_PAGE_SIZE = 8;
+const OWN_HISTORY_LIMIT = 4;
+
 export function LuckyDrawPageClient() {
   const account = useAccount();
   const address = account.address ?? null;
+  const [historyPage, setHistoryPage] = useState(0);
+  const historyOffset = historyPage * HISTORY_PAGE_SIZE;
   const draw = useLuckyDraw(address, { enabled: Boolean(address) });
-  const history = useLuckyDrawHistory(50);
+  const history = useLuckyDrawHistory({ limit: HISTORY_PAGE_SIZE, offset: historyOffset });
+  const ownHistory = useLuckyDrawHistory({ limit: OWN_HISTORY_LIMIT, offset: 0, player: address, enabled: Boolean(address) });
   const claim = useClaimLuckyDraw(address);
   const prizeClaim = useClaimLuckyDrawPrize(address);
   const data = draw.data;
@@ -26,6 +34,11 @@ export function LuckyDrawPageClient() {
   const canDraw = Boolean(address && data?.config.enabled && data?.onchain.configured && data.progress.availableDraws > 0 && eligibleProofs.length >= requiredProofs);
   const result = claim.data?.result ?? null;
   const prizes = data?.config.prizes ?? DEFAULT_PRIZES;
+  const ownHistoryRows = (ownHistory.data?.rows ?? []).filter((row) => address && row.player.toLowerCase() === address.toLowerCase());
+  const ownHistoryTotal =
+    typeof ownHistory.data?.total === "number" && ownHistoryRows.length === (ownHistory.data?.rows.length ?? 0)
+      ? ownHistory.data.total
+      : ownHistoryRows.length;
 
   function openDraw() {
     if (!address) {
@@ -52,7 +65,7 @@ export function LuckyDrawPageClient() {
         <div className="lucky-draw-hero-metrics" aria-label="Lucky Draw stats">
           <Metric label="Available" value={String(data?.progress.availableDraws ?? 0)} />
           <Metric label="Progress" value={data ? `${data.progress.qualifiedRounds}/${data.config.roundsRequired}` : "-"} />
-          <Metric label="History" value={String(history.data?.rows.length ?? 0)} />
+          <Metric label="History" value={String(history.data?.total ?? history.data?.rows.length ?? 0)} />
         </div>
       </section>
 
@@ -141,46 +154,61 @@ export function LuckyDrawPageClient() {
           </Link>
         </div>
 
-        {history.isLoading ? (
-          <div className="grid gap-2 p-4">
-            <span className="feed-skeleton h-10 w-full" />
-            <span className="feed-skeleton h-10 w-full" />
-            <span className="feed-skeleton h-10 w-3/4" />
+        <div className="lucky-draw-history-sections">
+          <div className="lucky-draw-history-block">
+            <div className="lucky-draw-history-subhead">
+              <span>Your rewards</span>
+              <small>{address ? `${ownHistoryTotal} wallet rewards` : "Wallet not connected"}</small>
+            </div>
+            {!address ? (
+              <div className="lucky-draw-empty">Connect wallet to see your own Lucky Draw rewards.</div>
+            ) : ownHistory.isLoading ? (
+              <HistorySkeleton />
+            ) : ownHistoryRows.length ? (
+              <HistoryRows rows={ownHistoryRows} address={address} claimPending={prizeClaim.isPending} onClaimPrize={(requestId) => prizeClaim.mutate(requestId)} showPlayer={false} />
+            ) : (
+              <div className="lucky-draw-empty">No rewards for this wallet yet.</div>
+            )}
           </div>
-        ) : history.data?.rows.length ? (
-          <div className="lucky-draw-history-list">
-            {history.data.rows.map((row) => {
-              const ownPrize = address?.toLowerCase() === row.player.toLowerCase() && row.status === "claimable";
-              return (
-                <div key={`${row.requestId}-${row.txHash}`} className="lucky-draw-history-row">
-                  <div className="min-w-0">
-                    <strong>{formatEth(row.prizeAmountEth)} ETH</strong>
-                    <span>{shortAddress(row.player)} - #{row.requestId.slice(0, 8)}</span>
-                  </div>
-                  <div className="lucky-draw-history-actions">
-                    <span className={`lucky-draw-status lucky-draw-status-${row.status}`}>{row.status}</span>
-                    {ownPrize ? (
-                      <button
-                        type="button"
-                        className="secondary-action inline-flex h-9 items-center justify-center rounded-md px-3 text-xs font-bold disabled:opacity-45"
-                        disabled={prizeClaim.isPending}
-                        onClick={() => prizeClaim.mutate(row.requestId)}
-                      >
-                        Claim
-                      </button>
-                    ) : (
-                      <a className="secondary-action inline-flex h-9 items-center justify-center rounded-md px-3 text-xs font-bold" href={`https://basescan.org/tx/${row.txHash}`} target="_blank" rel="noreferrer">
-                        Tx
-                      </a>
-                    )}
-                  </div>
+
+          <div className="lucky-draw-history-block">
+            <div className="lucky-draw-history-subhead">
+              <span>Recent rewards</span>
+              <small>{history.data?.total ? `${history.data.total} total` : "Latest on-chain rewards"}</small>
+            </div>
+            {history.isLoading ? (
+              <HistorySkeleton />
+            ) : history.data?.rows.length ? (
+              <>
+                <HistoryRows rows={history.data.rows} address={address} claimPending={prizeClaim.isPending} onClaimPrize={(requestId) => prizeClaim.mutate(requestId)} showPlayer />
+                <div className="lucky-draw-pagination">
+                  <button
+                    type="button"
+                    className="secondary-action inline-flex h-9 items-center justify-center rounded-md px-3 text-xs font-bold disabled:opacity-45"
+                    disabled={historyPage === 0 || history.isFetching}
+                    onClick={() => setHistoryPage((page) => Math.max(0, page - 1))}
+                  >
+                    Previous
+                  </button>
+                  <span>
+                    Page {historyPage + 1}
+                    {history.data.total ? ` / ${Math.max(1, Math.ceil(history.data.total / HISTORY_PAGE_SIZE))}` : ""}
+                  </span>
+                  <button
+                    type="button"
+                    className="secondary-action inline-flex h-9 items-center justify-center rounded-md px-3 text-xs font-bold disabled:opacity-45"
+                    disabled={!history.data.hasMore || history.isFetching}
+                    onClick={() => setHistoryPage((page) => page + 1)}
+                  >
+                    Next
+                  </button>
                 </div>
-              );
-            })}
+              </>
+            ) : (
+              <div className="lucky-draw-empty">No resolved draws yet.</div>
+            )}
           </div>
-        ) : (
-          <div className="lucky-draw-empty">No resolved draws yet.</div>
-        )}
+        </div>
       </section>
     </main>
   );
@@ -230,6 +258,63 @@ function DrawResult({
         {claimPending && <Loader2 size={15} className="animate-spin" />}
         Claim prize
       </button>
+    </div>
+  );
+}
+
+function HistoryRows({
+  rows,
+  address,
+  claimPending,
+  onClaimPrize,
+  showPlayer
+}: {
+  rows: LuckyDrawHistory["rows"];
+  address?: string | null;
+  claimPending: boolean;
+  onClaimPrize: (requestId: string) => void;
+  showPlayer: boolean;
+}) {
+  return (
+    <div className="lucky-draw-history-list">
+      {rows.map((row) => {
+        const ownPrize = address?.toLowerCase() === row.player.toLowerCase() && row.status === "claimable";
+        return (
+          <div key={`${row.requestId}-${row.txHash}`} className="lucky-draw-history-row">
+            <div className="min-w-0">
+              <strong>{formatEth(row.prizeAmountEth)} ETH</strong>
+              <span>{showPlayer ? shortAddress(row.player) : "Your wallet"} - #{row.requestId.slice(0, 8)}</span>
+            </div>
+            <div className="lucky-draw-history-actions">
+              <span className={`lucky-draw-status lucky-draw-status-${row.status}`}>{row.status}</span>
+              {ownPrize ? (
+                <button
+                  type="button"
+                  className="secondary-action inline-flex h-9 items-center justify-center rounded-md px-3 text-xs font-bold disabled:opacity-45"
+                  disabled={claimPending}
+                  onClick={() => onClaimPrize(row.requestId)}
+                >
+                  Claim
+                </button>
+              ) : (
+                <a className="secondary-action inline-flex h-9 items-center justify-center rounded-md px-3 text-xs font-bold" href={`https://basescan.org/tx/${row.txHash}`} target="_blank" rel="noreferrer">
+                  Tx
+                </a>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function HistorySkeleton() {
+  return (
+    <div className="grid gap-2 py-3">
+      <span className="feed-skeleton h-10 w-full" />
+      <span className="feed-skeleton h-10 w-full" />
+      <span className="feed-skeleton h-10 w-3/4" />
     </div>
   );
 }

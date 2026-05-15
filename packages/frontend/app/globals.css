@@ -7873,8 +7873,42 @@ select {
   padding: 18px;
 }
 
-.lucky-draw-history-list {
+.lucky-draw-history-sections {
+  display: grid;
+  gap: 16px;
   margin-top: 16px;
+}
+
+.lucky-draw-history-block {
+  min-width: 0;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.lucky-draw-history-subhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lucky-draw-history-subhead span,
+.lucky-draw-history-subhead small {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.lucky-draw-history-subhead span {
+  color: var(--text-1);
+}
+
+.lucky-draw-history-subhead small {
+  color: var(--text-3);
+}
+
+.lucky-draw-history-list {
   display: grid;
 }
 
@@ -7931,10 +7965,25 @@ select {
 }
 
 .lucky-draw-empty {
-  margin-top: 16px;
-  border-top: 1px solid var(--border);
-  padding-top: 16px;
+  padding: 13px 0 0;
   color: var(--text-2);
+}
+
+.lucky-draw-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.lucky-draw-pagination span {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-3);
 }
 
 @media (min-width: 768px) {
@@ -8073,6 +8122,16 @@ select {
   .lucky-draw-history-row {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .lucky-draw-history-subhead,
+  .lucky-draw-pagination {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .lucky-draw-pagination {
+    gap: 8px;
   }
 }
 

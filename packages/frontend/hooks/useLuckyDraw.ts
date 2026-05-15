@@ -87,6 +87,10 @@ export type LuckyDrawHistory = {
   updatedAt: string;
   chainId: 8453;
   contractAddress: string | null;
+  limit: number;
+  offset: number;
+  total: number;
+  hasMore: boolean;
   rows: Array<{
     player: string;
     requestId: string;
@@ -114,14 +118,30 @@ export function useLuckyDraw(address?: string | null, { enabled = true }: { enab
   });
 }
 
-export function useLuckyDrawHistory(limit = 50) {
+export function useLuckyDrawHistory({
+  limit = 10,
+  offset = 0,
+  player = null,
+  enabled = true
+}: {
+  limit?: number;
+  offset?: number;
+  player?: string | null;
+  enabled?: boolean;
+} = {}) {
   return useQuery({
-    queryKey: ["lucky-draw-history", limit],
+    queryKey: ["lucky-draw-history", { limit, offset, player: player?.toLowerCase() ?? null }],
     queryFn: async () => {
-      const data = await fetchBackendJson<LuckyDrawHistory>(`/api/lucky-draw/history?limit=${limit}`);
+      const params = new URLSearchParams({
+        limit: String(limit),
+        offset: String(offset)
+      });
+      if (player) params.set("player", player);
+      const data = await fetchBackendJson<LuckyDrawHistory>(`/api/lucky-draw/history?${params.toString()}`);
       if (!data) throw new Error("Backend is not configured");
       return data;
     },
+    enabled,
     staleTime: 5 * 60_000,
     gcTime: 30 * 60_000,
     refetchOnWindowFocus: false

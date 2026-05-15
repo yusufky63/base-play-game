@@ -87,7 +87,13 @@ app.get("/api/player/:address/lucky-draw", luckyDrawRateLimit, async (req, res, 
 app.get("/api/lucky-draw/history", luckyDrawRateLimit, async (req, res, next) => {
   try {
     const limit = Number(req.query.limit ?? 50);
-    res.json(await getLuckyDrawPublicHistory(Number.isFinite(limit) ? Math.min(100, Math.max(1, Math.floor(limit))) : 50));
+    const offset = Number(req.query.offset ?? 0);
+    const player = typeof req.query.player === "string" && req.query.player.trim() ? req.query.player : null;
+    res.json(await getLuckyDrawPublicHistory({
+      limit: Number.isFinite(limit) ? Math.min(100, Math.max(1, Math.floor(limit))) : 50,
+      offset: Number.isFinite(offset) ? Math.max(0, Math.floor(offset)) : 0,
+      player
+    }));
   } catch (error) {
     next(error);
   }
