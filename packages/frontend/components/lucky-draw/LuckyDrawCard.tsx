@@ -12,13 +12,20 @@ export function LuckyDrawCard({ address: addressOverride, compact = false }: { a
   const data = luckyDraw.data;
   const onchainConfigured = data?.onchain?.configured ?? false;
   const availableDraws = data?.progress.availableDraws ?? 0;
+  const ribbonItems = ["0.000043 ETH", "0.000217 ETH", "0.004348 ETH", "0.000043 ETH", "0.000217 ETH", "0.004348 ETH"];
 
   return (
     <section className={`lucky-draw-card ${compact ? "lucky-draw-card-compact" : ""}`}>
       <div className="lucky-draw-ribbon" aria-hidden="true">
-        {Array.from({ length: 12 }).map((_, index) => (
-          <span key={index}>{index % 3 === 0 ? "0.000043 ETH" : index % 3 === 1 ? "0.000217 ETH" : "0.004348 ETH"}</span>
-        ))}
+        <div className="lucky-draw-ribbon-track">
+          {[0, 1].map((segment) => (
+            <div key={segment} className="lucky-draw-ribbon-segment">
+              {ribbonItems.map((item, index) => (
+                <span key={`${segment}-${item}-${index}`}>{item}</span>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="relative z-[1]">

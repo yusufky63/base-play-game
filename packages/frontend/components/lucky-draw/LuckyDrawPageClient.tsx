@@ -49,7 +49,7 @@ export function LuckyDrawPageClient() {
             Bonus ETH rewards for active BasePlay players, resolved by the LuckyDraw contract with Chainlink VRF.
           </p>
         </div>
-        <div className="lucky-draw-hero-metrics">
+        <div className="lucky-draw-hero-metrics" aria-label="Lucky Draw stats">
           <Metric label="Available" value={String(data?.progress.availableDraws ?? 0)} />
           <Metric label="Progress" value={data ? `${data.progress.qualifiedRounds}/${data.config.roundsRequired}` : "-"} />
           <Metric label="History" value={String(history.data?.rows.length ?? 0)} />
@@ -104,27 +104,27 @@ export function LuckyDrawPageClient() {
             {!address ? "Connect wallet" : claim.isPending ? "Drawing..." : canDraw ? "Open Lucky Draw" : draw.isLoading ? "Loading..." : "No draw ready"}
           </button>
         </div>
+      </section>
 
-        <aside className="lucky-draw-side panel">
-          <div className="lucky-draw-side-head">
-            <Sparkles size={17} />
-            <span>Reward details</span>
+      <section className="lucky-draw-details">
+        <div className="lucky-draw-side-head">
+          <Sparkles size={17} />
+          <span>Reward details</span>
+        </div>
+        <div className="lucky-draw-info-list">
+          <div>
+            <span>Unlock</span>
+            <strong>{requiredProofs} settled rounds</strong>
           </div>
-          <div className="lucky-draw-info-list">
-            <div>
-              <span>Unlock</span>
-              <strong>{requiredProofs} settled rounds</strong>
-            </div>
-            <div>
-              <span>Reward range</span>
-              <strong>{formatEth(Math.min(...prizes.map((prize) => prize.eth)))} - {formatEth(Math.max(...prizes.map((prize) => prize.eth)))} ETH</strong>
-            </div>
-            <div>
-              <span>Settlement</span>
-              <strong>VRF result, on-chain claim</strong>
-            </div>
+          <div>
+            <span>Reward range</span>
+            <strong>{formatEth(Math.min(...prizes.map((prize) => prize.eth)))} - {formatEth(Math.max(...prizes.map((prize) => prize.eth)))} ETH</strong>
           </div>
-        </aside>
+          <div>
+            <span>Settlement</span>
+            <strong>VRF result, on-chain claim</strong>
+          </div>
+        </div>
       </section>
 
       <section className="lucky-draw-history panel">
@@ -187,14 +187,18 @@ export function LuckyDrawPageClient() {
 }
 
 function RewardReel({ prizes, spinning }: { prizes: LuckyDrawPrize[]; spinning: boolean }) {
-  const reelItems = Array.from({ length: 8 }).flatMap(() => prizes);
+  const reelItems = Array.from({ length: 5 }).flatMap(() => prizes);
   return (
     <div className={`lucky-draw-reel lucky-draw-page-reel ${spinning ? "lucky-draw-reel-spinning" : "lucky-draw-reel-idle"}`} aria-hidden="true">
       <div className="lucky-draw-reel-track">
-        {reelItems.map((prize, index) => (
-          <div key={`${prize.usd}-${prize.weight}-${index}`} className="lucky-draw-reel-item">
-            <span>${prize.usd.toFixed(prize.usd < 1 ? 2 : 0)}</span>
-            <small>{formatEth(prize.eth)} ETH</small>
+        {[0, 1].map((segment) => (
+          <div key={segment} className="lucky-draw-reel-segment">
+            {reelItems.map((prize, index) => (
+              <div key={`${segment}-${prize.usd}-${prize.weight}-${index}`} className="lucky-draw-reel-item">
+                <span>${prize.usd.toFixed(prize.usd < 1 ? 2 : 0)}</span>
+                <small>{formatEth(prize.eth)} ETH</small>
+              </div>
+            ))}
           </div>
         ))}
       </div>
