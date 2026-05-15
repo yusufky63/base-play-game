@@ -100,7 +100,7 @@ const rewardNotes = [
   {
     icon: <Gift size={18} />,
     title: "Lucky Draw",
-    body: "Every 10 qualifying settled rounds unlocks one Lucky Draw for the same connected wallet. The dedicated Lucky Draw page sends settled round proofs to the LuckyDraw contract, keeps a continuous ETH reward reel running inline while Chainlink VRF resolves, uses the full max-width desktop layout, shows flat reward details below the draw area, separates the connected wallet's own rewards from paginated public on-chain reward history, and pays from a separately funded draw contract. On mobile game pages, the compact Lucky Draw entry follows the main play controls instead of pushing the game area down."
+    body: "Every 10 qualifying settled rounds unlocks one Lucky Draw for the same connected wallet. The dedicated Lucky Draw page sends settled round proofs to the LuckyDraw contract, keeps a continuous ETH reward reel running inline while Chainlink VRF resolves, uses the full max-width desktop layout, shows flat reward details below the draw area, separates the connected wallet's own rewards from paginated public on-chain reward history, and pays from a separately funded draw contract. Public reward history is served in small pages from a 5 minute backend on-chain log cache so repeated visitors do not force a fresh full history scan. On mobile game pages, the compact Lucky Draw entry follows the main play controls instead of pushing the game area down."
   }
 ];
 
@@ -179,7 +179,7 @@ const faqs = [
   },
   {
     question: "How does Lucky Draw work?",
-    answer: "Lucky Draw is a promotional reward loop, not a wagered game round. After 10 qualifying settled rounds, the connected wallet opens the dedicated Lucky Draw page and submits those round request IDs to the LuckyDraw contract. The contract verifies every proof against the approved game contracts, blocks reused rounds, snapshots the prize table, requests Chainlink VRF, and makes the resolved ETH prize claimable on-chain. Pending, failed, refunded, duplicate, wrong-wallet, already consumed, or legacy off-chain claimed rounds do not create valid draw proofs."
+    answer: "Lucky Draw is a promotional reward loop, not a wagered game round. After 10 qualifying settled rounds, the connected wallet opens the dedicated Lucky Draw page and submits those round request IDs to the LuckyDraw contract. The contract verifies every proof against the approved game contracts, blocks reused rounds, snapshots the prize table, requests Chainlink VRF, and makes the resolved ETH prize claimable on-chain. Pending, failed, refunded, duplicate, wrong-wallet, already consumed, or legacy off-chain claimed rounds do not create valid draw proofs. The public history endpoint supports limit, offset, total, hasMore, and optional player filtering, while using a short backend cache for on-chain logs."
   },
   {
     question: "How is Lucky Draw operated?",

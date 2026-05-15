@@ -2,7 +2,7 @@ export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> 
   {
     date: "May 15, 2026",
     title: "On-chain Lucky Draw",
-    body: "Lucky Draw now has a wider desktop layout, cleaner mobile layout, own rewards, paginated public history, and a stricter wallet picker."
+    body: "Lucky Draw now has a wider desktop layout, own rewards, cached paginated public history, and a cleaner Recent rewards section."
   },
   {
     date: "May 14, 2026",

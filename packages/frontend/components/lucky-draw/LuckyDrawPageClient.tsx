@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { Gift, Loader2, Sparkles, Ticket, Trophy } from "lucide-react";
 import { useAccount } from "wagmi";
 import {
@@ -149,9 +148,6 @@ export function LuckyDrawPageClient() {
             </div>
             <h2 className="mt-2 display-heading text-2xl font-bold text-[var(--text-1)]">Recent rewards</h2>
           </div>
-          <Link href="/docs?section=rewards" className="secondary-action inline-flex h-10 items-center justify-center rounded-md px-4 text-sm font-bold">
-            Docs
-          </Link>
         </div>
 
         <div className="lucky-draw-history-sections">
