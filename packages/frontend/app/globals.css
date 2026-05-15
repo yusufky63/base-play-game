@@ -7630,7 +7630,7 @@ select {
 }
 
 .lucky-draw-page {
-  --lucky-draw-content-width: 1080px;
+  --lucky-draw-content-width: 80rem;
   display: grid;
   gap: 18px;
 }
