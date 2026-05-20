@@ -283,6 +283,7 @@ export interface Database {
           enabled: boolean;
           rounds_required: number;
           min_bet_eth: number;
+          daily_draw_cap: number;
           eth_usd_reference: number;
           prize_table: Json;
           paused_reason: string | null;
@@ -304,6 +305,19 @@ export interface Database {
         };
         Insert: Partial<Database["public"]["Tables"]["lucky_draw_progress"]["Row"]> & { player: string };
         Update: Partial<Database["public"]["Tables"]["lucky_draw_progress"]["Row"]>;
+        Relationships: [];
+      };
+      lucky_draw_daily_progress: {
+        Row: {
+          player: string;
+          draw_day: string;
+          qualified_rounds: number;
+          earned_draws: number;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["lucky_draw_daily_progress"]["Row"]> &
+          Pick<Database["public"]["Tables"]["lucky_draw_daily_progress"]["Row"], "player" | "draw_day">;
+        Update: Partial<Database["public"]["Tables"]["lucky_draw_daily_progress"]["Row"]>;
         Relationships: [];
       };
       lucky_draw_rounds: {
