@@ -12,7 +12,7 @@ export function LuckyDrawCard({ address: addressOverride, compact = false }: { a
   const data = luckyDraw.data;
   const onchainConfigured = data?.onchain?.configured ?? false;
   const availableDraws = data?.progress.availableDraws ?? 0;
-  const ribbonItems = ["0.000043 ETH", "0.000217 ETH", "0.004348 ETH", "0.000043 ETH", "0.000217 ETH", "0.004348 ETH"];
+  const ribbonItems = (data?.config.prizes?.length ? data.config.prizes : FALLBACK_PRIZES).map((prize) => `${formatEth(prize.eth)} ETH`);
 
   return (
     <section className={`lucky-draw-card ${compact ? "lucky-draw-card-compact" : ""}`}>
@@ -36,7 +36,7 @@ export function LuckyDrawCard({ address: addressOverride, compact = false }: { a
               Lucky Draw
             </div>
             <h2 className="mt-2 display-heading text-xl font-bold text-[var(--text-1)]">
-              {availableDraws > 0 ? `${availableDraws} draw${availableDraws > 1 ? "s" : ""} ready` : "Play 10 rounds"}
+              {availableDraws > 0 ? `${availableDraws} draw${availableDraws > 1 ? "s" : ""} ready` : "Play qualifying rounds"}
             </h2>
           </div>
           <div className="lucky-draw-icon">
@@ -73,6 +73,7 @@ export function LuckyDrawCard({ address: addressOverride, compact = false }: { a
 
 function LuckyDrawBody({ data, compact }: { data: LuckyDrawSummary; compact: boolean }) {
   const progress = data.progress;
+  const daily = data.daily ?? { earnedDraws: 0, cap: data.config.dailyDrawCap ?? 10, capped: false };
   const roundsRequired = data.config.roundsRequired;
   const latestPrize = data.recentResults[0];
 
@@ -80,18 +81,23 @@ function LuckyDrawBody({ data, compact }: { data: LuckyDrawSummary; compact: boo
     <>
       <div className="mt-4">
         <div className="mb-2 flex items-center justify-between font-mono text-[11px] text-[var(--text-3)]">
-          <span>{progress.availableDraws > 0 ? "Draw unlocked" : `${progress.qualifiedRounds} / ${roundsRequired} rounds`}</span>
-          <span>{progress.roundsUntilNext === 0 ? "Ready" : `${progress.roundsUntilNext} left`}</span>
+          <span>Next draw: {progress.qualifiedRounds} / {roundsRequired}</span>
+          <span>{progress.availableDraws > 0 ? `${progress.availableDraws} available` : `${progress.roundsUntilNext} left`}</span>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-[var(--surface-3)]">
-          <span className="block h-full rounded-full bg-[var(--accent)] transition-[width]" style={{ width: `${progress.availableDraws > 0 ? 100 : progress.progressPct}%` }} />
+          <span className="block h-full rounded-full bg-[var(--accent)] transition-[width]" style={{ width: `${progress.progressPct}%` }} />
         </div>
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2">
-        <MiniMetric label="Draws" value={String(progress.lifetimeDrawsEarned)} />
-        <MiniMetric label="Claimed" value={String(progress.lifetimeDrawsClaimed)} />
+        <MiniMetric label="Available" value={String(progress.availableDraws)} />
+        <MiniMetric label="Earned today" value={`${daily.earnedDraws}/${daily.cap}`} />
         <MiniMetric label="Won" value={`${formatEth(progress.totalPrizeEth)} ETH`} />
+      </div>
+
+      <div className="mt-3 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-xs leading-5 text-[var(--text-2)]">
+        Min eligible bet: <span className="font-mono text-[var(--text-1)]">{formatEth(data.config.minBetEth)} ETH</span>
+        {daily.capped && <span className="block text-[var(--pending)]">Daily Lucky Draw cap reached until 03:00 TSI.</span>}
       </div>
 
       {!compact && (
@@ -125,5 +131,14 @@ function MiniMetric({ label, value }: { label: string; value: string }) {
 }
 
 function formatEth(value: number) {
-  return Number(value).toLocaleString(undefined, { maximumFractionDigits: 8 });
+  const numeric = Number(value || 0);
+  if (!Number.isFinite(numeric)) return "0";
+  return numeric.toFixed(8).replace(/\.?0+$/, "") || "0";
 }
+
+const FALLBACK_PRIZES = [0.1, 0.5, 1, 2.5, 5, 10].map((usd) => ({
+  usd,
+  weight: 1,
+  eth: usd / 2187,
+  oddsPct: 0
+}));
