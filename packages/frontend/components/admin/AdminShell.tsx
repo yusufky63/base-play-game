@@ -1,6 +1,6 @@
 "use client";
 
-import { Gift, LayoutGrid, LockKeyhole, ScrollText, Settings2, Vault } from "lucide-react";
+import { Gift, LayoutGrid, LockKeyhole, RadioTower, ScrollText, Settings2, Vault } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useIsOwner } from "@/hooks/useIsOwner";
@@ -10,6 +10,7 @@ const adminLinks = [
   { href: "/admin", label: "Dashboard", icon: LayoutGrid },
   { href: "/admin/games", label: "Games", icon: Settings2 },
   { href: "/admin/lucky-draw", label: "Lucky Draw", icon: Gift },
+  { href: "/admin/vrf", label: "VRF", icon: RadioTower },
   { href: "/admin/vault", label: "Vault", icon: Vault },
   { href: "/admin/logs", label: "Logs", icon: ScrollText }
 ];
