@@ -2,7 +2,7 @@ export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> 
   {
     date: "May 20, 2026",
     title: "Render backend integration",
-    body: "The production backend is now wired to the Render service at base-play-game.onrender.com with a backend-only workspace build, /health checks, and the same admin allowlist variables used by Lucky Draw and VRF operations. Backend indexing also creates missing player rows before settled rounds are stored, Lucky Draw proof candidates are checked against the live game contracts before the Open Lucky Draw button can use them, Render proxy headers are trusted for rate limiting, and contract failures now show draw-specific messages."
+    body: "The production backend is now wired to the Render service at base-play-game.onrender.com with a backend-only workspace build, /health checks, and the same admin allowlist variables used by Lucky Draw and VRF operations. Backend indexing also creates missing player rows before settled rounds are stored, Lucky Draw proof candidates are checked against the live game contracts before the Open Lucky Draw button can use them, a maintenance reconciliation can align Supabase draw counters to contract-valid unconsumed proofs, Render proxy headers are trusted for rate limiting, and contract failures now show draw-specific messages."
   },
   {
     date: "May 19, 2026",

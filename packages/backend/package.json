@@ -8,7 +8,9 @@
     "build": "npm --workspace @baseplay/shared run build && tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "supabase:verify": "tsx scripts/verifySupabaseSchema.ts"
+    "supabase:verify": "tsx scripts/verifySupabaseSchema.ts",
+    "lucky-draw:reconcile": "tsx scripts/reconcileLuckyDrawProgress.ts",
+    "lucky-draw:reconcile:apply": "tsx scripts/reconcileLuckyDrawProgress.ts --apply"
   },
   "dependencies": {
     "@baseplay/shared": "0.1.0",

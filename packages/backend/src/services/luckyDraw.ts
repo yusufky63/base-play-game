@@ -104,6 +104,17 @@ export type LuckyDrawProof = {
   requestId: string;
 };
 
+export type LuckyDrawCanonicalProgress = {
+  player: string;
+  roundsRequired: number;
+  eligibleProofs: number;
+  availableDraws: number;
+  qualifiedRounds: number;
+  lifetimeDrawsEarned: number;
+  lifetimeDrawsClaimed: number;
+  previous: Pick<LuckyDrawProgressRow, "qualified_rounds" | "available_draws" | "lifetime_draws_earned" | "lifetime_draws_claimed"> | null;
+};
+
 export type LuckyDrawPublicHistory = {
   updatedAt: string;
   chainId: 8453;
@@ -197,6 +208,44 @@ export async function getLuckyDrawSummary(address: string): Promise<LuckyDrawSum
   });
 
   return buildSummary(player, config, progress, dailyProgress, recentResults, eligibleProofs);
+}
+
+export async function getLuckyDrawCanonicalProgress(address: string): Promise<LuckyDrawCanonicalProgress> {
+  const player = normalizeAddress(address);
+  const [config, progress] = await Promise.all([
+    getLuckyDrawConfig(),
+    getLuckyDrawProgress(player)
+  ]);
+  const normalizedConfig = normalizeConfig(config);
+  const roundsRequired = Math.max(1, normalizedConfig.roundsRequired);
+  const roundCount = await getLuckyDrawRoundCount(player);
+  const eligibleProofs = await getEligibleProofs(player, {
+    roundsRequired,
+    claimedDrawsToSkip: progress?.lifetime_draws_claimed ?? 0,
+    minBetEth: normalizedConfig.minBetEth,
+    targetProofs: Math.max(roundsRequired, roundCount)
+  });
+  const availableDraws = Math.floor(eligibleProofs.length / roundsRequired);
+  const qualifiedRounds = eligibleProofs.length % roundsRequired;
+  const lifetimeDrawsClaimed = Math.max(0, Math.floor(progress?.lifetime_draws_claimed ?? 0));
+
+  return {
+    player,
+    roundsRequired,
+    eligibleProofs: eligibleProofs.length,
+    availableDraws,
+    qualifiedRounds,
+    lifetimeDrawsEarned: lifetimeDrawsClaimed + availableDraws,
+    lifetimeDrawsClaimed,
+    previous: progress
+      ? {
+          qualified_rounds: progress.qualified_rounds,
+          available_draws: progress.available_draws,
+          lifetime_draws_earned: progress.lifetime_draws_earned,
+          lifetime_draws_claimed: progress.lifetime_draws_claimed
+        }
+      : null
+  };
 }
 
 export async function claimLuckyDraw(address: string, input: unknown) {
@@ -449,6 +498,15 @@ async function getLuckyDrawProgress(player: string) {
   const { data, error } = await supabaseAdmin.from("lucky_draw_progress").select("*").eq("player", player).maybeSingle();
   if (error) throw httpError(error.message, 500);
   return data as LuckyDrawProgressRow | null;
+}
+
+async function getLuckyDrawRoundCount(player: string) {
+  const { count, error } = await supabaseAdmin
+    .from("lucky_draw_rounds")
+    .select("*", { count: "exact", head: true })
+    .eq("player", player);
+  if (error) throw httpError(error.message, 500);
+  return count ?? 0;
 }
 
 async function getLuckyDrawDailyProgress(player: string, drawDay: string) {
