@@ -21,6 +21,7 @@ const io = new Server(server, {
 });
 
 app.disable("x-powered-by");
+app.set("trust proxy", 1);
 app.use(helmet());
 app.use(cors({ origin: env.FRONTEND_URL }));
 app.use((req, res, next) => {
@@ -107,16 +108,18 @@ app.post("/api/player/:address/lucky-draw/claim", luckyDrawClaimRateLimit, async
   }
 });
 
-app.get("/api/admin/lucky-draw", adminRateLimit, async (_req, res, next) => {
+app.get("/api/admin/lucky-draw", adminRateLimit, async (req, res, next) => {
   try {
+    await verifyAdminSignature(readAdminQueryAuth(req.query), "admin-read");
     res.json(await getLuckyDrawAdminState());
   } catch (error) {
     next(error);
   }
 });
 
-app.get("/api/admin/ops", adminRateLimit, async (_req, res, next) => {
+app.get("/api/admin/ops", adminRateLimit, async (req, res, next) => {
   try {
+    await verifyAdminSignature(readAdminQueryAuth(req.query), "admin-read");
     res.json(await getAdminOpsState());
   } catch (error) {
     next(error);
@@ -142,6 +145,19 @@ app.post("/api/admin/lucky-draw/result", adminRateLimit, async (req, res, next) 
 });
 
 app.use(errorHandler);
+
+function readAdminQueryAuth(query: express.Request["query"]) {
+  return {
+    admin: firstQueryValue(query.admin),
+    message: firstQueryValue(query.message),
+    signature: firstQueryValue(query.signature)
+  };
+}
+
+function firstQueryValue(value: unknown) {
+  if (Array.isArray(value)) return firstQueryValue(value[0]);
+  return typeof value === "string" ? value : undefined;
+}
 
 server.listen(env.PORT, async () => {
   console.log(`[Server] Running on port ${env.PORT}`);

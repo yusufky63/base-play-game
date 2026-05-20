@@ -32,8 +32,26 @@ export function parseContractError(error: unknown): GameError {
   if (message.includes("ActiveRoundExists")) {
     return new GameError(GameErrorCode.ROUND_ACTIVE, "A round is already active", error);
   }
+  if (message.includes("ActiveDrawExists")) {
+    return new GameError(GameErrorCode.ROUND_ACTIVE, "A Lucky Draw request is already pending", error);
+  }
   if (message.includes("GamePaused")) {
     return new GameError(GameErrorCode.CONTRACT_PAUSED, "Game is temporarily paused", error);
+  }
+  if (message.includes("EnforcedPause")) {
+    return new GameError(GameErrorCode.CONTRACT_PAUSED, "Lucky Draw is temporarily paused", error);
+  }
+  if (message.includes("InvalidProofCount")) {
+    return new GameError(GameErrorCode.UNKNOWN, "Not enough valid settled rounds are available yet", error);
+  }
+  if (message.includes("InvalidRound") || message.includes("RoundAlreadyConsumed")) {
+    return new GameError(GameErrorCode.UNKNOWN, "Some draw rounds are no longer eligible. Refresh and try again", error);
+  }
+  if (message.includes("InvalidGame")) {
+    return new GameError(GameErrorCode.UNKNOWN, "A draw proof references an unapproved game", error);
+  }
+  if (message.includes("InsufficientDrawLiquidity")) {
+    return new GameError(GameErrorCode.UNKNOWN, "Lucky Draw reward pool needs funding", error);
   }
   if (message.includes("rate limit") || message.includes("over rate limit") || message.includes("fetch failed")) {
     return new GameError(GameErrorCode.RPC_ERROR, "Network busy, please retry", error);

@@ -46,7 +46,7 @@ const playerNotes = [
   {
     icon: <CircleDollarSign size={18} />,
     title: "Clear payouts",
-    body: "Wagers and profile profit rows are shown in ETH with a lightweight USD reference where it helps. Quick bet buttons now use smaller amounts with a light card shadow, and the contract enforces the active minimum and maximum bet limits."
+    body: "Wagers and profile profit rows are shown in ETH with a lightweight USD reference where it helps. Quick bet buttons start at 0.000115 ETH, and the contract enforces the active minimum and maximum bet limits."
   },
   {
     icon: <Sparkles size={18} />,
@@ -56,7 +56,7 @@ const playerNotes = [
   {
     icon: <Radio size={18} />,
     title: "Fast activity views",
-    body: "Live feed, profile tabs, leaderboard data, Home stats, and round detail timelines are indexed from Base mainnet events and cached by view importance instead of polling every few seconds. Leaderboard responses are shared for 30 minutes, Home stats use a shared 10 minute API cache with no browser-level force-cache, compact feeds for 5 minutes, round details for 30 minutes, and profile tabs only load their own data when opened. Home global stats read aggregate tables first and fall back to settled round rows if an aggregate is empty. Profile tab labels avoid stale counts until opened, and each profile panel shows loading rows while its data is fetched. Basenames are cached after first lookup, game pages expose a referral share card without adding referral API load, backend event indexing is mainnet-only, reads all deployed game events with one batched log request per poll window, and Base RPC transports keep public endpoints first with private or Alchemy URLs used only after public endpoint failure or rate-limit. Direct contract fallback reads use multicall batching where possible, and ENS fallback display names only resolve when a server-side Ethereum mainnet RPC is configured."
+    body: "Live feed, profile tabs, leaderboard data, Home stats, and round detail timelines are indexed from Base mainnet events and cached by view importance instead of polling every few seconds. Leaderboard responses are shared for 30 minutes, Home stats use a shared 10 minute API cache with no browser-level force-cache, compact feeds for 5 minutes, round details for 30 minutes, and profile tabs only load their own data when opened. Home global stats read aggregate tables first and fall back to settled round rows if an aggregate is empty. Profile tab labels avoid stale counts until opened, and each profile panel shows loading rows while its data is fetched. Basenames are cached after first lookup, game pages expose a referral share card without adding referral API load, backend event indexing is mainnet-only, creates missing player rows before storing settled rounds, reads all deployed game events with one batched log request per poll window, and verifies Lucky Draw proof candidates against the live game contracts before exposing them to draw transactions. Base RPC transports keep public endpoints first with private or Alchemy URLs used only after public endpoint failure or rate-limit. Direct contract fallback reads use multicall batching where possible, and ENS fallback display names only resolve when a server-side Ethereum mainnet RPC is configured."
   },
   {
     icon: <Sparkles size={18} />,
@@ -67,7 +67,7 @@ const playerNotes = [
 
 const safetyNotes = [
   "Only confirm transactions you understand in your wallet.",
-  "Current quick bet buttons are 0.000055 ETH, 0.00023 ETH, and 0.0005 ETH on supported game pages.",
+  "Current quick bet buttons are 0.000115 ETH, 0.00023 ETH, and 0.0005 ETH on supported game pages.",
   "Small games can still lose real ETH. Play with amounts you are comfortable risking.",
   "A pending round may take time while the transaction and randomness settle.",
   "The Chainlink VRF button shows the request ID and the Basescan transaction link used to verify the round.",
@@ -85,12 +85,12 @@ const rewardNotes = [
   {
     icon: <Gift size={18} />,
     title: "Daily and weekly quests",
-    body: "Quests reward simple activity such as round counts, wins, trying different games, and keeping streaks. Connected players manage active quest and badge progress from the Quests page."
+    body: "Quests reward simple activity such as round counts, wins, trying different games, and keeping streaks. The active set now includes three-round, four-game, three-win, three-day streak, five-win weekly, and 50-round weekly goals. Connected players manage active quest and badge progress from the Quests page."
   },
   {
     icon: <BadgeCheck size={18} />,
     title: "Badges",
-    body: "Badges are off-chain profile achievements in this version. Recent badges appear in progression panels, and the full shelf is shown on the player profile."
+    body: "Badges are off-chain profile achievements in this version. Recent badges appear in progression panels, and the full shelf is shown on the player profile with earned and locked states visually separated."
   },
   {
     icon: <Radio size={18} />,
@@ -100,7 +100,7 @@ const rewardNotes = [
   {
     icon: <Gift size={18} />,
     title: "Lucky Draw",
-    body: "Every 10 qualifying settled rounds unlocks one Lucky Draw for the same connected wallet. The dedicated Lucky Draw page sends settled round proofs to the LuckyDraw contract, keeps a continuous ETH reward reel running inline while Chainlink VRF resolves, uses the full max-width desktop layout, shows flat reward details below the draw area, separates the connected wallet's own rewards from paginated public on-chain reward history, and pays from a separately funded draw contract. Public reward history is served in small pages from a 5 minute backend on-chain log cache so repeated visitors do not force a fresh full history scan, and unclaimed rewards remain visible as claimable after refresh. The page also mirrors game screens with a Base contract panel and VRF status panel, and resolved draw results show both ETH and USD value. On mobile game pages, the compact Lucky Draw entry follows the main play controls instead of pushing the game area down."
+    body: "Every 10 qualifying settled rounds at 0.000115 ETH or higher unlocks one Lucky Draw for the same connected wallet. A wallet can earn up to 10 draw rights per UTC day, which resets at 03:00 TSI, while unused available draws carry over. The dedicated Lucky Draw page sends settled round proofs to the LuckyDraw contract, derives available draws from proof-backed rounds that the contract has not consumed yet, keeps the next-draw progress separate from the available count, and pays from a separately funded draw contract. Public reward history is paginated from on-chain logs, connected wallet history refreshes directly so unclaimed rewards stay visible, and the page uses the same VRF verification card pattern as game pages after a draw starts."
   }
 ];
 
@@ -179,15 +179,15 @@ const faqs = [
   },
   {
     question: "How does Lucky Draw work?",
-    answer: "Lucky Draw is a promotional reward loop, not a wagered game round. After 10 qualifying settled rounds, the connected wallet opens the dedicated Lucky Draw page and submits those round request IDs to the LuckyDraw contract. The contract verifies every proof against the approved game contracts, blocks reused rounds, snapshots the prize table, requests Chainlink VRF, and makes the resolved ETH prize claimable on-chain. Pending, failed, refunded, duplicate, wrong-wallet, already consumed, or legacy off-chain claimed rounds do not create valid draw proofs. The public history endpoint supports limit, offset, total, hasMore, and optional player filtering, while using a short backend cache for on-chain logs. Claimable prizes are intentionally shown before the player claims them so a refresh does not hide a pending payout."
+    answer: "Lucky Draw is a promotional reward loop, not a wagered game round. After 10 qualifying settled rounds at or above 0.000115 ETH, the connected wallet opens the dedicated Lucky Draw page and submits those round request IDs to the LuckyDraw contract. The backend filters candidates through the live game contracts first, and the LuckyDraw contract verifies every proof against the approved game contracts, blocks reused rounds, snapshots the prize table, requests Chainlink VRF, and makes the resolved ETH prize claimable on-chain. The backend/UI also applies a soft daily earning cap of 10 draw rights per wallet per UTC day, resetting at 03:00 TSI; unused available draws and partial progress carry forward. Available draws and next-draw progress are shown separately, so progress restarts at 0/10 after an available draw is earned and then continues 1/10, 2/10, and onward toward the next draw. The Lucky Draw page keeps the request transaction and VRF request ID visible while the draw is pending, and it can surface the resolved prize from wallet history if VRF resolves after the first wait window. Claimable wallet rewards are highlighted in green, use a dedicated claim button, and disappear from the claimable list once the claim transaction is mined. The page includes a collapsible How it works panel that summarizes qualifying, unlocking, daily cap, and claiming. If daily status is still loading, the page falls back to the configured cap instead of hiding available draw data. Pending, failed, refunded, duplicate, wrong-wallet, already consumed, or below-minimum rounds do not create valid UI draw proofs."
   },
   {
     question: "How is Lucky Draw operated?",
-    answer: "The admin Lucky Draw page shows VRF subscription health, native and LINK balances, pending request status, consumer readiness, LuckyDraw available liquidity, pending reserve, claimable prizes, max prize, owner, and pause state. Admins can fund the VRF subscription with native ETH, fund the LuckyDraw reward treasury, withdraw available LuckyDraw liquidity, and update round requirements, minimum eligible bet, pause state, and prize weights through owner wallet transactions."
+    answer: "The admin Lucky Draw page focuses on reward config, the 0.000115 ETH minimum eligible bet, the 10 draw daily cap, ETH/USD reference pricing, historical rows, and the LuckyDraw reward treasury with ETH and USD estimates. VRF subscription health and funding now live under the separate admin VRF page because the same subscription affects both game settlement and Lucky Draw randomness. Admin operation reads and writes require the frontend backend URL, the Render backend service to pass /health, a configured multi-wallet admin allowlist on frontend and backend, and a matching owner/admin wallet signature. The daily cap control defaults safely to 10/day if an older admin response is missing that field; internal Supabase progression plus Lucky Draw functions are not exposed for public client execution."
   },
   {
     question: "Can Lucky Draw odds or rewards be changed?",
-    answer: "Yes. Admin controls can pause the feature, change the required round count, set a minimum eligible bet, update the ETH/USD reference used by the UI, and edit on-chain prize amounts and weights. A draw uses the prize table snapshot from request time, so admin changes after a player opens a draw cannot alter that pending result."
+    answer: "Yes. Admin controls can pause the feature, change the required round count, set the minimum eligible bet, update the daily cap, update the ETH/USD reference used by the UI, and edit on-chain prize amounts and weights. A draw uses the prize table snapshot from request time, so admin changes after a player opens a draw cannot alter that pending result."
   },
   {
     question: "Can public clients read referral history directly?",
@@ -211,7 +211,7 @@ const faqs = [
   },
   {
     question: "Can direct contract calls cheat the games?",
-    answer: "Direct calls use the same contract validation as the UI. Invalid params revert, active rounds are limited, and the vault reserves max payout before randomness is requested."
+    answer: "Direct calls use the same game contract validation as the UI. Invalid params revert, active rounds are limited, and the vault reserves max payout before randomness is requested. For Lucky Draw, the 0.000115 ETH minimum eligible bet is contract-enforced, while the daily 10 earned-draw cap is a backend/UI soft cap until a future LuckyDraw v2 moves that limit on-chain."
   },
   {
     question: "Can bots predict the result?",
@@ -400,7 +400,8 @@ export default async function DocsPage({ searchParams }: { searchParams?: Promis
                 <h3>Current quest rewards</h3>
                 <ul className="docs-note-list docs-note-list-compact">
                   <li>Daily quests currently reward 8-30 XP depending on effort.</li>
-                  <li>Weekly quests currently reward 45-85 XP depending on effort.</li>
+                  <li>Weekly quests currently reward 35-120 XP depending on effort.</li>
+                  <li>New goals add three-round, four-game, three-win, three-day streak, five-win weekly, and 50-round weekly targets.</li>
                   <li>Badge quests still unlock profile badges, but badge rewards do not affect payouts.</li>
                   <li>Quest XP is bonus progress. Round XP remains the main activity signal.</li>
                 </ul>

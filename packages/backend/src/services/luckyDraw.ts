@@ -1,4 +1,4 @@
-import { createPublicClient, encodePacked, getAddress, isAddress, keccak256, parseAbi, verifyMessage } from "viem";
+import { createPublicClient, encodePacked, getAddress, isAddress, keccak256, parseAbi, parseEther, verifyMessage } from "viem";
 import { base } from "viem/chains";
 import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
@@ -11,6 +11,7 @@ type LuckyDrawConfigRow = {
   enabled: boolean;
   rounds_required: number;
   min_bet_eth: number;
+  daily_draw_cap: number;
   eth_usd_reference: number;
   prize_table: unknown;
   paused_reason: string | null;
@@ -24,6 +25,14 @@ type LuckyDrawProgressRow = {
   lifetime_draws_earned: number;
   lifetime_draws_claimed: number;
   total_prize_eth: number;
+  updated_at: string;
+};
+
+type LuckyDrawDailyProgressRow = {
+  player: string;
+  draw_day: string;
+  qualified_rounds: number;
+  earned_draws: number;
   updated_at: string;
 };
 
@@ -60,6 +69,7 @@ export type LuckyDrawSummary = {
     enabled: boolean;
     roundsRequired: number;
     minBetEth: number;
+    dailyDrawCap: number;
     ethUsdReference: number;
     pausedReason: string | null;
     updatedAt: string;
@@ -73,6 +83,15 @@ export type LuckyDrawSummary = {
     totalPrizeEth: number;
     roundsUntilNext: number;
     progressPct: number;
+  };
+  daily: {
+    drawDay: string;
+    cap: number;
+    earnedDraws: number;
+    remainingDraws: number;
+    qualifiedRounds: number;
+    resetAt: string;
+    capped: boolean;
   };
   eligibleProofs: LuckyDrawProof[];
   recentResults: LuckyDrawResultRow[];
@@ -118,18 +137,24 @@ const DEFAULT_CONFIG: LuckyDrawConfigRow = {
   id: 1,
   enabled: true,
   rounds_required: 10,
-  min_bet_eth: 0,
-  eth_usd_reference: 2300,
+  min_bet_eth: 0.000115,
+  daily_draw_cap: 10,
+  eth_usd_reference: 2187,
   prize_table: DEFAULT_PRIZES,
   paused_reason: null,
   updated_at: new Date(0).toISOString()
 };
 
-const FALLBACK_ADMIN_ADDRESSES = ["0xeaa823ab4c4ee00283d8ed7be713ddf8a5ba0fac"];
+const FALLBACK_ADMIN_ADDRESSES = process.env.NODE_ENV === "production"
+  ? []
+  : ["0xeaa823ab4c4ee00283d8ed7be713ddf8a5ba0fac"];
 const LUCKY_DRAW_ABI = parseAbi([
   "function consumedRounds(bytes32 roundKey) view returns (bool)",
   "event DrawResolved(address indexed player, uint256 indexed requestId, uint16 prizeIndex, uint256 prizeAmount, uint256 randomWord)",
   "event PrizeClaimed(address indexed player, uint256 indexed requestId, uint256 amount)"
+]);
+const GAME_ROUND_READER_ABI = parseAbi([
+  "function rounds(uint256 requestId) view returns (address player, uint256 betAmount, uint256 reservedPayout, uint256 storedRequestId, bytes gameParams, bool settled, uint256 blockNumber)"
 ]);
 const LUCKY_DRAW_HISTORY_FROM_BLOCK = BigInt(process.env.LUCKY_DRAW_HISTORY_FROM_BLOCK ?? "45990000");
 const LUCKY_DRAW_HISTORY_CHUNK_BLOCKS = 10_000n;
@@ -142,18 +167,36 @@ const luckyDrawReadClient = createPublicClient({
 
 export async function getLuckyDrawSummary(address: string): Promise<LuckyDrawSummary> {
   const player = normalizeAddress(address);
-  const [config, progress, recentResults] = await Promise.all([
+  const drawDay = getCurrentDrawDay();
+  const [config, progress, dailyProgress, recentResults] = await Promise.all([
     getLuckyDrawConfig(),
     getLuckyDrawProgress(player),
+    getLuckyDrawDailyProgress(player, drawDay),
     getLuckyDrawResults(player, 8)
   ]);
   const normalizedConfig = normalizeConfig(config);
+  const roundsRequired = Math.max(1, normalizedConfig.roundsRequired);
+  const availableDrawsToProve = Math.max(0, Math.floor(progress?.available_draws ?? 0));
+  const earnedDrawsToProve = Math.max(0, Math.floor(progress?.lifetime_draws_earned ?? 0));
+  const qualifiedRoundsToProve = Math.max(0, Math.min(roundsRequired - 1, Math.floor(progress?.qualified_rounds ?? 0)));
+  const nextProgressProofTarget = Math.max(
+    roundsRequired * 2,
+    (availableDrawsToProve + 1) * roundsRequired + (roundsRequired - 1),
+    (earnedDrawsToProve + 1) * roundsRequired + (roundsRequired - 1)
+  );
   const eligibleProofs = await getEligibleProofs(player, {
-    roundsRequired: normalizedConfig.roundsRequired,
-    claimedDrawsToSkip: progress?.lifetime_draws_claimed ?? 0
+    roundsRequired,
+    claimedDrawsToSkip: progress?.lifetime_draws_claimed ?? 0,
+    minBetEth: normalizedConfig.minBetEth,
+    targetProofs: Math.max(
+      roundsRequired,
+      availableDrawsToProve * roundsRequired + qualifiedRoundsToProve,
+      earnedDrawsToProve * roundsRequired + qualifiedRoundsToProve,
+      nextProgressProofTarget
+    )
   });
 
-  return buildSummary(player, config, progress, recentResults, eligibleProofs);
+  return buildSummary(player, config, progress, dailyProgress, recentResults, eligibleProofs);
 }
 
 export async function claimLuckyDraw(address: string, input: unknown) {
@@ -172,15 +215,28 @@ export async function getLuckyDrawPublicHistory(options: { limit?: number; offse
   }
 
   const now = Date.now();
-  if (luckyDrawHistoryCache && luckyDrawHistoryCache.expiresAt > now) {
+  if (!player && luckyDrawHistoryCache && luckyDrawHistoryCache.expiresAt > now) {
     return paginateLuckyDrawHistory(luckyDrawHistoryCache.data, { limit, offset, player });
   }
 
   const latestBlock = await luckyDrawReadClient.getBlockNumber();
   const fromBlock = LUCKY_DRAW_HISTORY_FROM_BLOCK > latestBlock ? latestBlock : LUCKY_DRAW_HISTORY_FROM_BLOCK;
+  const data = await loadLuckyDrawHistory(luckyDrawAddress, fromBlock, latestBlock, player);
+  if (!player) {
+    luckyDrawHistoryCache = { expiresAt: now + LUCKY_DRAW_HISTORY_TTL_MS, data };
+  }
+  return paginateLuckyDrawHistory(data, { limit, offset, player });
+}
+
+async function loadLuckyDrawHistory(
+  luckyDrawAddress: `0x${string}`,
+  fromBlock: bigint,
+  latestBlock: bigint,
+  player: string | null
+): Promise<LuckyDrawPublicHistory> {
   const [resolvedLogs, claimedLogs] = await Promise.all([
-    getLuckyDrawEventLogs(luckyDrawAddress, "DrawResolved", fromBlock, latestBlock),
-    getLuckyDrawEventLogs(luckyDrawAddress, "PrizeClaimed", fromBlock, latestBlock)
+    getLuckyDrawEventLogs(luckyDrawAddress, "DrawResolved", fromBlock, latestBlock, player),
+    getLuckyDrawEventLogs(luckyDrawAddress, "PrizeClaimed", fromBlock, latestBlock, player)
   ]);
   const claimed = new Set(
     claimedLogs
@@ -213,7 +269,7 @@ export async function getLuckyDrawPublicHistory(options: { limit?: number; offse
     .filter((row): row is LuckyDrawPublicHistory["rows"][number] => Boolean(row))
     .sort((a, b) => Number(BigInt(b.blockNumber) - BigInt(a.blockNumber)));
 
-  const data = {
+  return {
     updatedAt: new Date().toISOString(),
     chainId: 8453 as const,
     contractAddress: luckyDrawAddress,
@@ -223,8 +279,6 @@ export async function getLuckyDrawPublicHistory(options: { limit?: number; offse
     hasMore: false,
     rows
   };
-  luckyDrawHistoryCache = { expiresAt: now + LUCKY_DRAW_HISTORY_TTL_MS, data };
-  return paginateLuckyDrawHistory(data, { limit, offset, player });
 }
 
 function paginateLuckyDrawHistory(
@@ -291,6 +345,7 @@ export async function updateLuckyDrawConfig(input: unknown) {
         enabled: body.enabled,
         rounds_required: body.roundsRequired,
         min_bet_eth: body.minBetEth,
+        daily_draw_cap: body.dailyDrawCap,
         eth_usd_reference: body.ethUsdReference,
         prize_table: body.prizes.map((prize) => ({ usd: prize.usd, weight: prize.weight })) as any,
         paused_reason: body.pausedReason || null,
@@ -396,6 +451,17 @@ async function getLuckyDrawProgress(player: string) {
   return data as LuckyDrawProgressRow | null;
 }
 
+async function getLuckyDrawDailyProgress(player: string, drawDay: string) {
+  const { data, error } = await supabaseAdmin
+    .from("lucky_draw_daily_progress")
+    .select("*")
+    .eq("player", player)
+    .eq("draw_day", drawDay)
+    .maybeSingle();
+  if (error) throw httpError(error.message, 500);
+  return data as LuckyDrawDailyProgressRow | null;
+}
+
 async function getLuckyDrawResults(player: string, limit: number) {
   const { data, error } = await supabaseAdmin
     .from("lucky_draw_results")
@@ -410,7 +476,7 @@ async function getLuckyDrawResults(player: string, limit: number) {
 
 async function getEligibleProofs(
   player: string,
-  options: { roundsRequired: number; claimedDrawsToSkip: number }
+  options: { roundsRequired: number; claimedDrawsToSkip: number; minBetEth: number; targetProofs: number }
 ): Promise<LuckyDrawProof[]> {
   const contractByGameId = new Map(
     GAMES_REGISTRY.map((game) => [
@@ -419,16 +485,17 @@ async function getEligibleProofs(
     ]).filter((entry): entry is [string, string] => Boolean(entry[1]))
   );
   const roundsRequired = Math.max(1, Math.floor(options.roundsRequired));
+  const targetProofs = Math.max(roundsRequired, Math.floor(options.targetProofs));
   const offchainClaimedProofs = Math.max(0, Math.floor(options.claimedDrawsToSkip)) * roundsRequired;
   const batchSize = 200;
-  const maxRows = Math.min(5_000, Math.max(500, (offchainClaimedProofs + roundsRequired) * 3 + batchSize));
+  const maxRows = Math.min(5_000, Math.max(500, (offchainClaimedProofs + targetProofs) * 3 + batchSize));
   const proofs: LuckyDrawProof[] = [];
   let eligibleProofs: LuckyDrawProof[] = [];
 
-  for (let offset = 0; offset < maxRows && eligibleProofs.length < roundsRequired; offset += batchSize) {
+  for (let offset = 0; offset < maxRows && eligibleProofs.length < targetProofs; offset += batchSize) {
     const { data, error } = await supabaseAdmin
       .from("lucky_draw_rounds")
-      .select("round_id, game_id, counted_at, game_rounds!inner(vrf_request_id, chain_id)")
+      .select("round_id, game_id, bet_amount, counted_at, game_rounds!inner(vrf_request_id, chain_id)")
       .eq("player", player)
       .order("counted_at", { ascending: true })
       .range(offset, offset + batchSize - 1);
@@ -437,10 +504,12 @@ async function getEligibleProofs(
     const rows = (data ?? []) as Array<{
       round_id: string;
       game_id: string;
+      bet_amount: number;
       game_rounds?: { vrf_request_id?: string | null; chain_id?: number | null } | Array<{ vrf_request_id?: string | null; chain_id?: number | null }>;
     }>;
 
     for (const row of rows) {
+      if (Number(row.bet_amount) < options.minBetEth) continue;
       const joined = Array.isArray(row.game_rounds) ? row.game_rounds[0] : row.game_rounds;
       const contractAddress = contractByGameId.get(row.game_id);
       const requestId = joined?.vrf_request_id;
@@ -453,7 +522,7 @@ async function getEligibleProofs(
       });
     }
 
-    const unconsumedProofs = await filterConsumedProofs(proofs);
+    const unconsumedProofs = await filterConsumedProofs(proofs, { player, minBetEth: options.minBetEth });
     eligibleProofs = unconsumedProofs.slice(offchainClaimedProofs);
     if (rows.length < batchSize) break;
   }
@@ -461,12 +530,12 @@ async function getEligibleProofs(
   return eligibleProofs;
 }
 
-async function filterConsumedProofs(proofs: LuckyDrawProof[]) {
+async function filterConsumedProofs(proofs: LuckyDrawProof[], options: { player: string; minBetEth: number }) {
   const luckyDrawAddress = CONTRACT_ADDRESSES[8453]?.LuckyDraw;
   if (!luckyDrawAddress || proofs.length === 0) return proofs;
 
   try {
-    const checks = await luckyDrawReadClient.multicall({
+    const consumedChecks = await luckyDrawReadClient.multicall({
       allowFailure: true,
       contracts: proofs.map((proof) => ({
         address: luckyDrawAddress,
@@ -476,9 +545,32 @@ async function filterConsumedProofs(proofs: LuckyDrawProof[]) {
       }))
     });
 
-    return proofs.filter((_, index) => checks[index]?.status !== "success" || checks[index]?.result !== true);
+    const unconsumedProofs = proofs.filter((_, index) => consumedChecks[index]?.status !== "success" || consumedChecks[index]?.result !== true);
+    const minBetWei = parseEther(String(options.minBetEth));
+    const roundChecks = await luckyDrawReadClient.multicall({
+      allowFailure: true,
+      contracts: unconsumedProofs.map((proof) => ({
+        address: proof.contractAddress as `0x${string}`,
+        abi: GAME_ROUND_READER_ABI,
+        functionName: "rounds",
+        args: [BigInt(proof.requestId)]
+      }))
+    });
+
+    return unconsumedProofs.filter((proof, index) => {
+      const check = roundChecks[index];
+      if (check?.status !== "success") return false;
+      const [roundPlayer, betAmount, , storedRequestId, , settled, blockNumber] = check.result;
+      return (
+        getAddress(roundPlayer).toLowerCase() === options.player &&
+        storedRequestId === BigInt(proof.requestId) &&
+        settled &&
+        blockNumber > 0n &&
+        betAmount >= minBetWei
+      );
+    });
   } catch {
-    return proofs;
+    return [];
   }
 }
 
@@ -486,7 +578,8 @@ async function getLuckyDrawEventLogs(
   address: `0x${string}`,
   eventName: "DrawResolved" | "PrizeClaimed",
   fromBlock: bigint,
-  latestBlock: bigint
+  latestBlock: bigint,
+  player: string | null = null
 ) {
   const logs: Array<{
     args?: Record<string, unknown>;
@@ -499,6 +592,7 @@ async function getLuckyDrawEventLogs(
       address,
       abi: LUCKY_DRAW_ABI,
       eventName,
+      ...(player ? { args: { player: player as `0x${string}` } } : {}),
       fromBlock: cursor,
       toBlock
     });
@@ -515,10 +609,13 @@ function buildSummary(
   player: string,
   configRow: LuckyDrawConfigRow,
   progressRow: LuckyDrawProgressRow | null,
+  dailyProgressRow: LuckyDrawDailyProgressRow | null,
   recentResults: LuckyDrawResultRow[],
   eligibleProofs: LuckyDrawProof[]
 ): LuckyDrawSummary {
   const config = normalizeConfig(configRow);
+  const drawDay = getCurrentDrawDay();
+  const resetAt = getNextDrawResetAt();
   const progress = progressRow ?? {
     player,
     qualified_rounds: 0,
@@ -528,11 +625,22 @@ function buildSummary(
     total_prize_eth: 0,
     updated_at: new Date(0).toISOString()
   };
+  const dailyProgress = dailyProgressRow ?? {
+    player,
+    draw_day: drawDay,
+    qualified_rounds: 0,
+    earned_draws: 0,
+    updated_at: new Date(0).toISOString()
+  };
   const roundsRequired = Math.max(1, config.roundsRequired);
   const proofBackedDraws = Math.floor(eligibleProofs.length / roundsRequired);
-  const availableDraws = Math.min(progress.available_draws, proofBackedDraws);
-  const qualifiedRounds = availableDraws > 0 ? roundsRequired : Math.min(progress.qualified_rounds, roundsRequired);
-  const roundsUntilNext = availableDraws > 0 ? 0 : Math.max(0, roundsRequired - qualifiedRounds);
+  const availableDraws = proofBackedDraws;
+  const proofBackedProgress = eligibleProofs.length % roundsRequired;
+  const storedProgress = Math.max(0, Math.min(progress.qualified_rounds, roundsRequired - 1));
+  const qualifiedRounds = availableDraws > 0
+    ? proofBackedProgress
+    : Math.max(proofBackedProgress, storedProgress);
+  const roundsUntilNext = Math.max(0, roundsRequired - qualifiedRounds);
 
   return {
     player,
@@ -551,18 +659,28 @@ function buildSummary(
       roundsUntilNext,
       progressPct: Math.min(100, (qualifiedRounds / roundsRequired) * 100)
     },
+    daily: {
+      drawDay,
+      cap: config.dailyDrawCap,
+      earnedDraws: Math.max(0, Number(dailyProgress.earned_draws) || 0),
+      remainingDraws: Math.max(0, config.dailyDrawCap - (Number(dailyProgress.earned_draws) || 0)),
+      qualifiedRounds: Math.max(0, Number(dailyProgress.qualified_rounds) || 0),
+      resetAt: resetAt.toISOString(),
+      capped: (Number(dailyProgress.earned_draws) || 0) >= config.dailyDrawCap
+    },
     eligibleProofs,
     recentResults
   };
 }
 
 function normalizeConfig(config: LuckyDrawConfigRow) {
-  const ethUsdReference = Number(config.eth_usd_reference) || 2300;
+  const ethUsdReference = Number(config.eth_usd_reference) || 2187;
   const prizes = parsePrizeTable(config.prize_table, ethUsdReference);
   return {
     enabled: Boolean(config.enabled),
     roundsRequired: Math.max(1, Number(config.rounds_required) || 10),
     minBetEth: Math.max(0, Number(config.min_bet_eth) || 0),
+    dailyDrawCap: Math.max(1, Number(config.daily_draw_cap) || 10),
     ethUsdReference,
     pausedReason: config.paused_reason,
     updatedAt: config.updated_at,
@@ -595,6 +713,7 @@ function parseConfigInput(input: unknown) {
     enabled?: unknown;
     roundsRequired?: unknown;
     minBetEth?: unknown;
+    dailyDrawCap?: unknown;
     ethUsdReference?: unknown;
     pausedReason?: unknown;
     prizes?: unknown;
@@ -602,6 +721,7 @@ function parseConfigInput(input: unknown) {
 
   const roundsRequired = Math.floor(Number(body.roundsRequired));
   const minBetEth = Number(body.minBetEth);
+  const dailyDrawCap = Math.floor(Number(body.dailyDrawCap ?? 10));
   const ethUsdReference = Number(body.ethUsdReference);
   const prizes = Array.isArray(body.prizes)
     ? body.prizes
@@ -616,6 +736,9 @@ function parseConfigInput(input: unknown) {
     throw httpError("roundsRequired must be between 1 and 500", 400);
   }
   if (!Number.isFinite(minBetEth) || minBetEth < 0) throw httpError("minBetEth must be a positive number", 400);
+  if (!Number.isInteger(dailyDrawCap) || dailyDrawCap < 1 || dailyDrawCap > 100) {
+    throw httpError("dailyDrawCap must be between 1 and 100", 400);
+  }
   if (!Number.isFinite(ethUsdReference) || ethUsdReference <= 0) throw httpError("ethUsdReference must be positive", 400);
   if (prizes.length === 0 || prizes.length > 12) throw httpError("Prize table must include 1-12 positive prize rows", 400);
 
@@ -623,10 +746,19 @@ function parseConfigInput(input: unknown) {
     enabled: Boolean(body.enabled),
     roundsRequired,
     minBetEth,
+    dailyDrawCap,
     ethUsdReference,
     pausedReason: typeof body.pausedReason === "string" ? body.pausedReason.slice(0, 240) : null,
     prizes
   };
+}
+
+function getCurrentDrawDay(now = new Date()) {
+  return now.toISOString().slice(0, 10);
+}
+
+function getNextDrawResetAt(now = new Date()) {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0));
 }
 
 function normalizeAddress(address: string) {

@@ -343,11 +343,14 @@ async function persistSettledLogs(chainId: 8453, gameId: string, logs: Log[]) {
       continue;
     }
 
+    const player = args.player.toLowerCase();
+    await ensurePlayerRow(player);
+
     const { error } = await supabaseAdmin.from("game_rounds").upsert(
       {
         tx_hash: log.transactionHash,
         vrf_request_id: args.requestId.toString(),
-        player: args.player.toLowerCase(),
+        player,
         game_id: gameId,
         chain_id: chainId,
         bet_amount: Number(formatEther(args.betAmount)),
@@ -364,6 +367,16 @@ async function persistSettledLogs(chainId: 8453, gameId: string, logs: Log[]) {
   }
 
   return lastBlock || null;
+}
+
+async function ensurePlayerRow(player: string) {
+  const { error } = await supabaseAdmin
+    .from("players")
+    .upsert({ wallet_address: player }, { onConflict: "wallet_address" });
+
+  if (error) {
+    console.error("[Listener] Player upsert error", error.message);
+  }
 }
 
 function groupLogsByEventName(logs: Log[]) {
