@@ -21,6 +21,7 @@ const inlineEnv = Object.fromEntries(
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  distDir: ".next",
   devIndicators: false,
   transpilePackages: ["@baseplay/shared"],
   reactStrictMode: true,
