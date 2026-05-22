@@ -22,6 +22,8 @@ VRF_SUB_ID_MAINNET=<base mainnet vrf subscription id>
 BACKEND_ADMIN_ADDRESSES=<comma-separated admin wallets>
 ```
 
+Railway serves the backend from `https://game-contracts-production.up.railway.app`. It should build only `@baseplay/backend`, start with `npm --workspace @baseplay/backend run start`, and expose `/health` as its health check.
+
 Optional RPC/load variables:
 
 ```bash

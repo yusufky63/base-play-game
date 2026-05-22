@@ -57,7 +57,7 @@ docker build -f Dockerfile.backend -t baseplay-backend .
 docker run --env-file production.env.example -p 4000:4000 baseplay-backend
 ```
 
-Railway must define the backend-only variables before the service starts:
+Railway runs the production backend service at `https://game-contracts-production.up.railway.app` with the backend workspace build/start commands. Define the backend-only variables before the service starts:
 
 ```bash
 SUPABASE_URL=https://buubouudfeyhltsqryam.supabase.co
@@ -73,8 +73,7 @@ Verify the live Supabase REST schema after migrations:
 npm --workspace @baseplay/backend run supabase:verify
 ```
 
-Only set `BACKEND_URL` in the Vercel frontend project after a real backend service is deployed and serving `/health`. Until then, leave it empty so the app uses Supabase and on-chain fallback data without showing a broken backend URL.
-The backend Dockerfile installs production workspace dependencies again in the runtime stage, which keeps Railway's runtime module resolution reliable for Express dependencies. Rate limiting and crash round state are kept in the current backend process.
+Set `NEXT_PUBLIC_BACKEND_URL` and `BACKEND_URL` in the Vercel frontend project to `https://game-contracts-production.up.railway.app` after the Railway backend is serving `/health`. The backend Dockerfile remains available for Docker hosts. Rate limiting and crash round state are kept in the current backend process.
 
 Frontend:
 
