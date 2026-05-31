@@ -1,28 +1,38 @@
 # BasePlay
 
-![Category](https://img.shields.io/badge/Category-On-chain%20Gaming%20%2F%20Base-1f1f1f?style=flat-square&labelColor=141414&color=2b2b2b) ![Status](https://img.shields.io/badge/Status-private-1f1f1f?style=flat-square&labelColor=141414&color=2b2b2b)
+BasePlay is a Base mainnet gaming platform with provably fair mini games, real-stake flows, instant payout logic, contracts, backend event handling, and operational tooling.
 
-Base-native on-chain gaming platform with provably fair mini games, real-stake flows, instant payouts, and admin tooling.
+## Snapshot
 
-## Links
+- **Category:** Base-native on-chain gaming
+- **Status:** Private repository with public deployment
+- **Live:** https://baseplaygame.vercel.app
+- **Repository:** https://github.com/yusufky63/base-play-game
+- **Portfolio:** https://codexsha.dev
 
-- Live: https://baseplaygame.vercel.app
-- Repository: https://github.com/yusufky63/base-play-game
-- Portfolio: https://codexsha.dev
+## Product Scope
 
-## Overview
+BasePlay is documented here as a product repository, not just a code dump. The goal of this README is to make the product purpose, runtime surface, and development path clear for future review and maintenance.
 
-BasePlay is part of the Codexsha product portfolio. The project is focused on shipping a compact, usable product surface rather than a demo-only prototype. This README is written to make the repository easier to understand, run, and evaluate.
+## Core Capabilities
 
-## Key Features
+- Game library direction: Coin Flip, Dice, Crash, Mines, Slots, Wheel, and Lucky Draw
+- Vault, payout, and contract settlement architecture
+- Chainlink VRF randomness and Hardhat test flow
+- Backend listener and realtime Socket.io updates
+- Admin-oriented product surfaces for operations
 
-- Game library including Coin Flip, Dice, Crash, Mines, Slots, and Wheel
-- Vault architecture and payout flows
-- Chainlink VRF randomness
-- Realtime event updates via backend services
-- Admin-oriented operational surfaces
+## Existing README Coverage Preserved
 
-## Stack
+This refresh keeps the important project-specific areas from the previous documentation:
+
+- Documentation Index
+- Quick Start
+- Platform Summary
+- Games
+- Lucky Draw
+
+## Tech Stack
 
 - Next.js
 - TypeScript
@@ -35,42 +45,48 @@ BasePlay is part of the Codexsha product portfolio. The project is focused on sh
 - Chainlink VRF
 - OpenZeppelin
 - Hardhat
-- WalletConnect
-- Framer Motion
 - Node.js
 - Express
 
-## Role / Ownership
+## Repository Map
 
-Full-stack product builder across game UX, contracts, backend events, database flows, and deployment.
+| Path | Purpose |
+| --- | --- |
+| packages/frontend/ | Next.js product UI |
+| packages/backend/ | Event listener, API, and realtime services |
+| packages/contracts/ | Solidity contracts and Hardhat tooling |
+| packages/shared/ | Shared types/utilities |
+| docs/ | Project documentation |
 
-## Getting Started
+## Local Development
 
-```bash
-npm install
-npm run dev:frontend
-npm run dev:backend
-npm run test --workspaces --if-present
-npm run build
-```
+| Command | Purpose |
+| --- | --- |
+| npm run dev:frontend | Run the frontend workspace |
+| npm run dev:backend | Run backend services |
+| npm run build | Build workspaces |
+| npm run test --workspaces --if-present | Run available workspace tests |
+| npm run compile:contracts | Compile contracts |
+| npm run test:contracts | Run contract tests |
+| npm run deploy:base | Deploy contracts when deployment env is explicitly configured |
 
-## Environment
+## Environment Notes
 
-Create a local environment file from the project conventions and configure only the values needed for the flow you are running. Do not commit secrets.
+Use local environment files for secrets and deployment-specific values. Do not commit real keys.
 
-Typical values used by this project include:
+- PRIVATE_KEY
+- VRF_SUB_ID_MAINNET
+- VAULT_FUND_ETH_MAINNET
+- LUCKY_DRAW_FUND_ETH_MAINNET
+- BASESCAN_API_KEY
+- NEXT_PUBLIC_DEFAULT_CHAIN
+- NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID
 
-- Base RPC URL
-- Supabase credentials
-- wallet connector IDs
-- backend service secrets
-- contract deployment keys for local/dev only
+## Operational Notes
 
-## Project Notes
-
-- Status: Private repository with public deployment.
-- Private or sensitive implementation details are intentionally not documented in public-facing copy.
-- The README should stay aligned with the live product and the Codexsha portfolio page.
+- Keep this README aligned with the live product and portfolio copy.
+- Prefer small, documented changes over large undocumented rewrites.
+- Mainnet deployment commands require explicit allow-list environment flags. Do not run deployment scripts with production keys unless you intend to deploy.
 
 ## Maintainer
 
