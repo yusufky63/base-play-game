@@ -1,132 +1,81 @@
 # BasePlay
 
-Mini onchain games on Base L2. Provably fair, instant payouts. $0.50-$3 bets.
+![Category](https://img.shields.io/badge/Category-On-chain%20Gaming%20%2F%20Base-1f1f1f?style=flat-square&labelColor=141414&color=2b2b2b) ![Status](https://img.shields.io/badge/Status-private-1f1f1f?style=flat-square&labelColor=141414&color=2b2b2b)
 
-**Tagline:** Mini games. Real stakes. On Base.
+Base-native on-chain gaming platform with provably fair mini games, real-stake flows, instant payouts, and admin tooling.
 
-Production is Base mainnet only. Testnet/Sepolia paths are intentionally removed from the app and backend.
+## Links
 
-## Documentation Index
+- Live: https://baseplaygame.vercel.app
+- Repository: https://github.com/yusufky63/base-play-game
+- Portfolio: https://codexsha.dev
 
-| # | Document | Contents |
-|---|----------|----------|
-| 01 | [Architecture](./docs/01-architecture.md) | Stack, folder structure, network config, game registry |
-| 02 | [Smart Contracts](./docs/02-contracts.md) | Solidity contracts and comments |
-| 03 | [Deploy Guide](./docs/03-deploy.md) | Remix deploy, VRF setup, Basescan verify |
-| 04 | [Frontend](./docs/04-frontend.md) | Next.js, Wagmi, Basename, chain switch, components |
-| 05 | [Backend](./docs/05-backend.md) | Node.js, event listener, Crash engine, WebSocket |
-| 06 | [Database](./docs/06-database.md) | Supabase schema, migrations, RLS, Realtime |
-| 07 | [UI & Design](./docs/07-ui-design.md) | Design tokens, light/dark, icons, animations |
-| 08 | [Security](./docs/08-security.md) | Attack vectors, audit checklist, hardening |
-| 09 | [Tests](./docs/09-tests.md) | Hardhat test suite, mock contracts, coverage |
-| 10 | [Integrations](./docs/10-integrations.md) | Basename, Farcaster, Mini-app, Base Account |
-| 11 | [Roadmap](./docs/11-roadmap.md) | Phase checklist, pre-deploy checklist |
-| 12 | [Current Status](./docs/12-status.md) | Implemented scope, open gaps, deploy status |
-| 13 | [AI Icon Prompts](./docs/13-ai-icon-prompts.md) | Brand and icon prompt references |
+## Overview
 
-## Quick Start
+BasePlay is part of the Codexsha product portfolio. The project is focused on shipping a compact, usable product surface rather than a demo-only prototype. This README is written to make the repository easier to understand, run, and evaluate.
 
-Prerequisites: Node.js 20.9+.
+## Key Features
+
+- Game library including Coin Flip, Dice, Crash, Mines, Slots, and Wheel
+- Vault architecture and payout flows
+- Chainlink VRF randomness
+- Realtime event updates via backend services
+- Admin-oriented operational surfaces
+
+## Stack
+
+- Next.js
+- TypeScript
+- Tailwind CSS
+- Wagmi
+- Viem
+- Supabase
+- Socket.io
+- Solidity
+- Chainlink VRF
+- OpenZeppelin
+- Hardhat
+- WalletConnect
+- Framer Motion
+- Node.js
+- Express
+
+## Role / Ownership
+
+Full-stack product builder across game UX, contracts, backend events, database flows, and deployment.
+
+## Getting Started
 
 ```bash
 npm install
-npm run build
-npm run test
-```
-
-Contracts:
-
-```bash
-npm run compile:contracts
-npm run test:contracts
-```
-
-Production contract deploys are guarded. Before Base mainnet deployment, use a fresh deploy wallet, configure `VRF_SUB_ID_MAINNET`, set `VAULT_FUND_ETH_MAINNET`, and explicitly set `ALLOW_MAINNET_DEPLOY=true`.
-
-Backend:
-
-```bash
-copy .env.example packages\backend\.env
-npm run dev:backend
-```
-
-Production backend:
-
-```bash
-docker build -f Dockerfile.backend -t baseplay-backend .
-docker run --env-file production.env.example -p 4000:4000 baseplay-backend
-```
-
-Railway runs the production backend service at `https://game-contracts-production.up.railway.app` with the backend workspace build/start commands. Define the backend-only variables before the service starts:
-
-```bash
-SUPABASE_URL=https://buubouudfeyhltsqryam.supabase.co
-SUPABASE_SERVICE_KEY=<server-only service role key>
-VRF_SUB_ID_MAINNET=<base mainnet vrf subscription id>
-FRONTEND_URL=https://baseplay.games
-BACKEND_ADMIN_ADDRESSES=<comma-separated admin wallets for Lucky Draw controls>
-```
-
-Verify the live Supabase REST schema after migrations:
-
-```bash
-npm --workspace @baseplay/backend run supabase:verify
-```
-
-Set `NEXT_PUBLIC_BACKEND_URL` and `BACKEND_URL` in the Vercel frontend project to `https://game-contracts-production.up.railway.app` after the Railway backend is serving `/health`. The backend Dockerfile remains available for Docker hosts. Rate limiting and crash round state are kept in the current backend process.
-
-Frontend:
-
-```bash
 npm run dev:frontend
+npm run dev:backend
+npm run test --workspaces --if-present
+npm run build
 ```
 
-## Platform Summary
+## Environment
 
-| Area | Choice |
-|---|---|
-| Chain | Base Mainnet |
-| Currency | ETH only |
-| Min bet | 0.000055 ETH |
-| Max bet | 0.0005 ETH |
-| House edge | 5% |
-| Randomness | Chainlink VRF v2.5 |
-| Database | Supabase PostgreSQL + Realtime |
-| Backend | Node.js + Express + Socket.io |
-| Contracts | Solidity 0.8.24 + Hardhat tests |
-| Promotions | ETH-denominated Lucky Draw after 10 qualifying settled rounds |
+Create a local environment file from the project conventions and configure only the values needed for the flow you are running. Do not commit secrets.
 
-## Games
+Typical values used by this project include:
 
-| Game | Multiplier | MVP status |
-|------|------------|------------|
-| Coin Flip | 2x gross, house edge in vault | Base mainnet live + tests |
-| Dice | 6x gross, house edge in vault | Base mainnet live + tests |
-| Crash | up to 10x | Base mainnet live + tests |
-| Mines | up to 20x | Base mainnet live + tests |
-| Hi-Lo | up to 8x | Base mainnet live + tests |
-| Over/Under | odds based | Base mainnet live + tests |
-| Limbo | target based | Base mainnet live + tests |
-| Wheel | risk table | Base mainnet live + tests |
-| Plinko Lite | path table | Base mainnet live + tests |
-| Color Pick | 4x gross | Base mainnet live + tests |
-| Treasure Chest | tier table | Base mainnet live + tests |
-| Lucky Seven | 6x gross | Base mainnet live + tests |
-| Roulette Lite | up to 12x | Base mainnet live + tests |
-| Scratch Card | up to 30x | Base mainnet live + tests |
-| Rock Paper Scissors | 2x gross | Base mainnet live + tests |
-| Slots | up to 25x | Base mainnet live + tests |
+- Base RPC URL
+- Supabase credentials
+- wallet connector IDs
+- backend service secrets
+- contract deployment keys for local/dev only
 
-## Lucky Draw
+## Project Notes
 
-Lucky Draw is a promotional reward loop, separate from wager settlement. Every 10 qualifying settled rounds unlocks one draw for the player. The frontend/backend prepare settled round proofs, and the `LuckyDraw` contract verifies those proofs against approved game contracts before requesting Chainlink VRF. Default reward tiers mirror `$0.10`, `$0.50`, `$1`, `$2.50`, `$5`, and `$10` converted to ETH at the admin reference price.
+- Status: Private repository with public deployment.
+- Private or sensitive implementation details are intentionally not documented in public-facing copy.
+- The README should stay aligned with the live product and the Codexsha portfolio page.
 
-Security model:
+## Maintainer
 
-- Pending, refunded, failed, or duplicate rounds do not count.
-- The contract verifies each submitted round belongs to `msg.sender`, is settled, meets the minimum eligible bet, and has not been consumed before.
-- The prize table is snapshotted when the draw request is made, so later admin changes cannot alter a pending draw.
-- Chainlink VRF chooses the prize tier; the player claims the resolved ETH reward from the funded `LuckyDraw` contract.
-- Supabase tracks progress and prepares proof candidates, but no longer creates Lucky Draw randomness or payout records for new claims.
-- `/admin/lucky-draw` manages pause state, round requirement, minimum bet, ETH reference price, and on-chain prize weights.
-- Base mainnet `LuckyDraw`: `0x9b4b322302C1EA7E6e9f0d26F7F1a647E5D8185A`. The admin page also shows VRF subscription balances, consumer readiness, and LuckyDraw treasury fund/withdraw controls.
+Built by Yusuf / Codexsha.
+
+- GitHub: https://github.com/yusufky63
+- X: https://x.com/codexsha
+- Telegram: https://t.me/codexsha
