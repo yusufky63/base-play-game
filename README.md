@@ -1,97 +1,73 @@
 # BasePlay
 
-BasePlay is a Base mainnet gaming platform with provably fair mini games, real-stake flows, instant payout logic, contracts, backend event handling, and operational tooling.
+BasePlay is a Base-native on-chain gaming platform with a Next.js frontend, backend services, Solidity contracts, shared packages, and deployment configuration for real product environments.
 
-## Snapshot
+The repository is organized as a workspace so the frontend, backend, smart contracts, and shared types can evolve together.
 
-- **Category:** Base-native on-chain gaming
-- **Status:** Private repository with public deployment
-- **Live:** https://baseplaygame.vercel.app
-- **Repository:** https://github.com/yusufky63/base-play-game
-- **Portfolio:** https://codexsha.dev
+## Documentation Index
 
-## Product Scope
+- `docs/` - product, deployment, contract, and operational notes.
+- `packages/frontend` - player-facing web application.
+- `packages/backend` - event listener, API, realtime, and service logic.
+- `packages/contracts` - Solidity contracts, Hardhat tasks, tests, and deployment scripts.
+- `packages/shared` - shared types and utilities used across packages.
 
-BasePlay is documented here as a product repository, not just a code dump. The goal of this README is to make the product purpose, runtime surface, and development path clear for future review and maintenance.
+## Platform Summary
 
-## Core Capabilities
-
-- Game library direction: Coin Flip, Dice, Crash, Mines, Slots, Wheel, and Lucky Draw
-- Vault, payout, and contract settlement architecture
-- Chainlink VRF randomness and Hardhat test flow
-- Backend listener and realtime Socket.io updates
-- Admin-oriented product surfaces for operations
-
-## Existing README Coverage Preserved
-
-This refresh keeps the important project-specific areas from the previous documentation:
-
-- Documentation Index
-- Quick Start
-- Platform Summary
-- Games
-- Lucky Draw
-
-## Tech Stack
-
-- Next.js
-- TypeScript
-- Tailwind CSS
-- Wagmi
-- Viem
-- Supabase
-- Socket.io
-- Solidity
-- Chainlink VRF
-- OpenZeppelin
-- Hardhat
-- Node.js
-- Express
-
-## Repository Map
-
-| Path | Purpose |
+| Area | Description |
 | --- | --- |
-| packages/frontend/ | Next.js product UI |
-| packages/backend/ | Event listener, API, and realtime services |
-| packages/contracts/ | Solidity contracts and Hardhat tooling |
-| packages/shared/ | Shared types/utilities |
-| docs/ | Project documentation |
+| Games | Coin Flip, Dice, Crash, Mines, Slots, Wheel, and additional Base-native game surfaces. |
+| Lucky Draw | Draw-oriented flow backed by contract logic and configurable funding. |
+| Vault | Contract-level funds management and settlement-oriented architecture. |
+| Randomness | Chainlink VRF configuration for provably fair outcomes. |
+| Operations | Backend listener, realtime updates, deployment scripts, and production environment examples. |
 
-## Local Development
+## Quick Start
+
+```bash
+npm install
+npm run build
+npm run dev:frontend
+```
+
+Run backend and contract tasks in separate terminals when working on settlement or event flows.
 
 | Command | Purpose |
 | --- | --- |
-| npm run dev:frontend | Run the frontend workspace |
-| npm run dev:backend | Run backend services |
-| npm run build | Build workspaces |
-| npm run test --workspaces --if-present | Run available workspace tests |
-| npm run compile:contracts | Compile contracts |
-| npm run test:contracts | Run contract tests |
-| npm run deploy:base | Deploy contracts when deployment env is explicitly configured |
+| `npm run build` | Build workspace packages. |
+| `npm test` | Run workspace tests. |
+| `npm run dev:frontend` | Start the frontend app. |
+| `npm run dev:backend` | Start backend services. |
+| `npm run compile:contracts` | Compile Solidity contracts. |
+| `npm run test:contracts` | Run contract tests. |
+| `npm run coverage:contracts` | Generate contract coverage. |
+| `npm run deploy:base` | Deploy configured contracts to Base after environment checks. |
+| `npm run deploy:missing:base` | Deploy missing Base contracts only. |
 
-## Environment Notes
+| Layer | Tools |
+| --- | --- |
+| Frontend | Next.js, React, TypeScript, Tailwind CSS, Wagmi, Viem, WalletConnect, Framer Motion |
+| Backend | Node.js, Express-style services, Socket.io, Supabase, event listeners |
+| Contracts | Solidity, Hardhat, OpenZeppelin, Chainlink VRF, Base deployment scripts |
+| Infra | Vercel frontend config, Render backend config, Dockerfile backend, production env examples |
 
-Use local environment files for secrets and deployment-specific values. Do not commit real keys.
+## Environment
 
-- PRIVATE_KEY
-- VRF_SUB_ID_MAINNET
-- VAULT_FUND_ETH_MAINNET
-- LUCKY_DRAW_FUND_ETH_MAINNET
-- BASESCAN_API_KEY
-- NEXT_PUBLIC_DEFAULT_CHAIN
-- NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID
+Start from `.env.example` and `production.env.example`. Treat deploy keys, VRF IDs, and funding values as environment-specific production secrets.
 
-## Operational Notes
+- `NODE_ENV`
+- `PRIVATE_KEY`
+- `VRF_SUB_ID_MAINNET`
+- `VAULT_FUND_ETH_MAINNET`
+- `LUCKY_DRAW_FUND_ETH_MAINNET`
+- `VAULT_CONTRACT_NAME`
+- `ETHERSCAN_API_KEY`
+- `BASESCAN_API_KEY`
+- `ALLOW_MAINNET_DEPLOY`
+- `ALLOW_CREATE_MAINNET_VRF_SUB`
+- `ALLOW_ZERO_MAINNET_VAULT`
+- `NEXT_PUBLIC_DEFAULT_CHAIN`
 
-- Keep this README aligned with the live product and portfolio copy.
-- Prefer small, documented changes over large undocumented rewrites.
-- Mainnet deployment commands require explicit allow-list environment flags. Do not run deployment scripts with production keys unless you intend to deploy.
+## Status
 
-## Maintainer
-
-Built by Yusuf / Codexsha.
-
-- GitHub: https://github.com/yusufky63
-- X: https://x.com/codexsha
-- Telegram: https://t.me/codexsha
+Private product repository with public deployment. Keep contract addresses, operational secrets, and production funding values out of public documentation.
