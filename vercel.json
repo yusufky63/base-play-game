@@ -1,6 +1,5 @@
 {
   "framework": "nextjs",
   "installCommand": "npm install --include=dev",
-  "buildCommand": "npm --workspace @baseplay/shared run build && npm run build --workspace @baseplay/frontend",
-  "outputDirectory": "packages/frontend/.next"
+  "buildCommand": "npm --workspace @baseplay/shared run build && npm run build --workspace @baseplay/frontend"
 }
