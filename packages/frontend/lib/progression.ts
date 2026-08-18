@@ -17,7 +17,7 @@ export function levelProgress(xp: number, level = levelFromXp(xp)) {
   return {
     current,
     required: span,
-    percent: Math.min(100, Math.max(0, (current / span) * 100)),
+    percent: Math.min(100, Math.max(0, Math.round((current / span) * 100))),
     nextLevelXp
   };
 }

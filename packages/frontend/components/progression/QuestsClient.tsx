@@ -295,7 +295,7 @@ export function QuestsClient() {
         <SummaryCard
           icon={<Flame size={16} />}
           label="Next Level"
-          value={address ? `${progress.percent}%` : "0%"}
+          value={address ? `${Math.round(progress.percent)}%` : "0%"}
           detail={address ? `${progress.current}/${progress.required} XP needed` : "Play to level up"}
         />
         <SummaryCard
