@@ -9,33 +9,36 @@ import path from "node:path";
 export const dynamic = "force-dynamic";
 
 function getPrivateKey(): `0x${string}` | null {
-  let pk = process.env.PRIVATE_KEY;
-  if (pk) {
-    return (pk.startsWith("0x") ? pk : `0x${pk}`) as `0x${string}`;
-  }
+  let raw = process.env.PRIVATE_KEY;
+  if (!raw) {
+    const candidatePaths = [
+      path.resolve(process.cwd(), ".env.local"),
+      path.resolve(process.cwd(), ".env"),
+      path.resolve(process.cwd(), "../../.env"),
+      path.resolve(process.cwd(), "../.env")
+    ];
 
-  // Fallback for local development if process.env wasn't inlined
-  const candidatePaths = [
-    path.resolve(process.cwd(), ".env.local"),
-    path.resolve(process.cwd(), ".env"),
-    path.resolve(process.cwd(), "../../.env"),
-    path.resolve(process.cwd(), "../.env")
-  ];
-
-  for (const envPath of candidatePaths) {
-    if (fs.existsSync(envPath)) {
-      try {
-        const content = fs.readFileSync(envPath, "utf8");
-        const match = content.match(/^PRIVATE_KEY=(.*)$/m);
-        if (match && match[1]) {
-          const raw = match[1].trim().replace(/^["']|["']$/g, "");
-          return (raw.startsWith("0x") ? raw : `0x${raw}`) as `0x${string}`;
-        }
-      } catch {}
+    for (const envPath of candidatePaths) {
+      if (fs.existsSync(envPath)) {
+        try {
+          const content = fs.readFileSync(envPath, "utf8");
+          const match = content.match(/^PRIVATE_KEY=(.*)$/m);
+          if (match && match[1]) {
+            raw = match[1];
+            break;
+          }
+        } catch {}
+      }
     }
   }
 
-  return null;
+  if (!raw) return null;
+
+  const cleaned = raw.trim().replace(/^["']|["']$/g, "").replace(/[\r\n\t\s]/g, "");
+  if (!cleaned) return null;
+
+  const hex = cleaned.startsWith("0x") ? cleaned : `0x${cleaned}`;
+  return hex as `0x${string}`;
 }
 
 function getSupabaseServer() {
