@@ -18,13 +18,13 @@ import { generateBadgeClaimSignature } from "./services/badgeClaim.js";
 const app = express();
 const server = createServer(app);
 const io = new Server(server, {
-  cors: { origin: env.FRONTEND_URL, credentials: true }
+  cors: { origin: true, credentials: true }
 });
 
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
-app.use(helmet());
-app.use(cors({ origin: env.FRONTEND_URL }));
+app.use(helmet({ crossOriginResourcePolicy: false }));
+app.use(cors({ origin: true, credentials: true }));
 app.use((req, res, next) => {
   const requestId = req.header("x-request-id") ?? randomUUID();
   res.setHeader("x-request-id", requestId);
@@ -169,8 +169,12 @@ function firstQueryValue(value: unknown) {
   return typeof value === "string" ? value : undefined;
 }
 
-server.listen(env.PORT, async () => {
-  console.log(`[Server] Running on port ${env.PORT}`);
-  const crashEngine = startCrashEngine(io);
-  await initEventListeners({ crashEngine });
+server.listen(env.PORT, "0.0.0.0", async () => {
+  console.log(`[Server] Running on port ${env.PORT} (0.0.0.0)`);
+  try {
+    const crashEngine = startCrashEngine(io);
+    await initEventListeners({ crashEngine });
+  } catch (initErr) {
+    console.error("[Server] Event listener initialization error:", initErr);
+  }
 });
