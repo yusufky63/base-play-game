@@ -25,3 +25,27 @@ jobs:
       - run: npm --workspace @baseplay/contracts run compile
       - run: npm --workspace @baseplay/contracts run test
       - run: npm audit --omit=dev --audit-level=critical
+
+  deploy-railway:
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      RAILWAY_PROJECT_ID: 6423e46b-3caa-43f2-9f8b-92080e4e545e
+      RAILWAY_ENVIRONMENT_ID: 59f6e043-10f7-4eb7-8dca-659eb801438e
+      RAILWAY_SERVICE_ID: 6729e26c-ff41-4773-9ed2-978395bdac17
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          cache: npm
+      - name: Deploy backend to Railway
+        run: |
+          if [ -z "$RAILWAY_TOKEN" ]; then
+            echo "RAILWAY_TOKEN GitHub secret is required for Railway deploys."
+            exit 1
+          fi
+          npx -y @railway/cli link --project "$RAILWAY_PROJECT_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --service "$RAILWAY_SERVICE_ID"
+          npx -y @railway/cli up --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --detach

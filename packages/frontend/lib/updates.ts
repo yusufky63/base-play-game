@@ -1,5 +1,10 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
+    date: "May 21, 2026",
+    title: "BasePlay Badges ERC-1155 contract and NFT claim live on Base",
+    body: "The BasePlayBadges (ERC-1155) smart contract has been deployed to Base Mainnet at 0x1Ca9E82eBA7967295C3D77404af639B592C268eD with EIP-712 cryptographic signature verification and soulbound achievement security. Players can now claim their in-game earned achievement badges as on-chain NFTs directly to their wallets with single and batch claim support. Dynamic metadata endpoints (/api/badges/[id]) serve OpenSea/Coinbase Wallet standard attributes for all 20 badge tiers."
+  },
+  {
     date: "May 20, 2026",
     title: "Railway backend integration",
     body: "The production backend is wired to the Railway service at game-contracts-production.up.railway.app with /health checks and the same admin allowlist variables used by Lucky Draw and VRF operations. Backend RPC URLs now prefer configured provider URLs before public fallbacks, and Lucky Draw history skips archive-restricted log chunks instead of returning a 500 when a public RPC rejects old event ranges. Vercel builds only inline defined public env values, explicitly pin the frontend output directory, and use stable Next.js 16.2.6 instead of the canary build that failed during Vercel adapter config. Backend indexing also creates missing player rows before settled rounds are stored, Lucky Draw proof candidates are checked against the live game contracts before the Open Lucky Draw button can use them, a maintenance reconciliation can align Supabase draw counters to contract-valid unconsumed proofs, profile and game Lucky Draw cards refresh the summary on mount/focus and only show a Draws metric when a current draw is actually available, the Lucky Draw How it works and claimable history styles are included in the shipped stylesheet, proxy headers are trusted for rate limiting, and contract failures now show draw-specific messages."

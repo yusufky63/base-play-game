@@ -1,6 +1,6 @@
 # BasePlay
 
-Mini onchain games on Base L2. Provably fair, instant payouts. $0.50-$3 bets.
+Mini onchain games on Base L2. Provably fair, instant payouts. ETH bets.
 
 **Tagline:** Mini games. Real stakes. On Base.
 
@@ -8,21 +8,21 @@ Production is Base mainnet only. Testnet/Sepolia paths are intentionally removed
 
 ## Documentation Index
 
-| # | Document | Contents |
-|---|----------|----------|
-| 01 | [Architecture](./docs/01-architecture.md) | Stack, folder structure, network config, game registry |
-| 02 | [Smart Contracts](./docs/02-contracts.md) | Solidity contracts and comments |
-| 03 | [Deploy Guide](./docs/03-deploy.md) | Remix deploy, VRF setup, Basescan verify |
-| 04 | [Frontend](./docs/04-frontend.md) | Next.js, Wagmi, Basename, chain switch, components |
-| 05 | [Backend](./docs/05-backend.md) | Node.js, event listener, Crash engine, WebSocket |
-| 06 | [Database](./docs/06-database.md) | Supabase schema, migrations, RLS, Realtime |
-| 07 | [UI & Design](./docs/07-ui-design.md) | Design tokens, light/dark, icons, animations |
-| 08 | [Security](./docs/08-security.md) | Attack vectors, audit checklist, hardening |
-| 09 | [Tests](./docs/09-tests.md) | Hardhat test suite, mock contracts, coverage |
-| 10 | [Integrations](./docs/10-integrations.md) | Basename, Farcaster, Mini-app, Base Account |
-| 11 | [Roadmap](./docs/11-roadmap.md) | Phase checklist, pre-deploy checklist |
-| 12 | [Current Status](./docs/12-status.md) | Implemented scope, open gaps, deploy status |
-| 13 | [AI Icon Prompts](./docs/13-ai-icon-prompts.md) | Brand and icon prompt references |
+| #   | Document                                        | Contents                                               |
+| --- | ----------------------------------------------- | ------------------------------------------------------ |
+| 01  | [Architecture](./docs/01-architecture.md)       | Stack, folder structure, network config, game registry |
+| 02  | [Smart Contracts](./docs/02-contracts.md)       | Solidity contracts and comments                        |
+| 03  | [Deploy Guide](./docs/03-deploy.md)             | Remix deploy, VRF setup, Basescan verify               |
+| 04  | [Frontend](./docs/04-frontend.md)               | Next.js, Wagmi, Basename, chain switch, components     |
+| 05  | [Backend](./docs/05-backend.md)                 | Node.js, event listener, Crash engine, WebSocket       |
+| 06  | [Database](./docs/06-database.md)               | Supabase schema, migrations, RLS, Realtime             |
+| 07  | [UI & Design](./docs/07-ui-design.md)           | Design tokens, light/dark, icons, animations           |
+| 08  | [Security](./docs/08-security.md)               | Attack vectors, audit checklist, hardening             |
+| 09  | [Tests](./docs/09-tests.md)                     | Hardhat test suite, mock contracts, coverage           |
+| 10  | [Integrations](./docs/10-integrations.md)       | Basename, Farcaster, Mini-app, Base Account            |
+| 11  | [Roadmap](./docs/11-roadmap.md)                 | Phase checklist, pre-deploy checklist                  |
+| 12  | [Current Status](./docs/12-status.md)           | Implemented scope, open gaps, deploy status            |
+| 13  | [AI Icon Prompts](./docs/13-ai-icon-prompts.md) | Brand and icon prompt references                       |
 
 ## Quick Start
 
@@ -83,43 +83,43 @@ npm run dev:frontend
 
 ## Platform Summary
 
-| Area | Choice |
-|---|---|
-| Chain | Base Mainnet |
-| Currency | ETH only |
-| Min bet | 0.000055 ETH |
-| Max bet | 0.0005 ETH |
-| House edge | 5% |
-| Randomness | Chainlink VRF v2.5 |
-| Database | Supabase PostgreSQL + Realtime |
-| Backend | Node.js + Express + Socket.io |
-| Contracts | Solidity 0.8.24 + Hardhat tests |
+| Area       | Choice                                                        |
+| ---------- | ------------------------------------------------------------- |
+| Chain      | Base Mainnet                                                  |
+| Currency   | ETH only                                                      |
+| Min bet    | 0.000115 ETH                                                  |
+| Max bet    | 0.0005 ETH                                                    |
+| House edge | 5%                                                            |
+| Randomness | Chainlink VRF v2.5                                            |
+| Database   | Supabase PostgreSQL + Realtime                                |
+| Backend    | Node.js + Express + Socket.io                                 |
+| Contracts  | Solidity 0.8.24 + Hardhat tests                               |
 | Promotions | ETH-denominated Lucky Draw after 10 qualifying settled rounds |
 
 ## Games
 
-| Game | Multiplier | MVP status |
-|------|------------|------------|
-| Coin Flip | 2x gross, house edge in vault | Base mainnet live + tests |
-| Dice | 6x gross, house edge in vault | Base mainnet live + tests |
-| Crash | up to 10x | Base mainnet live + tests |
-| Mines | up to 20x | Base mainnet live + tests |
-| Hi-Lo | up to 8x | Base mainnet live + tests |
-| Over/Under | odds based | Base mainnet live + tests |
-| Limbo | target based | Base mainnet live + tests |
-| Wheel | risk table | Base mainnet live + tests |
-| Plinko Lite | path table | Base mainnet live + tests |
-| Color Pick | 4x gross | Base mainnet live + tests |
-| Treasure Chest | tier table | Base mainnet live + tests |
-| Lucky Seven | 6x gross | Base mainnet live + tests |
-| Roulette Lite | up to 12x | Base mainnet live + tests |
-| Scratch Card | up to 30x | Base mainnet live + tests |
-| Rock Paper Scissors | 2x gross | Base mainnet live + tests |
-| Slots | up to 25x | Base mainnet live + tests |
+| Game                | Multiplier                    | MVP status                |
+| ------------------- | ----------------------------- | ------------------------- |
+| Coin Flip           | 2x gross, house edge in vault | Base mainnet live + tests |
+| Dice                | 6x gross, house edge in vault | Base mainnet live + tests |
+| Crash               | up to 10x                     | Base mainnet live + tests |
+| Mines               | up to 20x                     | Base mainnet live + tests |
+| Hi-Lo               | up to 8x                      | Base mainnet live + tests |
+| Over/Under          | odds based                    | Base mainnet live + tests |
+| Limbo               | target based                  | Base mainnet live + tests |
+| Wheel               | risk table                    | Base mainnet live + tests |
+| Plinko Lite         | path table                    | Base mainnet live + tests |
+| Color Pick          | 4x gross                      | Base mainnet live + tests |
+| Treasure Chest      | tier table                    | Base mainnet live + tests |
+| Lucky Seven         | 6x gross                      | Base mainnet live + tests |
+| Roulette Lite       | up to 12x                     | Base mainnet live + tests |
+| Scratch Card        | up to 30x                     | Base mainnet live + tests |
+| Rock Paper Scissors | 2x gross                      | Base mainnet live + tests |
+| Slots               | up to 25x                     | Base mainnet live + tests |
 
 ## Lucky Draw
 
-Lucky Draw is a promotional reward loop, separate from wager settlement. Every 10 qualifying settled rounds unlocks one draw for the player. The frontend/backend prepare settled round proofs, and the `LuckyDraw` contract verifies those proofs against approved game contracts before requesting Chainlink VRF. Default reward tiers mirror `$0.10`, `$0.50`, `$1`, `$2.50`, `$5`, and `$10` converted to ETH at the admin reference price.
+Lucky Draw is a promotional reward loop, separate from wager settlement. Every 10 qualifying settled rounds at 0.000115 ETH or higher unlocks one draw for the player. The backend/UI applies a soft cap of 10 earned draw rights per wallet per UTC day, resetting at 03:00 TSI, while unused available draws carry over. The frontend/backend prepare settled round proofs, and the `LuckyDraw` contract verifies those proofs against approved game contracts before requesting Chainlink VRF. Default reward tiers mirror `$0.10`, `$0.50`, `$1`, `$2.50`, `$5`, and `$10` converted to ETH at the admin reference price.
 
 Security model:
 
@@ -128,5 +128,7 @@ Security model:
 - The prize table is snapshotted when the draw request is made, so later admin changes cannot alter a pending draw.
 - Chainlink VRF chooses the prize tier; the player claims the resolved ETH reward from the funded `LuckyDraw` contract.
 - Supabase tracks progress and prepares proof candidates, but no longer creates Lucky Draw randomness or payout records for new claims.
-- `/admin/lucky-draw` manages pause state, round requirement, minimum bet, ETH reference price, and on-chain prize weights.
-- Base mainnet `LuckyDraw`: `0x9b4b322302C1EA7E6e9f0d26F7F1a647E5D8185A`. The admin page also shows VRF subscription balances, consumer readiness, and LuckyDraw treasury fund/withdraw controls.
+- `/admin/lucky-draw` manages pause state, round requirement, minimum bet, daily cap, ETH reference price, on-chain prize weights, and the LuckyDraw reward treasury.
+- `/admin/vrf` shows the shared Chainlink VRF subscription health, native funding controls, consumer readiness, and pending coordinator state because the same subscription affects games and Lucky Draw.
+- Admin operation reads and writes require a configured owner wallet signature; production backend admin access should be configured through `BACKEND_ADMIN_ADDRESSES` or `OWNER_ADDRESS`.
+- Base mainnet `LuckyDraw`: `0x9b4b322302C1EA7E6e9f0d26F7F1a647E5D8185A`.

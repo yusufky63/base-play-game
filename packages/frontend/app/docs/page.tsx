@@ -85,12 +85,12 @@ const rewardNotes = [
   {
     icon: <Gift size={18} />,
     title: "Daily and weekly quests",
-    body: "Quests reward simple activity such as round counts, wins, trying different games, and keeping streaks. The active set now includes three-round, four-game, three-win, three-day streak, five-win weekly, and 50-round weekly goals. Connected players manage active quest and badge progress from the Quests page."
+    body: "Quests reward player activity such as round counts, wins, game variety, and daily streaks. The Quests page features a sleek, minimal card layout with distinct glowing green completed states, clear XP reward chips, and mobile-optimized horizontal scroll tabs (Daily, Weekly, Completed) with live task counts."
   },
   {
     icon: <BadgeCheck size={18} />,
-    title: "Badges",
-    body: "Badges are off-chain profile achievements in this version. Recent badges appear in progression panels, and the full shelf is shown on the player profile with earned and locked states visually separated."
+    title: "Badges and on-chain NFT claim",
+    body: "Badges represent major progression milestones across game tiers, win streaks, and quests. Earned badges can be claimed as on-chain ERC-1155 NFTs directly on Base via the BasePlayBadges contract (0x1Ca9E82eBA7967295C3D77404af639B592C268eD). The contract uses EIP-712 cryptographic signatures to ensure non-tamperable claims and soulbound achievement permanence."
   },
   {
     icon: <Radio size={18} />,
@@ -198,8 +198,8 @@ const faqs = [
     answer: "Daily and weekly quests update after a settled on-chain round is indexed. They can track rounds, wins, distinct games, and streaks. Pending, failed, or refunded rounds do not count."
   },
   {
-    question: "Can badges be minted?",
-    answer: "Not in the first version. Badges are profile achievements now, with mint-ready metadata fields prepared for a future contract if it is added."
+    question: "Can badges be claimed as NFTs?",
+    answer: "Yes. Earned badges can be claimed as on-chain ERC-1155 NFTs on Base directly from the Quests page using the Claim NFT button. Single and batch claims are supported with gas-efficient L2 execution."
   },
   {
     question: "Why are XP and volume separate rankings?",
@@ -212,26 +212,6 @@ const faqs = [
   {
     question: "Can direct contract calls cheat the games?",
     answer: "Direct calls use the same game contract validation as the UI. Invalid params revert, active rounds are limited, and the vault reserves max payout before randomness is requested. For Lucky Draw, the 0.000115 ETH minimum eligible bet is contract-enforced, while the daily 10 earned-draw cap is a backend/UI soft cap until a future LuckyDraw v2 moves that limit on-chain."
-  },
-  {
-    question: "Can bots predict the result?",
-    answer: "Bots can submit transactions like any wallet, but they cannot know the VRF result before the contract receives it. Rate limits and max bet controls reduce spam and vault risk."
-  },
-  {
-    question: "Why is Scratch Card one ticket?",
-    answer: "Scratch Card has no player-side choice. One bet creates one VRF-backed prize tier, so the UI presents it as a single reveal ticket."
-  },
-  {
-    question: "Why can a payout still be a net loss?",
-    answer: "Some games can land below 1x gross, such as low Plinko slots. That is a payout segment, but it can still be less than the wager and therefore a net loss."
-  },
-  {
-    question: "What should I check before playing?",
-    answer: "Check the connected wallet, selected Base network, bet amount, and the game options. BasePlay also checks network and wallet balance before sending the wager."
-  },
-  {
-    question: "Why is the Play button disabled?",
-    answer: "BasePlay only opens Play when the selected game is ready and the bankroll can safely cover the round. If it is disabled, try another game or check again later."
   }
 ];
 

@@ -5,6 +5,7 @@
   "scripts": {
     "compile": "hardhat compile",
     "deploy:base": "hardhat run scripts/deploy.ts --network base",
+    "deploy:badges:base": "hardhat run scripts/deploy-badges.ts --network base",
     "deploy:lucky-draw:base": "hardhat run scripts/deploy-lucky-draw.ts --network base",
     "deploy:missing:base": "hardhat run scripts/deploy-missing-games.ts --network base",
     "resume:vault-v2:base": "hardhat run scripts/resume-vault-v2-migration.ts --network base",

@@ -14,6 +14,9 @@
     "dev:backend": "npm --workspace @baseplay/backend run dev",
     "deploy:base": "npm --workspace @baseplay/contracts run deploy:base",
     "deploy:missing:base": "npm --workspace @baseplay/contracts run deploy:missing:base",
+    "deploy:vercel:prod": "npx vercel deploy --prod --yes",
+    "deploy:render:prod": "node scripts/deploy-render.mjs",
+    "deploy:prod": "npm run deploy:vercel:prod && npm run deploy:render:prod",
     "test:contracts": "npm --workspace @baseplay/contracts run test",
     "coverage:contracts": "npm --workspace @baseplay/contracts run coverage",
     "compile:contracts": "npm --workspace @baseplay/contracts run compile"

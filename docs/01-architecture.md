@@ -24,7 +24,7 @@
 | Deploy | Remix IDE | — | [remix-ide.readthedocs.io](https://remix-ide.readthedocs.io) |
 | Tests | Hardhat | 2.x | [hardhat.org/docs](https://hardhat.org/docs) |
 | Hosting FE | Vercel | — | [vercel.com/docs](https://vercel.com/docs) |
-| Hosting BE | Railway | — | [docs.railway.app](https://docs.railway.app) |
+| Hosting BE | Railway | — | [docs.railway.com](https://docs.railway.com) |
 | RPC | Alchemy | — | [docs.alchemy.com](https://docs.alchemy.com) |
 
 ---

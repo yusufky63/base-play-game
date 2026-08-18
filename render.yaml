@@ -1,13 +1,18 @@
 services:
   - type: web
-    name: baseplay-backend
-    env: docker
-    dockerfilePath: ./Dockerfile.backend
+    name: base-play-game
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm ci --include=dev && npm --workspace @baseplay/backend run build
+    startCommand: npm --workspace @baseplay/backend run start
     healthCheckPath: /health
     autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NPM_CONFIG_PRODUCTION
+        value: "false"
       - key: PORT
         value: 4000
       - key: FRONTEND_URL
@@ -16,5 +21,9 @@ services:
         value: https://buubouudfeyhltsqryam.supabase.co
       - key: SUPABASE_SERVICE_KEY
         sync: false
+      - key: BASE_MAINNET_BACKEND_RPC_URLS
+        value: https://mainnet.base.org,https://base-rpc.publicnode.com
+      - key: BACKEND_ADMIN_ADDRESSES
+        value: 0x78de409a6306550882328E2a67160471368387FF,0xEAa823AB4C4eE00283d8ed7be713ddf8A5ba0Fac
       - key: VRF_SUB_ID_MAINNET
         value: "99206800527867153437621897824214889292890569130424926759764033108751536998150"

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { isAddress } from "viem";
 import { useAccount } from "wagmi";
-import { Activity, BadgeCheck, Clipboard, Flame, Gift, RefreshCw, Sparkles, Trophy, Users, WalletCards } from "lucide-react";
+import { Activity, BadgeCheck, CheckCircle2, Clipboard, Flame, Gift, RefreshCw, Sparkles, Trophy, Users, WalletCards } from "lucide-react";
 import { BasenameLabel } from "@/components/base/BasenameLabel";
 import { GameIdentity, getGameLabel, getGamePath } from "@/components/game/GameIdentity";
 import { useEthUsdPrice } from "@/hooks/useEthUsdPrice";
@@ -265,7 +265,11 @@ export function ProfileClient({ address }: { address: string }) {
             <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
               {profile.isLoading && <ProfileLoadingCards />}
               {!profile.isLoading && (data?.badges ?? []).map((badge) => (
-                <div key={badge.badge_id} className="badge-card">
+                <div key={badge.badge_id} className="badge-card badge-card-earned">
+                  <div className="badge-card-status">
+                    <CheckCircle2 size={12} />
+                    Earned
+                  </div>
                   <div className="badge-card-icon">
                     <BadgeCheck size={20} />
                   </div>
@@ -346,7 +350,7 @@ export function ProfileClient({ address }: { address: string }) {
           <div className="profile-tab-panel">
             <div className="profile-panel-heading">
               <h2 className="display-heading text-lg font-bold text-[var(--text-1)]">Lucky Draw</h2>
-              <span>10 settled rounds unlock one draw</span>
+              <span>10 qualifying 0.000115+ ETH rounds unlock one draw</span>
             </div>
             <div className="p-4">
               <LuckyDrawCard address={validAddress} />

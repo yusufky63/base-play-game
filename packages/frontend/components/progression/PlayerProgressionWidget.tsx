@@ -63,7 +63,16 @@ export function PlayerProgressionWidget({ variant = "home" }: { variant?: "home"
                 <div key={`${quest.quest_id}-${quest.period_start}`} className={`progression-mini-quest ${quest.completed ? "progression-mini-quest-done" : ""}`}>
                   <div className="progression-mini-row">
                     <span>{quest.title}</span>
-                    <strong>{quest.completed ? <CheckCircle2 size={13} /> : `+${quest.reward_xp} XP`}</strong>
+                    <strong>
+                      {quest.completed ? (
+                        <span className="progression-mini-done">
+                          <CheckCircle2 size={13} />
+                          Done
+                        </span>
+                      ) : (
+                        `+${quest.reward_xp} XP`
+                      )}
+                    </strong>
                   </div>
                   <div className="progression-mini-track">
                     <i style={{ width: `${percent}%` }} />
