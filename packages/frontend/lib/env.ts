@@ -18,7 +18,7 @@ const publicEnvSchema = z.object({
   NEXT_PUBLIC_BET_PRESETS_ETH: z.string().optional().default("0.000115,0.00023,0.0005")
 });
 
-export const env = publicEnvSchema.parse({
+const parsedEnv = publicEnvSchema.safeParse({
   NEXT_PUBLIC_DEFAULT_CHAIN: cleanEnv(process.env.NEXT_PUBLIC_DEFAULT_CHAIN),
   NEXT_PUBLIC_SUPABASE_URL: cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
@@ -30,6 +30,19 @@ export const env = publicEnvSchema.parse({
   NEXT_PUBLIC_BACKEND_URL: cleanEnv(process.env.NEXT_PUBLIC_BACKEND_URL),
   NEXT_PUBLIC_BET_PRESETS_ETH: cleanEnv(process.env.NEXT_PUBLIC_BET_PRESETS_ETH)
 });
+
+export const env = parsedEnv.success ? parsedEnv.data : {
+  NEXT_PUBLIC_DEFAULT_CHAIN: "baseMainnet" as const,
+  NEXT_PUBLIC_SUPABASE_URL: cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL) || "",
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) || "",
+  NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: cleanEnv(process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID) || "",
+  NEXT_PUBLIC_WALLETCONNECT_ID: cleanEnv(process.env.NEXT_PUBLIC_WALLETCONNECT_ID) || "",
+  NEXT_PUBLIC_OWNER_ADDRESS: cleanEnv(process.env.NEXT_PUBLIC_OWNER_ADDRESS) || "",
+  NEXT_PUBLIC_ADMIN_ADDRESSES: cleanEnv(process.env.NEXT_PUBLIC_ADMIN_ADDRESSES) || "",
+  NEXT_PUBLIC_APP_URL: cleanEnv(process.env.NEXT_PUBLIC_APP_URL) || "",
+  NEXT_PUBLIC_BACKEND_URL: cleanEnv(process.env.NEXT_PUBLIC_BACKEND_URL) || "",
+  NEXT_PUBLIC_BET_PRESETS_ETH: cleanEnv(process.env.NEXT_PUBLIC_BET_PRESETS_ETH) || "0.000115,0.00023,0.0005"
+};
 
 export const walletConnectProjectId =
   env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || env.NEXT_PUBLIC_WALLETCONNECT_ID || DEFAULT_WALLETCONNECT_PROJECT_ID;
