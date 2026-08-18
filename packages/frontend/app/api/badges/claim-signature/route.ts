@@ -3,8 +3,40 @@ import { getAddress, isAddress } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { getContractAddress } from "@baseplay/shared/config/addresses";
 import { createClient } from "@supabase/supabase-js";
+import fs from "node:fs";
+import path from "node:path";
 
 export const dynamic = "force-dynamic";
+
+function getPrivateKey(): `0x${string}` | null {
+  let pk = process.env.PRIVATE_KEY;
+  if (pk) {
+    return (pk.startsWith("0x") ? pk : `0x${pk}`) as `0x${string}`;
+  }
+
+  // Fallback for local development if process.env wasn't inlined
+  const candidatePaths = [
+    path.resolve(process.cwd(), ".env.local"),
+    path.resolve(process.cwd(), ".env"),
+    path.resolve(process.cwd(), "../../.env"),
+    path.resolve(process.cwd(), "../.env")
+  ];
+
+  for (const envPath of candidatePaths) {
+    if (fs.existsSync(envPath)) {
+      try {
+        const content = fs.readFileSync(envPath, "utf8");
+        const match = content.match(/^PRIVATE_KEY=(.*)$/m);
+        if (match && match[1]) {
+          const raw = match[1].trim().replace(/^["']|["']$/g, "");
+          return (raw.startsWith("0x") ? raw : `0x${raw}`) as `0x${string}`;
+        }
+      } catch {}
+    }
+  }
+
+  return null;
+}
 
 function getSupabaseServer() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -23,12 +55,11 @@ export async function POST(req: Request) {
     }
 
     const playerAddress = getAddress(address);
-    const privateKeyRaw = process.env.PRIVATE_KEY;
-    if (!privateKeyRaw) {
+    const privateKey = getPrivateKey();
+    if (!privateKey) {
       return NextResponse.json({ error: "Platform signer not configured" }, { status: 500 });
     }
 
-    const privateKey = (privateKeyRaw.startsWith("0x") ? privateKeyRaw : `0x${privateKeyRaw}`) as `0x${string}`;
     const signerAccount = privateKeyToAccount(privateKey);
     const contractAddress = getContractAddress(8453, "BasePlayBadges");
 
@@ -38,8 +69,8 @@ export async function POST(req: Request) {
     if (supabase) {
       const { data: unlockedBadges, error } = await supabase
         .from("player_badges")
-        .select("badge_id, badge_definitions!inner(token_id)")
-        .eq("player_address", playerAddress.toLowerCase());
+        .select("badge_id, badge_definitions(token_id)")
+        .eq("player", playerAddress.toLowerCase());
 
       if (error) {
         console.error("[claim-signature] Supabase error:", error);
