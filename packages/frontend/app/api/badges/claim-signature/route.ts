@@ -9,58 +9,69 @@ import path from "node:path";
 export const dynamic = "force-dynamic";
 
 function getPrivateKey(): `0x${string}` | null {
-  let raw = process.env.PRIVATE_KEY;
-  if (!raw) {
-    const candidatePaths = [
-      path.resolve(process.cwd(), ".env.local"),
-      path.resolve(process.cwd(), ".env"),
-      path.resolve(process.cwd(), "../../.env"),
-      path.resolve(process.cwd(), "../.env")
-    ];
+  try {
+    let raw = process.env.PRIVATE_KEY;
+    if (!raw && typeof process !== "undefined" && process.cwd) {
+      const candidatePaths = [
+        path.resolve(process.cwd(), ".env.local"),
+        path.resolve(process.cwd(), ".env"),
+        path.resolve(process.cwd(), "../../.env"),
+        path.resolve(process.cwd(), "../.env")
+      ];
 
-    for (const envPath of candidatePaths) {
-      if (fs.existsSync(envPath)) {
+      for (const envPath of candidatePaths) {
         try {
-          const content = fs.readFileSync(envPath, "utf8");
-          const match = content.match(/^PRIVATE_KEY=(.*)$/m);
-          if (match && match[1]) {
-            raw = match[1];
-            break;
+          if (fs.existsSync(envPath)) {
+            const content = fs.readFileSync(envPath, "utf8");
+            const match = content.match(/^PRIVATE_KEY=(.*)$/m);
+            if (match && match[1]) {
+              raw = match[1];
+              break;
+            }
           }
         } catch {}
       }
     }
+
+    if (!raw) return null;
+
+    const cleaned = raw.trim().replace(/^["']|["']$/g, "").replace(/[\r\n\t\s]/g, "");
+    if (!cleaned) return null;
+
+    const hex = cleaned.startsWith("0x") ? cleaned : `0x${cleaned}`;
+    return hex as `0x${string}`;
+  } catch {
+    return null;
   }
-
-  if (!raw) return null;
-
-  const cleaned = raw.trim().replace(/^["']|["']$/g, "").replace(/[\r\n\t\s]/g, "");
-  if (!cleaned) return null;
-
-  const hex = cleaned.startsWith("0x") ? cleaned : `0x${cleaned}`;
-  return hex as `0x${string}`;
 }
 
 function getSupabaseServer() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return null;
-  return createClient(url, key, { auth: { persistSession: false } });
+  try {
+    return createClient(url, key, { auth: { persistSession: false } });
+  } catch {
+    return null;
+  }
 }
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const { address, tokenId, tokenIds } = body;
 
     if (!address || !isAddress(address)) {
-      return NextResponse.json({ error: "Invalid player address" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid player address" }, { status: 200 });
     }
 
     const playerAddress = getAddress(address);
     const privateKey = getPrivateKey();
     if (!privateKey) {
-      return NextResponse.json({ error: "Platform signer not configured" }, { status: 500 });
+      return NextResponse.json(
+        { success: false, error: "Platform signer not configured. Please ensure PRIVATE_KEY is set." },
+        { status: 200 }
+      );
     }
 
     const signerAccount = privateKeyToAccount(privateKey);
@@ -88,13 +99,13 @@ export async function POST(req: Request) {
         );
 
         if (tokenId !== undefined && !unlockedTokenIds.has(Number(tokenId))) {
-          return NextResponse.json({ error: "Badge not earned by this player" }, { status: 403 });
+          return NextResponse.json({ success: false, error: "Badge not earned by this player" }, { status: 200 });
         }
 
         if (Array.isArray(tokenIds)) {
           const hasAll = tokenIds.every((id: number) => unlockedTokenIds.has(Number(id)));
           if (!hasAll) {
-            return NextResponse.json({ error: "One or more badges not earned by player" }, { status: 403 });
+            return NextResponse.json({ success: false, error: "One or more badges not earned by player" }, { status: 200 });
           }
         }
       }
@@ -169,9 +180,9 @@ export async function POST(req: Request) {
       });
     }
 
-    return NextResponse.json({ error: "Missing tokenId or tokenIds" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Missing tokenId or tokenIds" }, { status: 200 });
   } catch (err: any) {
     console.error("[claim-signature] Server error:", err);
-    return NextResponse.json({ error: err?.message || "Failed to generate signature" }, { status: 500 });
+    return NextResponse.json({ success: false, error: err?.message || "Failed to generate signature" }, { status: 200 });
   }
 }
