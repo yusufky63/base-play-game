@@ -135,6 +135,35 @@ export function QuestsClient() {
 
   const onChainClaimedSet = onChainBadgesQuery.data ?? new Set<number>();
 
+  async function fetchClaimSignature(payload: { address: string; tokenId?: number; tokenIds?: number[] }) {
+    const backendBase = (process.env.NEXT_PUBLIC_BACKEND_URL || "https://game-contracts-production.up.railway.app").replace(/\/+$/, "");
+    const endpoints = [
+      "/api/badges/claim-signature",
+      `${backendBase}/api/badges/claim-signature`
+    ];
+
+    let lastError = "Failed to obtain claim signature";
+    for (const endpoint of endpoints) {
+      try {
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => null);
+        if (data && data.success) {
+          return data;
+        }
+        if (data?.error) {
+          lastError = data.error;
+        }
+      } catch (e: any) {
+        lastError = e?.message || lastError;
+      }
+    }
+    throw new Error(lastError);
+  }
+
   // Claim single badge handler
   async function handleClaimBadge(tokenId: number) {
     if (!address) return;
@@ -146,22 +175,7 @@ export function QuestsClient() {
         await switchChainAsync({ chainId: 8453 });
       }
 
-      const res = await fetch("/api/badges/claim-signature", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address, tokenId })
-      });
-
-      let data: any = null;
-      try {
-        data = await res.json();
-      } catch {
-        throw new Error("Server returned an invalid response. Please ensure Vercel environment variables are applied with a fresh deployment.");
-      }
-
-      if (!res.ok || !data?.success) {
-        throw new Error(data?.error || "Failed to obtain claim signature");
-      }
+      const data = await fetchClaimSignature({ address, tokenId });
 
       const hash = await writeContractAsync({
         address: badgesAddress,
@@ -194,22 +208,7 @@ export function QuestsClient() {
         await switchChainAsync({ chainId: 8453 });
       }
 
-      const res = await fetch("/api/badges/claim-signature", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address, tokenIds: unclaimedTokenIds })
-      });
-
-      let data: any = null;
-      try {
-        data = await res.json();
-      } catch {
-        throw new Error("Server returned an invalid response during batch claim.");
-      }
-
-      if (!res.ok || !data?.success) {
-        throw new Error(data?.error || "Failed to obtain batch claim signature");
-      }
+      const data = await fetchClaimSignature({ address, tokenIds: unclaimedTokenIds });
 
       const hash = await writeContractAsync({
         address: badgesAddress,

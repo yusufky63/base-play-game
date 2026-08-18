@@ -13,6 +13,7 @@ import { startCrashEngine } from "./services/crashEngine.js";
 import { getIndexerHealth, initEventListeners } from "./services/eventListener.js";
 import { claimLuckyDraw, getLuckyDrawAdminState, getLuckyDrawPublicHistory, getLuckyDrawSummary, updateLuckyDrawConfig, updateLuckyDrawResultStatus, verifyAdminSignature } from "./services/luckyDraw.js";
 import { claimReferral, getReferralSummary } from "./services/referrals.js";
+import { generateBadgeClaimSignature } from "./services/badgeClaim.js";
 
 const app = express();
 const server = createServer(app);
@@ -64,6 +65,15 @@ app.get("/api/player/:address/pending-rounds", chainReadRateLimit, async (req, r
 app.post("/api/referrals/claim", referralRateLimit, async (req, res, next) => {
   try {
     res.json(await claimReferral(req.body));
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post("/api/badges/claim-signature", async (req, res, next) => {
+  try {
+    const result = await generateBadgeClaimSignature(req.body);
+    res.json(result);
   } catch (error) {
     next(error);
   }
