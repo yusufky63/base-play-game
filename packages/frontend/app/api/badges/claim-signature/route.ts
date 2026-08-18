@@ -76,7 +76,12 @@ export async function POST(req: Request) {
         console.error("[claim-signature] Supabase error:", error);
       } else if (unlockedBadges) {
         const unlockedTokenIds = new Set(
-          unlockedBadges.map((b: any) => b.badge_definitions?.token_id).filter(Boolean)
+          unlockedBadges
+            .map((b: any) => {
+              const def = Array.isArray(b.badge_definitions) ? b.badge_definitions[0] : b.badge_definitions;
+              return def?.token_id;
+            })
+            .filter((id): id is number => typeof id === "number")
         );
 
         if (tokenId !== undefined && !unlockedTokenIds.has(Number(tokenId))) {

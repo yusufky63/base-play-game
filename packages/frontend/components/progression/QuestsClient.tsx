@@ -152,9 +152,15 @@ export function QuestsClient() {
         body: JSON.stringify({ address, tokenId })
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Failed to obtain claim signature");
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error("Server returned an invalid response. Please ensure Vercel environment variables are applied with a fresh deployment.");
+      }
+
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error || "Failed to obtain claim signature");
       }
 
       const hash = await writeContractAsync({
@@ -194,9 +200,15 @@ export function QuestsClient() {
         body: JSON.stringify({ address, tokenIds: unclaimedTokenIds })
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Failed to obtain batch claim signature");
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error("Server returned an invalid response during batch claim.");
+      }
+
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error || "Failed to obtain batch claim signature");
       }
 
       const hash = await writeContractAsync({
