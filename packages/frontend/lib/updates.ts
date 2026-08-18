@@ -1,5 +1,10 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
+    date: "May 22, 2026",
+    title: "Badge claim signer resiliency and multi-alias resolution",
+    body: "Enhanced backend and API badge claim signature services with multi-alias environment variable resolution (PRIVATE_KEY, SIGNER_PRIVATE_KEY, PLATFORM_SIGNER_PRIVATE_KEY), automated inline comment/whitespace stripping, strict 32-byte hex validation, and dual Vercel/Railway endpoint fallback diagnostics."
+  },
+  {
     date: "May 21, 2026",
     title: "BasePlay Badges ERC-1155 contract and NFT claim live on Base",
     body: "The BasePlayBadges (ERC-1155) smart contract has been deployed to Base Mainnet at 0x1Ca9E82eBA7967295C3D77404af639B592C268eD with EIP-712 cryptographic signature verification and soulbound achievement security. Players can now claim their in-game earned achievement badges as on-chain NFTs directly to their wallets with single and batch claim support. Dynamic metadata endpoints (/api/badges/[id]) serve OpenSea/Coinbase Wallet standard attributes for all 20 badge tiers."

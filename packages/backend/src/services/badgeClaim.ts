@@ -1,14 +1,68 @@
+import fs from "node:fs";
+import path from "node:path";
 import { getAddress, isAddress } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { getContractAddress } from "@baseplay/shared/config/addresses";
 import { supabaseAdmin } from "../supabase/client.js";
 
 function getPrivateKey(): `0x${string}` | null {
-  const raw = process.env.PRIVATE_KEY;
+  const candidateKeys = [
+    "PRIVATE_KEY",
+    "SIGNER_PRIVATE_KEY",
+    "PLATFORM_SIGNER_PRIVATE_KEY",
+    "BADGE_SIGNER_PRIVATE_KEY",
+    "ADMIN_PRIVATE_KEY",
+    "BACKEND_PRIVATE_KEY",
+    "SERVER_PRIVATE_KEY",
+    "RELAYER_PRIVATE_KEY",
+    "DEPLOYER_PRIVATE_KEY",
+    "WALLET_PRIVATE_KEY",
+    "EVM_PRIVATE_KEY",
+    "NEXT_PUBLIC_PRIVATE_KEY"
+  ];
+
+  let raw: string | undefined;
+
+  for (const key of candidateKeys) {
+    const val = process.env[key];
+    if (val && typeof val === "string" && val.trim().length > 0) {
+      raw = val;
+      break;
+    }
+  }
+
+  // Fallback: case-insensitive scan of all env keys
+  if (!raw) {
+    for (const [k, v] of Object.entries(process.env)) {
+      if (!v || typeof v !== "string" || !v.trim()) continue;
+      const clean = k.toLowerCase().trim().replace(/[^a-z0-9]/g, "");
+      if (
+        clean === "privatekey" ||
+        clean === "signerprivatekey" ||
+        clean === "platformsignerprivatekey" ||
+        clean === "badgesignerprivatekey" ||
+        clean === "adminprivatekey" ||
+        clean.endsWith("privatekey") ||
+        clean.endsWith("signerkey")
+      ) {
+        raw = v;
+        break;
+      }
+    }
+  }
+
   if (!raw) return null;
-  const cleaned = raw.trim().replace(/^["']|["']$/g, "").replace(/[\r\n\t\s]/g, "");
+
+  const noComments = raw.split("#")[0].split("//")[0];
+  const cleaned = noComments.trim().replace(/^["']|["']$/g, "").replace(/[\r\n\t\s]/g, "");
   if (!cleaned) return null;
+
   const hex = cleaned.startsWith("0x") ? cleaned : `0x${cleaned}`;
+  if (!/^0x[0-9a-fA-F]{64}$/.test(hex)) {
+    console.warn(`[badgeClaim] Signer private key format invalid (length: ${hex.length}). Expected 66 chars (0x + 64 hex).`);
+    return null;
+  }
+
   return hex as `0x${string}`;
 }
 
@@ -25,10 +79,16 @@ export async function generateBadgeClaimSignature(input: {
   const playerAddress = getAddress(address);
   const privateKey = getPrivateKey();
   if (!privateKey) {
-    return { success: false, error: "Platform signer not configured on backend" };
+    return { success: false, error: "Platform signer not configured on backend. Please ensure PRIVATE_KEY is set in Railway environment variables." };
   }
 
-  const signerAccount = privateKeyToAccount(privateKey);
+  let signerAccount;
+  try {
+    signerAccount = privateKeyToAccount(privateKey);
+  } catch (err: any) {
+    console.error("[badgeClaim] Failed to initialize signer account:", err?.message);
+    return { success: false, error: "Invalid platform signer private key on backend" };
+  }
   const contractAddress = getContractAddress(8453, "BasePlayBadges");
 
   // Verify ownership in database

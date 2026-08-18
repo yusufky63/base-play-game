@@ -90,7 +90,7 @@ const rewardNotes = [
   {
     icon: <BadgeCheck size={18} />,
     title: "Badges and on-chain NFT claim",
-    body: "Badges represent major progression milestones across game tiers, win streaks, and quests. Earned badges can be claimed as on-chain ERC-1155 NFTs directly on Base via the BasePlayBadges contract (0x1Ca9E82eBA7967295C3D77404af639B592C268eD). The contract uses EIP-712 cryptographic signatures to ensure non-tamperable claims and soulbound achievement permanence."
+    body: "Badges represent major progression milestones across game tiers, win streaks, and quests. Earned badges can be claimed as on-chain ERC-1155 NFTs directly on Base via the BasePlayBadges contract (0x1Ca9E82eBA7967295C3D77404af639B592C268eD). The contract uses EIP-712 cryptographic signatures issued by the platform signer to ensure non-tamperable claims and soulbound achievement permanence."
   },
   {
     icon: <Radio size={18} />,
