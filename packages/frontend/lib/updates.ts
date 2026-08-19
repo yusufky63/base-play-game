@@ -1,5 +1,10 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
+    date: "May 23, 2026",
+    title: "Badges UI redesign and elevated NFT claim experience",
+    body: "Redesigned collectible badge achievement cards with tier-specific glowing visual frames (Bronze, Silver, Gold, Diamond), dedicated high-contrast Claim NFT action buttons, real-time minting loading states, and direct BaseScan verified NFT verification links."
+  },
+  {
     date: "May 22, 2026",
     title: "Badge claim signer resiliency and multi-alias resolution",
     body: "Enhanced backend and API badge claim signature services with multi-alias environment variable resolution (PRIVATE_KEY, SIGNER_PRIVATE_KEY, PLATFORM_SIGNER_PRIVATE_KEY), automated inline comment/whitespace stripping, strict 32-byte hex validation, and dual Vercel/Railway endpoint fallback diagnostics."

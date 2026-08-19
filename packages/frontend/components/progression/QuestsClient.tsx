@@ -21,6 +21,7 @@ import { type Abi, getAddress } from "viem";
 import type { Database } from "@baseplay/shared/types/supabase.types";
 import { getContractAddress } from "@baseplay/shared/config/addresses";
 import basePlayBadgesAbi from "@baseplay/shared/abis/BasePlayBadges.json";
+import { BASEPLAY_BUILDER_CODE_SUFFIX } from "@/lib/builderCode";
 import { WalletStatus } from "@/components/wallet/WalletStatus";
 import { usePlayerProfile } from "@/hooks/usePlayerProfile";
 import { mergeQuestRows, type QuestProgressItem, useQuestDefinitions } from "@/hooks/useQuestDefinitions";
@@ -69,7 +70,6 @@ export function QuestsClient() {
   const [view, setView] = useState<QuestView>("daily");
   const [board, setBoard] = useState<QuestBoard>("quests");
   const [claimingTokenId, setClaimingTokenId] = useState<number | null>(null);
-  const [isBatchClaiming, setIsBatchClaiming] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const badgesAddress = useMemo(() => {
@@ -135,7 +135,7 @@ export function QuestsClient() {
 
   const onChainClaimedSet = onChainBadgesQuery.data ?? new Set<number>();
 
-  async function fetchClaimSignature(payload: { address: string; tokenId?: number; tokenIds?: number[] }) {
+  async function fetchClaimSignature(payload: { address: string; tokenId: number }) {
     const backendBase = (process.env.NEXT_PUBLIC_BACKEND_URL || "https://game-contracts-production.up.railway.app").replace(/\/+$/, "");
     const endpoints = [
       "/api/badges/claim-signature",
@@ -181,7 +181,8 @@ export function QuestsClient() {
         address: badgesAddress,
         abi: basePlayBadgesAbi as Abi,
         functionName: "claimBadge",
-        args: [BigInt(tokenId), BigInt(data.deadline), data.signature]
+        args: [BigInt(tokenId), BigInt(data.deadline), data.signature],
+        dataSuffix: BASEPLAY_BUILDER_CODE_SUFFIX
       });
 
       if (publicClient) {
@@ -196,49 +197,6 @@ export function QuestsClient() {
       setClaimingTokenId(null);
     }
   }
-
-  // Batch claim handler
-  async function handleBatchClaim(unclaimedTokenIds: number[]) {
-    if (!address || unclaimedTokenIds.length === 0) return;
-    setActionError(null);
-    setIsBatchClaiming(true);
-
-    try {
-      if (account.chainId !== 8453 && switchChainAsync) {
-        await switchChainAsync({ chainId: 8453 });
-      }
-
-      const data = await fetchClaimSignature({ address, tokenIds: unclaimedTokenIds });
-
-      const hash = await writeContractAsync({
-        address: badgesAddress,
-        abi: basePlayBadgesAbi as Abi,
-        functionName: "claimBadgesBatch",
-        args: [unclaimedTokenIds.map(BigInt), BigInt(data.deadline), data.signature]
-      });
-
-      if (publicClient) {
-        await publicClient.waitForTransactionReceipt({ hash });
-      }
-
-      await queryClient.invalidateQueries({ queryKey: ["on-chain-badges", address] });
-    } catch (err: any) {
-      console.error("[QuestsClient] Batch claim error:", err);
-      setActionError(err?.shortMessage || err?.message || "Batch badge claim failed.");
-    } finally {
-      setIsBatchClaiming(false);
-    }
-  }
-
-  // Find all earned badges that haven't been claimed on-chain yet
-  const unmintedEarnedTokenIds = useMemo(() => {
-    return earnedBadges
-      .map((eb) => {
-        const badgeDef = allBadges.find((b) => b.id === eb.badge_id);
-        return badgeDef?.token_id;
-      })
-      .filter((id): id is number => typeof id === "number" && !onChainClaimedSet.has(id));
-  }, [earnedBadges, allBadges, onChainClaimedSet]);
 
   return (
     <main className="quests-page mx-auto w-full max-w-7xl px-4 py-8 md:py-10">
@@ -436,18 +394,6 @@ export function QuestsClient() {
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                {unmintedEarnedTokenIds.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => handleBatchClaim(unmintedEarnedTokenIds)}
-                    disabled={isBatchClaiming || claimingTokenId !== null}
-                    className="quests-badge-batch-btn"
-                  >
-                    {isBatchClaiming ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
-                    <span>Claim All Ready ({unmintedEarnedTokenIds.length})</span>
-                  </button>
-                )}
-
                 <div className="quests-badge-counter-pill">
                   <BadgeCheck size={14} />
                   <span>{earnedBadges.length} / {allBadges.length || DEFAULT_BADGE_DEFINITIONS.length} Earned</span>
@@ -564,6 +510,14 @@ function QuestCard({ quest, connected }: { quest: QuestProgressItem; connected: 
   );
 }
 
+function getBadgeTierInfo(tokenId?: number | null): { tier: "Bronze" | "Silver" | "Gold" | "Diamond"; colorClass: string; iconTone: string } {
+  if (!tokenId) return { tier: "Bronze", colorClass: "badge-tier-bronze", iconTone: "text-[#d97706]" };
+  if ([15, 20].includes(tokenId)) return { tier: "Diamond", colorClass: "badge-tier-diamond", iconTone: "text-[#06b6d4]" };
+  if ([4, 9, 10, 14, 19].includes(tokenId)) return { tier: "Gold", colorClass: "badge-tier-gold", iconTone: "text-[#eab308]" };
+  if ([5, 6, 7, 12, 13, 17, 18].includes(tokenId)) return { tier: "Silver", colorClass: "badge-tier-silver", iconTone: "text-[#94a3b8]" };
+  return { tier: "Bronze", colorClass: "badge-tier-bronze", iconTone: "text-[#d97706]" };
+}
+
 function BadgeCard({
   badge,
   earned,
@@ -580,20 +534,40 @@ function BadgeCard({
   onClaim?: () => void;
 }) {
   const isEarned = Boolean(earned);
+  const tierInfo = getBadgeTierInfo(badge.token_id);
 
   return (
-    <article className={`quests-badge-card ${isEarned ? "quests-badge-earned" : "quests-badge-locked"}`}>
+    <article className={`quests-badge-card ${tierInfo.colorClass} ${isEarned ? "quests-badge-earned" : "quests-badge-locked"} ${isClaimedOnChain ? "is-claimed-onchain" : ""}`}>
       <div className="quests-badge-top">
-        <div className="quests-badge-emblem">
-          {isEarned ? <BadgeCheck size={20} /> : <LockKeyhole size={18} />}
+        <div className="quests-badge-emblem-wrap">
+          <div className="quests-badge-emblem">
+            {isEarned ? (
+              isClaimedOnChain ? (
+                <Trophy size={20} className="text-[var(--win)]" />
+              ) : (
+                <BadgeCheck size={20} className={tierInfo.iconTone} />
+              )
+            ) : (
+              <LockKeyhole size={18} />
+            )}
+          </div>
+          {isClaimedOnChain && (
+            <span className="quests-badge-emblem-check" title="Minted on Base">
+              <CheckCircle2 size={11} />
+            </span>
+          )}
         </div>
+
         <div className="quests-badge-meta-pills">
           {badge.token_id && (
             <span className="quests-badge-token-id">#{String(badge.token_id).padStart(2, "0")}</span>
           )}
+          <span className={`quests-badge-tier-pill ${tierInfo.colorClass}`}>
+            {tierInfo.tier}
+          </span>
           <span className={`quests-badge-state ${isEarned ? "quests-badge-state-earned" : "quests-badge-state-locked"}`}>
             {isEarned ? <CheckCircle2 size={11} /> : <LockKeyhole size={11} />}
-            <span>{isEarned ? "Earned" : "Locked"}</span>
+            <span>{isEarned ? (isClaimedOnChain ? "Minted" : "Earned") : "Locked"}</span>
           </span>
         </div>
       </div>
@@ -603,8 +577,11 @@ function BadgeCard({
         <p className="quests-badge-desc">{badge.description}</p>
       </div>
 
-      <div className="quests-badge-footer">
-        <span className="quests-badge-category">{badge.category}</span>
+      <div className="quests-badge-action-area">
+        <div className="quests-badge-category-row">
+          <span className="quests-badge-category">{badge.category}</span>
+          <span className="quests-badge-chain-tag">Base ERC-1155</span>
+        </div>
 
         {isEarned ? (
           isClaimedOnChain ? (
@@ -612,12 +589,16 @@ function BadgeCard({
               href={`https://basescan.org/token/${badgesAddress}?a=${badge.token_id}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="quests-badge-claimed-link"
+              className="quests-badge-minted-banner"
               title="View your NFT on BaseScan"
             >
-              <CheckCircle2 size={11} />
-              <span>NFT Claimed</span>
-              <ExternalLink size={10} />
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 size={13} className="text-[var(--win)]" />
+                <span className="font-bold text-[var(--win)]">NFT Minted</span>
+              </div>
+              <span className="quests-badge-basescan-link">
+                BaseScan <ExternalLink size={11} />
+              </span>
             </a>
           ) : (
             <button
@@ -626,14 +607,24 @@ function BadgeCard({
               disabled={isClaiming}
               className="quests-badge-claim-btn"
             >
-              {isClaiming ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
-              <span>{isClaiming ? "Claiming..." : "Claim NFT"}</span>
+              {isClaiming ? (
+                <>
+                  <Loader2 size={13} className="animate-spin" />
+                  <span>Minting NFT on Base...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles size={13} />
+                  <span>Claim NFT</span>
+                </>
+              )}
             </button>
           )
         ) : (
-          <span className="quests-badge-nft-status quests-badge-nft-locked">
-            <span>Play to Unlock</span>
-          </span>
+          <div className="quests-badge-locked-status">
+            <LockKeyhole size={12} />
+            <span>Complete quest to unlock</span>
+          </div>
         )}
       </div>
     </article>
