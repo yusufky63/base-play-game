@@ -6,6 +6,7 @@ import { useEthUsdPrice } from "@/hooks/useEthUsdPrice";
 import { formatUsd } from "@/lib/formatters";
 import { type VRFState, VRF_MESSAGES } from "@/hooks/useVRF";
 import { betPresetAmounts } from "@/lib/env";
+import { openWalletModal } from "@/lib/walletConnectors";
 
 interface BetPanelProps {
   amount: string;
@@ -40,6 +41,10 @@ export function BetPanel({
   const walletActionLabel = !address ? "Connect wallet" : isUnsupportedChain ? "Switch to Base" : actionLabel;
 
   function handleActionClick() {
+    if (!address) {
+      openWalletModal();
+      return;
+    }
     if (isUnsupportedChain && switchChain) {
       switchChain({ chainId: 8453 });
       return;

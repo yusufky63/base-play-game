@@ -37,6 +37,7 @@ import { BasenameLabel } from "@/components/base/BasenameLabel";
 import { useToast } from "@/components/ui/ToastProvider";
 import { useEthUsdPrice } from "@/hooks/useEthUsdPrice";
 import { formatUsd } from "@/lib/formatters";
+import { openWalletModal } from "@/lib/walletConnectors";
 import type { VRFState } from "@/hooks/useVRF";
 
 export interface OnChainRoom {
@@ -205,7 +206,7 @@ export function PvPArenaClient() {
   // Action: Create Duel Room
   async function handleCreateDuel() {
     if (!isConnected || !address) {
-      toast({ tone: "info", title: "Connect Wallet", description: "Connect wallet to play on Base." });
+      openWalletModal();
       return;
     }
     if (chain?.id !== 8453) {
@@ -232,7 +233,7 @@ export function PvPArenaClient() {
   // Action: Accept & Match Duel Room (Instant Transition, No Stuck Screen)
   async function handleConfirmJoinDuel(room: OnChainRoom) {
     if (!isConnected || !address) {
-      toast({ tone: "info", title: "Connect Wallet", description: "Connect wallet to play on Base." });
+      openWalletModal();
       return;
     }
     if (chain?.id !== 8453) {
@@ -765,6 +766,10 @@ export function PvPArenaClient() {
                             type="button"
                             disabled={isBusy}
                             onClick={() => {
+                              if (!isConnected || !address) {
+                                openWalletModal();
+                                return;
+                              }
                               setSelectedChallengeRoom(room);
                               setActiveTab("arena");
                             }}
