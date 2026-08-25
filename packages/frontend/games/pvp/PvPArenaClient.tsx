@@ -209,6 +209,15 @@ export function PvPArenaClient() {
       openWalletModal();
       return;
     }
+    if (myOpenRoom) {
+      toast({
+        tone: "info",
+        title: "Room Already Open",
+        description: `You already have an open room (Room #${myOpenRoom.roomId}). Cancel it before opening a new one.`
+      });
+      setActiveTab("arena");
+      return;
+    }
     if (chain?.id !== 8453) {
       if (switchChain) switchChain({ chainId: 8453 });
       toast({ tone: "error", title: "Wrong Network", description: "Please switch to Base Mainnet." });
@@ -324,6 +333,13 @@ export function PvPArenaClient() {
 
   const vrfState: VRFState = activeRoom?.status === 1 ? "pending_vrf" : isTxPending || isTxWaiting ? "pending_tx" : isSettled ? "settled" : "idle";
 
+  const myOpenRoom = address
+    ? rooms.find(
+        (r) =>
+          r.playerA.toLowerCase() === address.toLowerCase() && r.status === 0
+      )
+    : null;
+
   const isMyOpenRoom = Boolean(
     activeRoom &&
       activeRoom.status === 0 &&
@@ -345,9 +361,10 @@ export function PvPArenaClient() {
           <BetPanel
             amount={amount}
             loading={isBusy}
-            disabled={isBusy}
+            disabled={isBusy || Boolean(myOpenRoom)}
+            disabledReason={myOpenRoom ? `Room #${myOpenRoom.roomId} Already Open` : undefined}
             vrfState={vrfState}
-            actionLabel="Create Duel Room"
+            actionLabel={myOpenRoom ? `Room #${myOpenRoom.roomId} Active` : "Create Duel Room"}
             onAmountChange={setAmount}
             onPlay={handleCreateDuel}
           />
