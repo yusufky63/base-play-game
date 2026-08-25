@@ -175,11 +175,16 @@ export function PvPArenaClient() {
     if (targetRoomIdFromUrl && rooms.length > 0 && !selectedChallengeRoom) {
       const target = rooms.find((r) => r.roomId === targetRoomIdFromUrl && r.status === 0);
       if (target) {
-        setSelectedChallengeRoom(target);
-        setActiveTab("arena");
+        if (address && target.playerA.toLowerCase() === address.toLowerCase()) {
+          setActiveRoom(target);
+          setActiveTab("arena");
+        } else {
+          setSelectedChallengeRoom(target);
+          setActiveTab("arena");
+        }
       }
     }
-  }, [targetRoomIdFromUrl, rooms, selectedChallengeRoom]);
+  }, [targetRoomIdFromUrl, rooms, selectedChallengeRoom, address]);
 
   // Real-time On-Chain Contract Events
   useWatchContractEvent({
@@ -243,6 +248,14 @@ export function PvPArenaClient() {
   async function handleConfirmJoinDuel(room: OnChainRoom) {
     if (!isConnected || !address) {
       openWalletModal();
+      return;
+    }
+    if (address && room.playerA.toLowerCase() === address.toLowerCase()) {
+      toast({
+        tone: "info",
+        title: "Cannot Play Against Yourself",
+        description: "You created this room. Share your invite link with another player to start the duel!"
+      });
       return;
     }
     if (chain?.id !== 8453) {
@@ -519,15 +532,41 @@ export function PvPArenaClient() {
                 </div>
               </div>
 
-              <button
-                type="button"
-                disabled={isBusy}
-                onClick={() => handleConfirmJoinDuel(activeChallenge)}
-                className="w-full primary-action flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold text-white shadow-md disabled:opacity-50"
-              >
-                <Swords size={16} />
-                Start Coin Duel ({activeChallenge.betAmountEth} ETH)
-              </button>
+              {address && activeChallenge.playerA.toLowerCase() === address.toLowerCase() ? (
+                <div className="w-full space-y-2.5">
+                  <div className="rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-3 text-xs text-[var(--text-2)]">
+                    This is your own duel room. Share your invite link with another player!
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => copyInviteLink(activeChallenge.roomId)}
+                      className="py-2.5 rounded-md bg-[var(--surface-2)] border border-[var(--border)] text-[var(--accent)] text-xs font-bold hover:bg-[var(--surface)] transition flex items-center justify-center gap-1.5"
+                    >
+                      <Share2 size={13} />
+                      Invite Friend
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isBusy}
+                      onClick={() => handleCancelDuel(activeChallenge.roomId)}
+                      className="py-2.5 rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--lose)] text-xs font-bold hover:bg-[var(--lose-light)] transition disabled:opacity-50"
+                    >
+                      Cancel Room
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={isBusy}
+                  onClick={() => handleConfirmJoinDuel(activeChallenge)}
+                  className="w-full primary-action flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold text-white shadow-md disabled:opacity-50"
+                >
+                  <Swords size={16} />
+                  Start Coin Duel ({activeChallenge.betAmountEth} ETH)
+                </button>
+              )}
             </div>
           </section>
         )}
