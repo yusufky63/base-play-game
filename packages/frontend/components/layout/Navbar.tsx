@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Gamepad2, Gift, LogOut, Menu, Sparkles, Trophy, UserRound, Wallet, X } from "lucide-react";
+import { Gamepad2, Gift, LogOut, Menu, Sparkles, Swords, Trophy, UserRound, Wallet, X } from "lucide-react";
 import { useAccount, useDisconnect } from "wagmi";
 import { BasenameLabel } from "@/components/base/BasenameLabel";
 import { Logo } from "@/components/ui/Logo";
@@ -17,6 +17,7 @@ import { markManualWalletDisconnect } from "@/lib/walletConnectors";
 
 const navItems = [
   { href: "/", label: "Games", icon: Gamepad2 },
+  { href: "/games/pvp", label: "PvP Arena", icon: Swords },
   { href: "/quests", label: "Quests", icon: Sparkles },
   { href: "/lucky-draw", label: "Lucky Draw", icon: Gift },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },

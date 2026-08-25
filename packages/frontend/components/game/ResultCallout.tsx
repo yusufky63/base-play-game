@@ -1,9 +1,11 @@
 "use client";
 
-import { CheckCircle2, Clock3, Trophy, XCircle } from "lucide-react";
+import { useState } from "react";
+import { CheckCircle2, Clock3, Sparkles, Trophy, XCircle } from "lucide-react";
 import { formatEther } from "viem";
 import { useAccount } from "wagmi";
 import { SharePanel } from "@/components/share/SharePanel";
+import { ShareWinModal } from "@/components/share/ShareWinModal";
 import { useReferralSummary } from "@/hooks/useReferral";
 
 type ResultVariant = "win" | "loss" | "pending" | "idle";
@@ -28,6 +30,7 @@ export function ResultCallout({
   };
 }) {
   const { address } = useAccount();
+  const [showShareModal, setShowShareModal] = useState(false);
   const referralSummary = useReferralSummary(address, { enabled: Boolean(address) && variant === "win" && Boolean(share) });
   if (variant === "idle") return null;
 
@@ -58,9 +61,28 @@ export function ResultCallout({
               Share your win and invite friends to play on Base.
             </p>
             <div className="win-share-result">{share.detail}</div>
-            <div className="win-share-actions">
+            <div className="win-share-actions flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setShowShareModal(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold shadow-sm transition active:scale-95"
+              >
+                <Sparkles size={13} />
+                Generate Card
+              </button>
               <SharePanel compact text={shareText} path={referralPath} />
             </div>
+
+            <ShareWinModal
+              isOpen={showShareModal}
+              onClose={() => setShowShareModal(false)}
+              gameName={share.game}
+              payoutEth={payout as any}
+              betAmountEth={betAmount as any}
+              multiplier={winMultiplier ?? undefined}
+              playerAddress={address}
+              txHash={share.txHash}
+            />
           </div>
         )}
       </div>

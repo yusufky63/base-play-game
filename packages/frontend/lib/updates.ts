@@ -1,5 +1,10 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
+    date: "August 25, 2026",
+    title: "PvP 1v1 Arena Main Navigation, Interactive Docs Search, and Enhanced Win Cards",
+    body: "PvP Arena (1v1 provably fair Coin Duels on Base Mainnet) is now accessible directly from the primary header navigation across desktop and mobile. Added a real-time instant keyword search bar to the Documentation page covering games, mechanics, contract addresses, and FAQs. Integrated dedicated PvP 1v1 Arena documentation detailing the escrow smart contract architecture, 2% platform rake economics, 60-block timeout refund security, invite link sharing, and Chainlink VRF v2.5 resolution. Redesigned the Share Win modal with full theme token compatibility (light/dark mode typography adaptation), high-contrast referral QR code generation, and 1-click Twitter / X image pasting."
+  },
+  {
     date: "May 23, 2026",
     title: "Badges UI redesign and elevated NFT claim experience",
     body: "Redesigned collectible badge achievement cards with tier-specific glowing visual frames (Bronze, Silver, Gold, Diamond), dedicated high-contrast Claim NFT action buttons, real-time minting loading states, and direct BaseScan verified NFT verification links."

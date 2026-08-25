@@ -16,6 +16,7 @@ import {
   Radar,
   Scissors,
   ScrollText,
+  Swords,
   TrendingUp,
   type LucideIcon
 } from "lucide-react";
@@ -39,7 +40,8 @@ const GAME_VISUALS: Record<string, { Icon: LucideIcon; label: string }> = {
   "roulette-lite": { Icon: Radar, label: "Roulette Lite" },
   "scratch-card": { Icon: ScrollText, label: "Scratch Card" },
   "rock-paper-scissors": { Icon: Scissors, label: "Rock Paper Scissors" },
-  slots: { Icon: Cherry, label: "Slots" }
+  slots: { Icon: Cherry, label: "Slots" },
+  pvp: { Icon: Swords, label: "PvP Arena" }
 };
 
 export function getGameLabel(gameId: string) {

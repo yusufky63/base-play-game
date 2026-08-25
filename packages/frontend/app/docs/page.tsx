@@ -1,19 +1,38 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { BadgeCheck, BookOpen, CircleDollarSign, ExternalLink, Gift, HelpCircle, Radio, RotateCcw, ShieldCheck, Sparkles, WalletCards } from "lucide-react";
+import { 
+  BadgeCheck, 
+  BookOpen, 
+  CircleDollarSign, 
+  ExternalLink, 
+  Gift, 
+  HelpCircle, 
+  Radio, 
+  RotateCcw, 
+  Search, 
+  ShieldCheck, 
+  Sparkles, 
+  Swords, 
+  WalletCards,
+  X 
+} from "lucide-react";
 import { CONTRACT_ADDRESSES } from "@baseplay/shared/config/addresses";
 import { GAMES_REGISTRY } from "@baseplay/shared/config/games.registry";
 import { NETWORKS } from "@baseplay/shared/config/networks";
 import { GameIdentity } from "@/components/game/GameIdentity";
 
 const docNav = [
-  { id: "essentials", label: "Essentials", title: "Player documentation", description: "Core player concepts before placing a wager." },
-  { id: "rounds", label: "Round flow", title: "How a round works", description: "The wager, VRF, settlement, and display flow." },
-  { id: "refunds", label: "Refunds", title: "Pending rounds and refunds", description: "What happens when a VRF round is delayed." },
-  { id: "games", label: "Games", title: "Games", description: "Active games and their player-facing rules." },
-  { id: "contracts", label: "Contracts", title: "Public contracts", description: "Explorer links for game and vault contracts." },
-  { id: "account", label: "Account", title: "Wallet, stats, and safety", description: "Wallet identity, live data, XP, and safety notes." },
-  { id: "rewards", label: "Rewards", title: "XP, quests, badges, referrals, and Lucky Draw", description: "How player progression and promotional rewards work without changing game settlement." },
-  { id: "faq", label: "Q&A", title: "Questions and answers", description: "Common player questions about results and mechanics." }
+  { id: "essentials", label: "Essentials" },
+  { id: "pvp", label: "PvP Arena" },
+  { id: "rounds", label: "Round flow" },
+  { id: "refunds", label: "Refunds" },
+  { id: "games", label: "Games" },
+  { id: "contracts", label: "Contracts" },
+  { id: "account", label: "Account" },
+  { id: "rewards", label: "Rewards" },
+  { id: "faq", label: "Q&A" }
 ] as const;
 
 type DocSectionId = (typeof docNav)[number]["id"];
@@ -37,6 +56,25 @@ const roundSteps = [
   }
 ];
 
+const pvpSteps = [
+  {
+    title: "Create or Join a Duel Room",
+    body: "The host selects Heads or Tails, enters the bet amount, and opens a room on Base Mainnet. Challengers can browse open rooms in the lobby or join directly via an invite link."
+  },
+  {
+    title: "Opposing Side Assignment",
+    body: "The challenger automatically takes the opposite side (e.g. if the Host selected Heads, the Challenger fights for Tails). Both players wager identical ETH into the contract escrow."
+  },
+  {
+    title: "Provably Fair VRF Resolution",
+    body: "Once the challenger matches the room, Chainlink VRF v2.5 generates the random seed on Base Mainnet. The winner receives 98% of the pot (2% platform rake)."
+  },
+  {
+    title: "Timeout & Cancellation Protection",
+    body: "Open rooms can be cancelled by the host at any time before a challenger joins. If VRF resolution exceeds 60 blocks, either player can claim a full refund via claimTimeout()."
+  }
+];
+
 const playerNotes = [
   {
     icon: <ShieldCheck size={18} />,
@@ -46,7 +84,7 @@ const playerNotes = [
   {
     icon: <CircleDollarSign size={18} />,
     title: "Clear payouts",
-    body: "Wagers and profile profit rows are shown in ETH with a lightweight USD reference where it helps. Quick bet buttons start at 0.000115 ETH, and the contract enforces the active minimum and maximum bet limits."
+    body: "Wagers and profile profit rows are shown in ETH with a lightweight USD reference where it helps. Quick bet buttons start at 0.000115 ETH, and the contract enforces active minimum and maximum bet limits."
   },
   {
     icon: <Sparkles size={18} />,
@@ -56,12 +94,12 @@ const playerNotes = [
   {
     icon: <Radio size={18} />,
     title: "Fast activity views",
-    body: "Live feed, profile tabs, leaderboard data, Home stats, and round detail timelines are indexed from Base mainnet events and cached by view importance instead of polling every few seconds. Leaderboard responses are shared for 30 minutes, Home stats use a shared 10 minute API cache with no browser-level force-cache, compact feeds for 5 minutes, round details for 30 minutes, and profile tabs only load their own data when opened. Home global stats read aggregate tables first and fall back to settled round rows if an aggregate is empty. Profile tab labels avoid stale counts until opened, and each profile panel shows loading rows while its data is fetched. Basenames are cached after first lookup, game pages expose a referral share card without adding referral API load, backend event indexing is mainnet-only, creates missing player rows before storing settled rounds, reads all deployed game events with one batched log request per poll window, and verifies Lucky Draw proof candidates against the live game contracts before exposing them to draw transactions. Base RPC transports keep public endpoints first with private or Alchemy URLs used only after public endpoint failure or rate-limit. Direct contract fallback reads use multicall batching where possible, and ENS fallback display names only resolve when a server-side Ethereum mainnet RPC is configured."
+    body: "Live feed, profile tabs, leaderboard data, Home stats, and round detail timelines are indexed from Base mainnet events and cached by view importance instead of polling every few seconds."
   },
   {
     icon: <Sparkles size={18} />,
     title: "Clean Home hero",
-    body: "The Home hero uses a static full-width band without an animated Pixel Blast background, while tabs, game cards, round status panels, contract panels, buttons, filters, and mobile help sections stay compact with thinner neutral borders and consistent card shadows. Desktop game pages keep the contract card, play area, and How it works panel in a stable left-column stack so accordion changes do not stretch the play area."
+    body: "The Home hero uses a static full-width band without an animated Pixel Blast background, while tabs, game cards, round status panels, contract panels, buttons, filters, and mobile help sections stay compact."
   }
 ];
 
@@ -85,12 +123,12 @@ const rewardNotes = [
   {
     icon: <Gift size={18} />,
     title: "Daily and weekly quests",
-    body: "Quests reward player activity such as round counts, wins, game variety, and daily streaks. The Quests page features a sleek, minimal card layout with distinct glowing green completed states, clear XP reward chips, and mobile-optimized horizontal scroll tabs (Daily, Weekly, Completed) with live task counts."
+    body: "Quests reward player activity such as round counts, wins, game variety, and daily streaks. The Quests page features a sleek card layout with distinct glowing green completed states."
   },
   {
     icon: <BadgeCheck size={18} />,
     title: "Badges and on-chain NFT claim",
-    body: "Badges represent major progression milestones across game tiers, win streaks, and quests. Earned badges can be claimed as on-chain ERC-1155 NFTs directly on Base via the BasePlayBadges contract (0x1Ca9E82eBA7967295C3D77404af639B592C268eD). The contract uses EIP-712 cryptographic signatures issued by the platform signer with dedicated card-level minting actions and soulbound achievement permanence."
+    body: "Badges represent major progression milestones across game tiers, win streaks, and quests. Earned badges can be claimed as on-chain ERC-1155 NFTs directly on Base via the BasePlayBadges contract (0x1Ca9E82eBA7967295C3D77404af639B592C268eD)."
   },
   {
     icon: <Radio size={18} />,
@@ -98,324 +136,341 @@ const rewardNotes = [
     body: "Referral links award small capped XP to the referrer after referred players settle rounds. Referral never pays ETH and never touches the vault."
   },
   {
-    icon: <Gift size={18} />,
+    icon: <RotateCcw size={18} />,
     title: "Lucky Draw",
-    body: "Every 10 qualifying settled rounds at 0.000115 ETH or higher unlocks one Lucky Draw for the same connected wallet. A wallet can earn up to 10 draw rights per UTC day, which resets at 03:00 TSI, while unused available draws carry over. The dedicated Lucky Draw page sends settled round proofs to the LuckyDraw contract, derives available draws from proof-backed rounds that the contract has not consumed yet, keeps the next-draw progress separate from the available count, and pays from a separately funded draw contract. Backend maintenance can reconcile stored Supabase counters back to the same contract-valid proof source used by the UI, while profile and game cards refresh the same summary when mounted or focused and only show a Draws metric when a current draw is available. The Lucky Draw page keeps its collapsible How it works panel and claimable history states styled from the shipped app stylesheet. Public reward history is paginated from on-chain logs, connected wallet history refreshes directly so unclaimed rewards stay visible, and archive-restricted public RPC chunks are skipped instead of breaking the history response. The page uses the same VRF verification card pattern as game pages after a draw starts."
+    body: "Players qualify for Lucky Draw spins through gameplay activity and streaks. Rewards are promotional prizes provided by the platform treasury."
   }
-];
-
-const refundNotes = [
-  "Refunds are only possible when the contract still has an unresolved active round for your wallet.",
-  "The claim button appears after the contract timeout block has fully passed. The UI does not show it one block early.",
-  "You can close the tab. After reconnecting the same wallet, BasePlay scans active rounds and shows the refund in the wallet menu and your profile page.",
-  "Claim refund is a normal wallet transaction. It returns the locked wager and releases the reserved payout from the vault.",
-  "If the round settles before the timeout, there is no refund because the game already produced its on-chain result."
 ];
 
 const faqs = [
   {
-    question: "Does the website decide whether I win?",
-    answer: "No. The UI only sends your locked choices to the contract. The contract requests Chainlink VRF and settles from the returned random word."
+    question: "How do I know the game is fair?",
+    answer: "Every single-player and PvP round requests a random seed from Chainlink VRF v2.5 directly on Base Mainnet. The contract cannot alter the outcome after your transaction is confirmed."
   },
   {
-    question: "Can I change my choice after pressing Play?",
-    answer: "No. The game options are encoded into the transaction before the VRF request starts. After signing, the choice is fixed on-chain."
+    question: "How does PvP Arena work?",
+    answer: "PvP Arena is 100% peer-to-peer. Host and challenger lock identical ETH bets in the contract escrow. Chainlink VRF determines the winner, who receives 98% of the pot (2% platform rake). The house has zero bankroll risk."
   },
   {
-    question: "Where can I verify a round?",
-    answer: "Open the Chainlink VRF button on a game page. It shows the request ID, the wager transaction, and the settlement transaction when available."
+    question: "What happens if a PvP duel is not matched or VRF is delayed?",
+    answer: "You can cancel your open room at any time before a challenger joins for a 100% refund. If VRF callback takes longer than 60 blocks, either player can call claimTimeout() to receive a full refund."
   },
   {
-    question: "What does win sharing include?",
-    answer: "Win sharing uses a short invite-focused message with light emoji, includes the payout multiplier when payout and wager data are available, and always links friends back to BasePlay. Game pages also include a lightweight invite card outside the win state; when a wallet is connected it shares the wallet referral path without querying referral stats, otherwise it shares the canonical domain."
+    question: "Can I share my win on Twitter / X?",
+    answer: "Yes! Every victory enables the 'Share Win Card' modal, which generates a high-resolution 1200x630 card with your personal referral QR code, instant image copy for Twitter (Ctrl+V), and download support."
   },
   {
-    question: "Why can live feed take a few seconds?",
-    answer: "The on-chain result is final first. Feed, profile, and leaderboard views are updated by the backend indexer after it reads settled Base events. Indexing is mainnet-first by default and batches deployed game addresses into one log query per poll window, while public activity views use cache windows to avoid unnecessary Supabase and RPC load."
-  },
-  {
-    question: "Why can Home global stats lag behind a new round?",
-    answer: "Home global stats are served through a shared API cache for up to 10 minutes so every visitor can reuse the same aggregate response. Browser force-cache is disabled for this endpoint, so desktop, mobile, Farcaster, and private windows should converge on the same API value once the shared cache refreshes."
-  },
-  {
-    question: "How is Base App support handled?",
-    answer: "BasePlay uses standard wagmi and viem wallet flows with a global explicit wallet picker for normal web sessions, focused on real injected MetaMask when present, WalletConnect, Coinbase Wallet, and any standalone injected browser wallet. The picker renders at app-provider level, so header, mobile menu, and game-page connect actions all open the same centered modal on web with wallet-specific icons. Normal web sessions also run a silent reconnect check for previously authorized connectors, so desktop web reloads and returns can restore MetaMask, WalletConnect, Coinbase Wallet, or a valid injected wallet without opening the picker again. Farcaster and Base App or Coinbase Wallet in-app browser sessions skip the web modal and connect through their native connector. Explicit MetaMask target connectors and Base Account are kept out of the normal web picker to avoid duplicate or unsupported provider attempts, generic injected wallets are hidden unless a standalone provider exists, WalletConnect is shipped as a direct frontend dependency, and mobile WalletConnect returns are resynced on focus, pageshow, and visibility changes after the player starts a connection. The canonical app URL is https://baseplay.games, Base mainnet is the only active chain, game actions open the wallet picker first on web and then request Base mainnet switching when the wallet is on an unsupported network, wallet transactions include the BasePlay Builder Code attribution suffix, RPC reads keep public Base endpoints ahead of private or Alchemy fallbacks, backend status read failures retry another RPC instead of marking every game unavailable, frontend fallback contract status reads are batched with multicall to reduce RPC load, and the listing copy uses Play. Compete. Win on Base."
-  },
-  {
-    question: "How is Farcaster support handled?",
-    answer: "BasePlay publishes Farcaster Mini App discovery metadata at /.well-known/farcaster.json, emits feed embed metadata with branded launch imagery, trims the canonical app URL before generating embed URLs, uses a 1200x630 branded social preview for Open Graph and X/Twitter cards, calls the Farcaster ready signal in Mini App clients, and prioritizes the Farcaster Mini App wallet connector only after the player starts a wallet action. Automatic reconnect and background referral signing are disabled in Mini App sessions so reopening the app does not ask for wallet authorization. Core game and Base App flows remain standard wagmi/viem flows."
-  },
-  {
-    question: "Is Google Analytics enabled?",
-    answer: "BasePlay loads Google Analytics through the official gtag script after the app becomes interactive. The production measurement ID is G-EXWSNL6326 and can be overridden with NEXT_PUBLIC_GA_MEASUREMENT_ID if the analytics property changes."
-  },
-  {
-    question: "Why do profile tabs not show counts in the tab label?",
-    answer: "Profile sections are lazy-loaded to reduce Supabase and RPC usage. Counts are shown inside the opened section after the relevant data has loaded, with loading rows displayed while the request is in progress."
-  },
-  {
-    question: "Why does the leaderboard not update every second?",
-    answer: "Leaderboard data is not used to settle games, so weekly rankings are served through a shared 30 minute cache and all-time rankings use a longer 3 hour cache from aggregate player stats. A player opening it later can reuse the same cached ranking instead of making another database query, and the weekly API falls back to the latest indexed week if the current week has no rows yet."
-  },
-  {
-    question: "Why can a round be pending?",
-    answer: "The wager transaction can confirm before the VRF callback arrives. During that window the round is locked, and the pending/refund panel tracks it."
-  },
-  {
-    question: "What happens if VRF takes too long?",
-    answer: "After the timeout block window fully passes, the same wallet can claim a refund from the game contract. Refund does not trigger a new VRF request."
-  },
-  {
-    question: "If I close the tab, do I lose the refund button?",
-    answer: "No. The refund state lives on-chain. Reconnect the same wallet and check the wallet menu or Profile page to see unresolved rounds."
-  },
-  {
-    question: "How is XP calculated?",
-    answer: "XP is based on the settled wager amount. Wins and losses at the same bet size earn the same XP, so XP represents play volume rather than lucky outcomes."
-  },
-  {
-    question: "Do referral rewards pay ETH?",
-    answer: "No. Referral rewards are only XP and badge progression. They do not create claimable ETH, rebates, or vault liabilities."
-  },
-  {
-    question: "How does Lucky Draw work?",
-    answer: "Lucky Draw is a promotional reward loop, not a wagered game round. After 10 qualifying settled rounds at or above 0.000115 ETH, the connected wallet opens the dedicated Lucky Draw page and submits those round request IDs to the LuckyDraw contract. The backend filters candidates through the live game contracts first, and the LuckyDraw contract verifies every proof against the approved game contracts, blocks reused rounds, snapshots the prize table, requests Chainlink VRF, and makes the resolved ETH prize claimable on-chain. The backend/UI also applies a soft daily earning cap of 10 draw rights per wallet per UTC day, resetting at 03:00 TSI; unused available draws and partial progress carry forward only when backed by unconsumed contract-valid proofs. Available draws and next-draw progress are shown separately, so progress restarts at 0/10 after an available draw is earned and then continues 1/10, 2/10, and onward toward the next draw. Backend maintenance can reconcile stored Supabase counters to the same proof-backed source if old indexer data drifted. The Lucky Draw page keeps the request transaction and VRF request ID visible while the draw is pending, and it can surface the resolved prize from wallet history if VRF resolves after the first wait window. Claimable wallet rewards are highlighted in green, use a dedicated claim button, and disappear from the claimable list once the claim transaction is mined. The page includes a collapsible How it works panel that summarizes qualifying, unlocking, daily cap, and claiming. If daily status is still loading, the page falls back to the configured cap instead of hiding available draw data. Pending, failed, refunded, duplicate, wrong-wallet, already consumed, or below-minimum rounds do not create valid UI draw proofs."
-  },
-  {
-    question: "How is Lucky Draw operated?",
-    answer: "The admin Lucky Draw page focuses on reward config, the 0.000115 ETH minimum eligible bet, the 10 draw daily cap, ETH/USD reference pricing, historical rows, and the LuckyDraw reward treasury with ETH and USD estimates. VRF subscription health and funding now live under the separate admin VRF page because the same subscription affects both game settlement and Lucky Draw randomness. Admin operation reads and writes require the frontend backend URL, the Railway backend service to pass /health, a configured multi-wallet admin allowlist on frontend and backend, and a matching owner/admin wallet signature. Vercel deploys inline only defined public env values, pins the frontend output directory, and uses stable Next.js 16.2.6 so optional missing frontend variables and Next adapter canary defaults do not block builds. The daily cap control defaults safely to 10/day if an older admin response is missing that field; internal Supabase progression plus Lucky Draw functions are not exposed for public client execution."
-  },
-  {
-    question: "Can Lucky Draw odds or rewards be changed?",
-    answer: "Yes. Admin controls can pause the feature, change the required round count, set the minimum eligible bet, update the daily cap, update the ETH/USD reference used by the UI, and edit on-chain prize amounts and weights. A draw uses the prize table snapshot from request time, so admin changes after a player opens a draw cannot alter that pending result."
-  },
-  {
-    question: "Can public clients read referral history directly?",
-    answer: "No. Referral relationship and reward rows are kept behind the backend referral API, which uses service-role Supabase access and request rate limits."
-  },
-  {
-    question: "When do quests complete?",
-    answer: "Daily and weekly quests update after a settled on-chain round is indexed. They can track rounds, wins, distinct games, and streaks. Pending, failed, or refunded rounds do not count."
-  },
-  {
-    question: "Can badges be claimed as NFTs?",
-    answer: "Yes. Earned badges can be claimed as on-chain ERC-1155 NFTs on Base directly from the Quests page using the Claim NFT button. Single and batch claims are supported with gas-efficient L2 execution."
-  },
-  {
-    question: "Why are XP and volume separate rankings?",
-    answer: "XP rewards activity and quest progress. Volume ranks how much was wagered in the selected leaderboard scope, so active players can be compared without turning leaderboard order into a lucky profit race."
-  },
-  {
-    question: "What does gross payout mean?",
-    answer: "Game pages show the gross multiplier from the game rule. The vault applies the configured house edge before sending the final net payout."
-  },
-  {
-    question: "Can direct contract calls cheat the games?",
-    answer: "Direct calls use the same game contract validation as the UI. Invalid params revert, active rounds are limited, and the vault reserves max payout before randomness is requested. For Lucky Draw, the 0.000115 ETH minimum eligible bet is contract-enforced, while the daily 10 earned-draw cap is a backend/UI soft cap until a future LuckyDraw v2 moves that limit on-chain."
+    question: "What happens if a round is delayed?",
+    answer: "If Chainlink VRF is delayed beyond the contract window, a refund button appears in your profile and wallet menu to recover your locked wager."
   }
 ];
 
-export default async function DocsPage({ searchParams }: { searchParams?: Promise<{ section?: string }> }) {
-  const params = await searchParams;
-  const selectedSection = docNav.some((item) => item.id === params?.section) ? (params?.section as DocSectionId) : "essentials";
-  const current = docNav.find((item) => item.id === selectedSection) ?? docNav[0];
+export default function DocsPage() {
+  const [activeSection, setActiveSection] = useState<DocSectionId>("essentials");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return null;
+    const q = searchQuery.toLowerCase().trim();
+
+    const matchedGames = GAMES_REGISTRY.filter((g) => g.name.toLowerCase().includes(q) || g.description.toLowerCase().includes(q));
+    const matchedFaqs = faqs.filter((f) => f.question.toLowerCase().includes(q) || f.answer.toLowerCase().includes(q));
+    const matchedNotes = [...playerNotes, ...rewardNotes].filter((n) => n.title.toLowerCase().includes(q) || n.body.toLowerCase().includes(q));
+
+    return {
+      games: matchedGames,
+      faqs: matchedFaqs,
+      notes: matchedNotes
+    };
+  }, [searchQuery]);
 
   return (
-    <main className="docs-page mx-auto w-full max-w-7xl px-4 py-10">
+    <div className="mx-auto max-w-6xl">
       <header className="docs-hero">
         <div className="docs-kicker">
-          <BookOpen size={16} />
-          BasePlay Docs
+          <BookOpen size={14} /> Documentation
         </div>
-        <h1 className="display-heading text-4xl font-bold text-[var(--text-1)]">{current.title}</h1>
-        <p>{current.description}</p>
+        <h1 className="display-heading text-3xl font-extrabold text-[var(--text-1)]">Player documentation</h1>
+        <p>
+          Everything you need to know about fair play, Chainlink VRF settlement, PvP Arena, refunds, games, contracts, and progression on Base.
+        </p>
+
+        {/* Real-time Search Bar */}
+        <div className="relative w-full max-w-md mt-5">
+          <div className="relative flex items-center">
+            <Search size={15} className="absolute left-3 text-[var(--text-3)] pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search topics, rules, PvP, VRF, FAQs..."
+              className="w-full pl-9 pr-8 py-2 rounded-lg bg-[var(--surface-2)] border border-[var(--border)] text-xs text-[var(--text-1)] placeholder:text-[var(--text-3)] focus:border-[var(--accent)] focus:outline-none transition"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 text-[var(--text-3)] hover:text-[var(--text-1)]"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+        </div>
       </header>
 
       <div className="docs-layout">
-        <aside className="docs-sidebar" aria-label="Docs navigation">
+        <aside className="docs-sidebar">
           <nav>
             {docNav.map((item) => (
-              <Link key={item.id} href={`/docs?section=${item.id}`} className={`docs-nav-link ${item.id === selectedSection ? "docs-nav-link-active" : ""}`}>
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                onClick={() => {
+                  setActiveSection(item.id);
+                  setSearchQuery("");
+                }}
+                className={`docs-nav-link ${activeSection === item.id && !searchQuery ? "docs-nav-link-active" : ""}`}
+              >
                 {item.label}
-              </Link>
+              </a>
             ))}
           </nav>
         </aside>
 
         <article className="docs-article">
-          {selectedSection === "essentials" && (
-          <section className="docs-block">
-            <SectionHeading eyebrow="Overview" title="Essentials" />
-            <p className="docs-lede">
-              BasePlay keeps the game result on-chain and uses the connected wallet as the player identity. These are the concepts worth knowing before placing a wager.
-            </p>
-            <div className="docs-feature-list">
-              {playerNotes.map((item) => (
-                <InfoCard key={item.title} icon={item.icon} title={item.title} body={item.body} />
-              ))}
-            </div>
-          </section>
-          )}
+          {/* Search Results Display */}
+          {searchResults ? (
+            <section className="docs-block">
+              <SectionHeading eyebrow="Search Results" title={`Matches for "${searchQuery}"`} />
 
-          {selectedSection === "rounds" && (
-          <section className="docs-block">
-            <SectionHeading eyebrow="Round flow" title="How a round works" />
-            <ol className="docs-step-list">
-              {roundSteps.map((item, index) => (
-                <li key={item.title}>
-                  <span>{index + 1}</span>
-                  <div>
-                    <h3>{item.title}</h3>
-                    <p>{item.body}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </section>
-          )}
+              {searchResults.games.length === 0 && searchResults.faqs.length === 0 && searchResults.notes.length === 0 ? (
+                <p className="text-xs text-[var(--text-3)]">No matching documentation topics found. Try another search term.</p>
+              ) : (
+                <div className="space-y-6">
+                  {searchResults.games.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-bold text-[var(--text-1)] mb-3">Games</h3>
+                      <div className="docs-game-list">
+                        {searchResults.games.map((game) => (
+                          <Link key={game.id} href={game.path} className="docs-game-row">
+                            <div>
+                              <GameIdentity gameId={game.id} label={game.name} size="sm" />
+                              <p>{game.description}</p>
+                            </div>
+                            <Metric label="Max payout" value={`${game.maxMultiplier}x`} />
+                            <Metric label="Edge" value={game.id === "pvp" ? "2% Rake" : "5%"} />
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-          {selectedSection === "refunds" && (
-          <section className="docs-block">
-            <SectionHeading eyebrow="Fallback" title="Pending rounds and refunds" icon={<RotateCcw size={18} />} />
-            <p className="docs-lede">
-              Refunds are a fallback for unresolved VRF rounds. They are tracked from the contract, so they survive refreshes and closed tabs.
-            </p>
-            <ul className="docs-note-list">
-              {refundNotes.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </section>
-          )}
+                  {searchResults.notes.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-bold text-[var(--text-1)] mb-3">Topics & Concepts</h3>
+                      <div className="docs-feature-list">
+                        {searchResults.notes.map((item) => (
+                          <InfoCard key={item.title} icon={item.icon} title={item.title} body={item.body} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-          {selectedSection === "games" && (
-          <section className="docs-block">
-            <SectionHeading eyebrow="Library" title="Games" />
-            <div className="docs-game-list">
-              {GAMES_REGISTRY.map((game) => (
-                <Link key={game.id} href={game.path} className="docs-game-row">
-                  <div>
-                    <GameIdentity gameId={game.id} label={game.name} size="sm" />
-                    <p>{game.description}</p>
-                  </div>
-                  <Metric label="Max payout" value={`${game.maxMultiplier}x`} />
-                  <Metric label="Edge" value="5%" />
-                </Link>
-              ))}
-            </div>
-          </section>
-          )}
-
-          {selectedSection === "contracts" && (
-          <section className="docs-block">
-            <SectionHeading eyebrow="Public records" title="Public contracts" />
-            <p className="docs-lede">
-              Game and vault contracts are public. Use the explorer links to inspect transactions, events, verified source code, balances, and owner-only vault actions for each deployed network. Base mainnet now uses the V2 vault source for amount-based withdraw controls, and vault settlement rejects zero-player lock, payout, loss, and refund requests.
-            </p>
-            <div className="docs-network-list">
-              {Object.values(NETWORKS).map((network) => (
-                <div key={network.chainId} className="docs-network">
-                  <div className="docs-network-head">
-                    <h3>{network.name}</h3>
-                    <a href={network.blockExplorer} target="_blank" rel="noopener noreferrer">
-                      Explorer <ExternalLink size={12} />
-                    </a>
-                  </div>
-                  <div className="docs-contract-list">
-                    <ContractDocRow label="GameVault" address={CONTRACT_ADDRESSES[network.chainId]?.GameVault} explorer={network.blockExplorer} />
-                    {GAMES_REGISTRY.filter((game) => game.active && game.chains.includes("baseMainnet")).map((game) => (
-                      <ContractDocRow key={`${network.chainId}-${game.id}`} label={game.name} gameId={game.id} address={CONTRACT_ADDRESSES[network.chainId]?.[game.contractName]} explorer={network.blockExplorer} />
-                    ))}
-                  </div>
+                  {searchResults.faqs.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-bold text-[var(--text-1)] mb-3">Questions & Answers</h3>
+                      <div className="docs-faq-list">
+                        {searchResults.faqs.map((item) => (
+                          <details key={item.question} className="docs-faq-item" open>
+                            <summary>{item.question}</summary>
+                            <p>{item.answer}</p>
+                          </details>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          </section>
-          )}
-
-          {selectedSection === "account" && (
-          <section className="docs-block">
-            <SectionHeading eyebrow="Account" title="Wallet, stats, and safety" icon={<WalletCards size={18} />} />
-            <div className="docs-grid-two">
-              <div>
-                <h3>Wallet and results</h3>
-                <p>
-                  Your connected browser wallet or Coinbase Wallet session is your player identity through wagmi. Game pages show the latest results for that game, while the full live feed shows recent activity across games.
+              )}
+            </section>
+          ) : (
+            <>
+              {/* Section 1: Essentials */}
+              <section id="essentials" className="docs-block">
+                <SectionHeading eyebrow="Core concepts" title="Essentials" icon={<BookOpen size={18} />} />
+                <p className="docs-lede">
+                  BasePlay is a provably fair gaming protocol on Base. Wagers, game logic, and payouts are settled by smart contracts using Chainlink VRF.
                 </p>
-                <div className="docs-link-row">
-                  <DocLink href="/leaderboard" label="Open leaderboard" />
-                  <DocLink href="/live-feed" label="Open live feed" />
-                </div>
-              </div>
-              <div>
-                <h3>Before playing</h3>
-                <ul className="docs-note-list docs-note-list-compact">
-                  {safetyNotes.map((item) => (
-                    <li key={item}>{item}</li>
+                <div className="docs-feature-list">
+                  {playerNotes.map((item) => (
+                    <InfoCard key={item.title} icon={item.icon} title={item.title} body={item.body} />
                   ))}
-                </ul>
-              </div>
-            </div>
-          </section>
-          )}
+                </div>
+              </section>
 
-          {selectedSection === "rewards" && (
-          <section className="docs-block">
-            <SectionHeading eyebrow="Progression" title="XP, quests, badges, referrals, and Lucky Draw" icon={<Gift size={18} />} />
-            <p className="docs-lede">
-              Progression is separate from game odds. It gives players profile goals and shareable achievements without changing the contract result, payout, or vault accounting.
-            </p>
-            <div className="docs-feature-list">
-              {rewardNotes.map((item) => (
-                <InfoCard key={item.title} icon={item.icon} title={item.title} body={item.body} />
-              ))}
-            </div>
-            <div className="docs-link-row mt-4">
-              <DocLink href="/quests" label="Open quests" />
-              <DocLink href="/lucky-draw" label="Open Lucky Draw" />
-              <DocLink href="/profile" label="Open profile badges" />
-            </div>
-            <div className="docs-grid-two mt-4">
-              <div>
-                <h3>Current quest rewards</h3>
-                <ul className="docs-note-list docs-note-list-compact">
-                  <li>Daily quests currently reward 8-30 XP depending on effort.</li>
-                  <li>Weekly quests currently reward 35-120 XP depending on effort.</li>
-                  <li>New goals add three-round, four-game, three-win, three-day streak, five-win weekly, and 50-round weekly targets.</li>
-                  <li>Badge quests still unlock profile badges, but badge rewards do not affect payouts.</li>
-                  <li>Quest XP is bonus progress. Round XP remains the main activity signal.</li>
-                </ul>
-              </div>
-              <div>
-                <h3>Referral rules</h3>
-                <ul className="docs-note-list docs-note-list-compact">
-                  <li>Referral links can use an address or a referral code.</li>
-                  <li>The referred wallet signs once to link the referral.</li>
-                  <li>Self-referral and changing referrer later are blocked.</li>
-                  <li>Referrer XP is capped per round and per day.</li>
-                  <li>Only settled indexed rounds count. Refunds and pending rounds do not.</li>
-                </ul>
-              </div>
-            </div>
-          </section>
-          )}
+              {/* Section 2: PvP Arena */}
+              <section id="pvp" className="docs-block">
+                <SectionHeading eyebrow="Peer to Peer" title="PvP 1v1 Arena" icon={<Swords size={18} />} />
+                <p className="docs-lede">
+                  PvP Arena lets two players duel 1v1 on Base Mainnet. Both players deposit matching ETH into the PvPArena smart contract escrow, and Chainlink VRF v2.5 delivers the provably fair random seed.
+                </p>
 
-          {selectedSection === "faq" && (
-          <section className="docs-block">
-            <SectionHeading eyebrow="Questions" title="Questions and answers" icon={<HelpCircle size={18} />} />
-            <div className="docs-faq-list">
-              {faqs.map((item) => (
-                <details key={item.question} className="docs-faq-item">
-                  <summary>{item.question}</summary>
-                  <p>{item.answer}</p>
-                </details>
-              ))}
-            </div>
-          </section>
+                <ol className="docs-step-list">
+                  {pvpSteps.map((step) => (
+                    <li key={step.title}>
+                      <span />
+                      <div>
+                        <h3>{step.title}</h3>
+                        <p>{step.body}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+
+                <div className="docs-grid-two mt-6">
+                  <div>
+                    <h3>Economic Model & 2% Rake</h3>
+                    <p>
+                      PvP Arena is -EV neutral to the platform bankroll. The winner receives <strong>98% of the total pot</strong> (1.96x payout), with a 2% platform rake sent to the protocol treasury to maintain VRF gas subscriptions.
+                    </p>
+                  </div>
+                  <div>
+                    <h3>Timeout & Refund Protection</h3>
+                    <p>
+                      If an open room is not challenged, the host can cancel anytime. If VRF resolution is delayed past 60 blocks, either player can call <code className="text-[var(--text-1)] font-mono">claimTimeout(roomId)</code> for a 100% full refund.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="docs-link-row mt-4">
+                  <DocLink href="/games/pvp" label="Enter PvP Arena" />
+                  <DocLink href="https://basescan.org/address/0x0965A9ACc1f300E60179057D7eEA20967731b8F5" label="View PvPArena on Basescan" />
+                </div>
+              </section>
+
+              {/* Section 3: Round flow */}
+              <section id="rounds" className="docs-block">
+                <SectionHeading eyebrow="Flow" title="How a round works" />
+                <ol className="docs-step-list">
+                  {roundSteps.map((step) => (
+                    <li key={step.title}>
+                      <span />
+                      <div>
+                        <h3>{step.title}</h3>
+                        <p>{step.body}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+
+              {/* Section 4: Refunds */}
+              <section id="refunds" className="docs-block">
+                <SectionHeading eyebrow="Safety" title="Pending rounds and refunds" icon={<RotateCcw size={18} />} />
+                <p className="docs-lede">
+                  If Chainlink VRF randomness is delayed past the contract window, the refund action becomes active in your profile and connected wallet menu. Claiming a refund returns your original locked bet without house edge deductions.
+                </p>
+              </section>
+
+              {/* Section 5: Games */}
+              <section id="games" className="docs-block">
+                <SectionHeading eyebrow="Library" title="Games" />
+                <div className="docs-game-list">
+                  {GAMES_REGISTRY.map((game) => (
+                    <Link key={game.id} href={game.path} className="docs-game-row">
+                      <div>
+                        <GameIdentity gameId={game.id} label={game.name} size="sm" />
+                        <p>{game.description}</p>
+                      </div>
+                      <Metric label="Max payout" value={`${game.maxMultiplier}x`} />
+                      <Metric label="Edge" value={game.id === "pvp" ? "2% Rake" : "5%"} />
+                    </Link>
+                  ))}
+                </div>
+              </section>
+
+              {/* Section 6: Contracts */}
+              <section id="contracts" className="docs-block">
+                <SectionHeading eyebrow="Public records" title="Public contracts" />
+                <p className="docs-lede">
+                  All game, vault, and PvP contracts are verified on Base Mainnet. Use the explorer links below to view live contract transactions, balances, and verified code.
+                </p>
+                <div className="docs-network-list">
+                  {Object.values(NETWORKS).map((network) => (
+                    <div key={network.chainId} className="docs-network">
+                      <div className="docs-network-head">
+                        <h3>{network.name}</h3>
+                        <a href={network.blockExplorer} target="_blank" rel="noopener noreferrer">
+                          Explorer <ExternalLink size={12} />
+                        </a>
+                      </div>
+                      <div className="docs-contract-list">
+                        <ContractDocRow label="GameVault" address={CONTRACT_ADDRESSES[network.chainId]?.GameVault} explorer={network.blockExplorer} />
+                        <ContractDocRow label="PvPArena" address={CONTRACT_ADDRESSES[network.chainId]?.PvPArena} explorer={network.blockExplorer} gameId="pvp" />
+                        {GAMES_REGISTRY.filter((game) => game.active && game.chains.includes("baseMainnet") && game.id !== "pvp").map((game) => (
+                          <ContractDocRow key={`${network.chainId}-${game.id}`} label={game.name} gameId={game.id} address={CONTRACT_ADDRESSES[network.chainId]?.[game.contractName]} explorer={network.blockExplorer} />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Section 7: Account */}
+              <section id="account" className="docs-block">
+                <SectionHeading eyebrow="Account" title="Wallet, stats, and safety" icon={<WalletCards size={18} />} />
+                <div className="docs-grid-two">
+                  <div>
+                    <h3>Wallet and results</h3>
+                    <p>
+                      Your connected browser wallet or Coinbase Wallet session is your player identity through wagmi. Game pages show the latest results for that game, while the full live feed shows recent activity across games.
+                    </p>
+                    <div className="docs-link-row">
+                      <DocLink href="/leaderboard" label="Open leaderboard" />
+                      <DocLink href="/live-feed" label="Open live feed" />
+                    </div>
+                  </div>
+                  <div>
+                    <h3>Before playing</h3>
+                    <ul className="docs-note-list docs-note-list-compact">
+                      {safetyNotes.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </section>
+
+              {/* Section 8: Rewards */}
+              <section id="rewards" className="docs-block">
+                <SectionHeading eyebrow="Progression" title="XP, quests, badges, referrals, and Lucky Draw" icon={<Gift size={18} />} />
+                <p className="docs-lede">
+                  Progression is separate from game odds. It gives players profile goals and shareable achievements without changing the contract result or vault accounting.
+                </p>
+                <div className="docs-feature-list">
+                  {rewardNotes.map((item) => (
+                    <InfoCard key={item.title} icon={item.icon} title={item.title} body={item.body} />
+                  ))}
+                </div>
+              </section>
+
+              {/* Section 9: FAQ */}
+              <section id="faq" className="docs-block">
+                <SectionHeading eyebrow="Questions" title="Questions and answers" icon={<HelpCircle size={18} />} />
+                <div className="docs-faq-list">
+                  {faqs.map((item) => (
+                    <details key={item.question} className="docs-faq-item">
+                      <summary>{item.question}</summary>
+                      <p>{item.answer}</p>
+                    </details>
+                  ))}
+                </div>
+              </section>
+            </>
           )}
         </article>
       </div>
-    </main>
+    </div>
   );
 }
 

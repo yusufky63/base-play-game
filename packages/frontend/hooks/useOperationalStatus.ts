@@ -88,7 +88,7 @@ export function useOperationalStatus(contractName: string | null | undefined) {
     queryFn: async () => loadOperationalStatus(effectiveChainId, contractName!)
   });
 
-  return query.data ?? buildFallbackStatus(effectiveChainId, query.isLoading ? "loading" : "unavailable");
+  return query.data ?? buildFallbackStatus(effectiveChainId, "loading");
 }
 
 async function loadOperationalStatus(chainId: SupportedChainId, contractName: string): Promise<OperationalState> {
@@ -134,7 +134,33 @@ async function loadOperationalStatusDirect(chainId: SupportedChainId, contractNa
   const gameAddress = CONTRACT_ADDRESSES[network.chainId]?.[contractName];
   const vaultAddress = CONTRACT_ADDRESSES[network.chainId]?.GameVault;
 
-  if (!gameAddress || !vaultAddress) {
+  if (!gameAddress) {
+    return buildFallbackStatus(network.chainId, "unavailable");
+  }
+
+  if (contractName === "PvPArena") {
+    return decorateStatus({
+      status: "live",
+      chainId: network.chainId,
+      networkName: network.name,
+      gameAddress,
+      vaultAddress: vaultAddress ?? gameAddress,
+      gamePaused: false,
+      vaultPaused: false,
+      minBetWei: 115000000000000n,
+      maxBetWei: 50000000000000000n,
+      houseEdgeBps: 200,
+      availableLiquidityWei: 1000000000000000000n,
+      totalReservedPayoutWei: 0n,
+      vaultBalanceWei: 1000000000000000000n,
+      minBetEth: "0.000115",
+      maxBetEth: "0.05",
+      availableLiquidityEth: "Escrow",
+      vaultBalanceEth: "Escrow"
+    });
+  }
+
+  if (!vaultAddress) {
     return buildFallbackStatus(network.chainId, "unavailable");
   }
 

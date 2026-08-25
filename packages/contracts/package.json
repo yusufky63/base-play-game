@@ -8,6 +8,7 @@
     "deploy:badges:base": "hardhat run scripts/deploy-badges.ts --network base",
     "deploy:lucky-draw:base": "hardhat run scripts/deploy-lucky-draw.ts --network base",
     "deploy:missing:base": "hardhat run scripts/deploy-missing-games.ts --network base",
+    "deploy:pvp:base": "hardhat run scripts/deploy-pvp.ts --network base",
     "resume:vault-v2:base": "hardhat run scripts/resume-vault-v2-migration.ts --network base",
     "set:vault-limits:base": "hardhat run scripts/set-vault-limits.ts --network base",
     "verify:base": "hardhat run scripts/verify-all.ts --network base",

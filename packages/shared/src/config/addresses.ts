@@ -19,7 +19,8 @@ export const CONTRACT_ADDRESSES: Record<number, Record<string, `0x${string}`>> =
     "RockPaperScissorsGame": "0x40cc80d6a4f14d958c692998d9279d8e6aac8eeb" as `0x${string}`,
     "SlotsGame": "0x89290afe9f2b11d482d2684ce1d299da58b05c7a" as `0x${string}`,
     "LuckyDraw": "0x9b4b322302C1EA7E6e9f0d26F7F1a647E5D8185A" as `0x${string}`,
-    "BasePlayBadges": "0x1Ca9E82eBA7967295C3D77404af639B592C268eD" as `0x${string}`
+    "BasePlayBadges": "0x1Ca9E82eBA7967295C3D77404af639B592C268eD" as `0x${string}`,
+    "PvPArena": "0x0965A9ACc1f300E60179057D7eEA20967731b8F5" as `0x${string}`
   }
 };
 

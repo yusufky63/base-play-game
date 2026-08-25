@@ -84,6 +84,11 @@ const GAME_STEPS: Record<string, { title: string; body: string }[]> = {
     { title: "Start the spin", body: "Slots has no hidden player choice; the transaction starts a three-reel VRF spin." },
     { title: "Draw reels", body: "The contract maps the random word to three symbols after the bet is confirmed." },
     { title: "Match symbols", body: "Pairs pay 1.45x gross, triples pay 12x gross, and the top triple pays 25x gross." }
+  ],
+  pvp: [
+    { title: "1v1 Smart Contract Escrow", body: "Both players deposit the exact same wager into the PvPArena contract. Funds are securely locked on Base." },
+    { title: "Chainlink VRF Randomness", body: "When the challenger matches the room, the contract requests verifiable VRF randomness. The result (0 or 1) is tamper-proof." },
+    { title: "98% Payout & 2% Rake", body: "The winner receives 98% of the pot instantly. A 2% platform fee is sent to treasury with zero house bankroll exposure." }
   ]
 };
 

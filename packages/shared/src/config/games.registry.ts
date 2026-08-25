@@ -242,6 +242,21 @@ export const GAMES_REGISTRY: GameConfig[] = [
     chains: ["baseMainnet"],
     requiresWebSocket: false,
     tags: ["arcade", "jackpot"]
+  },
+  {
+    id: "pvp",
+    name: "PvP Arena",
+    description: "1v1 Coin Duel against other players. 2% low rake with zero house risk.",
+    path: "/games/pvp",
+    contractName: "PvPArena",
+    minBetEth: MIN_BET_ETH,
+    maxBetEth: "0.05",
+    houseEdgePercent: 2,
+    maxMultiplier: 1.96,
+    active: true,
+    chains: ["baseMainnet"],
+    requiresWebSocket: false,
+    tags: ["pvp", "multiplayer", "realtime"]
   }
 ];
 

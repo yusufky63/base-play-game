@@ -1,8 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { useAccount } from "wagmi";
-import { getNetworkByChainId } from "@baseplay/shared/config/networks";
+import { useAccount, useSwitchChain } from "wagmi";
 import { useEthUsdPrice } from "@/hooks/useEthUsdPrice";
 import { formatUsd } from "@/lib/formatters";
 import { type VRFState, VRF_MESSAGES } from "@/hooks/useVRF";
@@ -21,12 +20,32 @@ interface BetPanelProps {
   onRefund?: () => unknown | Promise<unknown>;
 }
 
-export function BetPanel({ amount, disabled = false, disabledReason, loading = false, vrfState = "idle", actionLabel = "Play", hideAction = false, onAmountChange, onPlay, onRefund }: BetPanelProps) {
+export function BetPanel({
+  amount,
+  disabled = false,
+  disabledReason,
+  loading = false,
+  vrfState = "idle",
+  actionLabel = "Play",
+  hideAction = false,
+  onAmountChange,
+  onPlay,
+  onRefund
+}: BetPanelProps) {
   const ethUsd = useEthUsdPrice();
   const { address, chain } = useAccount();
+  const { switchChain } = useSwitchChain();
   const isBusy = loading || vrfState === "pending_tx" || vrfState === "pending_vrf";
-  const isUnsupportedChain = Boolean(address) && (!chain?.id || !getNetworkByChainId(chain.id));
+  const isUnsupportedChain = Boolean(address) && (!chain?.id || chain.id !== 8453);
   const walletActionLabel = !address ? "Connect wallet" : isUnsupportedChain ? "Switch to Base" : actionLabel;
+
+  function handleActionClick() {
+    if (isUnsupportedChain && switchChain) {
+      switchChain({ chainId: 8453 });
+      return;
+    }
+    void runPanelAction(onPlay);
+  }
 
   return (
     <aside className="panel bet-panel p-4">
@@ -50,7 +69,7 @@ export function BetPanel({ amount, disabled = false, disabledReason, loading = f
       {!hideAction && (
         <button
           type="button"
-          onClick={() => void runPanelAction(onPlay)}
+          onClick={handleActionClick}
           disabled={disabled || isBusy}
           className="primary-action mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-md px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-45"
         >
@@ -68,7 +87,6 @@ export function BetPanel({ amount, disabled = false, disabledReason, loading = f
           Claim refund
         </button>
       )}
-
     </aside>
   );
 }
