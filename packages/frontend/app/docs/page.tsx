@@ -162,6 +162,10 @@ const faqs = [
   {
     question: "What happens if a round is delayed?",
     answer: "If Chainlink VRF is delayed beyond the contract window, a refund button appears in your profile and wallet menu to recover your locked wager."
+  },
+  {
+    question: "How is the weekly leaderboard calculated?",
+    answer: "Weekly rankings cover one UTC week (Monday to Sunday) and list each wallet once. If no rounds have settled in the current week yet, the board shows the latest week with activity and labels the week it is displaying. All-time rankings use lifetime stats. Wallet addresses are stored in lowercase so the same wallet never appears twice."
   }
 ];
 

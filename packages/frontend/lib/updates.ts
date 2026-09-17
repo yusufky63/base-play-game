@@ -1,5 +1,10 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
+    date: "September 17, 2026",
+    title: "Weekly leaderboard shows one week and one row per wallet",
+    body: "The weekly leaderboard no longer lists the same wallet several times. When the current UTC week has no settled rounds yet, the leaderboard API now selects the latest week with activity and returns only that week instead of mixing every past week into one list. Weekly and all-time pages sort with a stable wallet tiebreaker, keep one row per wallet compared by lowercase address, pin Load more pages to the week being shown, and label which week is displayed. A new Supabase migration lowercases wallet addresses on every write to rounds, events, stats, and player rows and adds unique lower(address) guards so case-variant duplicates cannot be created."
+  },
+  {
     date: "August 25, 2026",
     title: "PvP 1v1 Arena Main Navigation, Interactive Docs Search, and Enhanced Win Cards",
     body: "PvP Arena (1v1 provably fair Coin Duels on Base Mainnet) is now accessible directly from the primary header navigation across desktop and mobile. Added a real-time instant keyword search bar to the Documentation page covering games, mechanics, contract addresses, and FAQs. Integrated dedicated PvP 1v1 Arena documentation detailing the escrow smart contract architecture, 2% platform rake economics, 60-block timeout refund security, invite link sharing, and Chainlink VRF v2.5 resolution. Redesigned the Share Win modal with full theme token compatibility (light/dark mode typography adaptation), high-contrast referral QR code generation, and 1-click Twitter / X image pasting."

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CalendarDays, Flame, Sparkles, Trophy } from "lucide-react";
 import type { Database } from "@baseplay/shared/types/supabase.types";
@@ -12,29 +12,46 @@ import { readSessionCache, writeSessionCache } from "@/lib/clientCache";
 type Leader = Database["public"]["Views"]["leaderboard_weekly_ranked"]["Row"];
 type SortMode = "xp" | "volume";
 type ScopeMode = "weekly" | "allTime";
+type LeaderboardSource = "supabase" | "unconfigured";
 const PAGE_SIZE = 50;
 const WEEKLY_CACHE_TTL = 30 * 60_000;
 const ALL_TIME_CACHE_TTL = 3 * 60 * 60_000;
-type LeaderboardCache = { leaders: Leader[]; hasMore: boolean; source: "supabase" | "unconfigured"; scope: ScopeMode };
+// Bump when the cached shape changes so stale lists from older sessions are ignored.
+const CACHE_VERSION = "v2";
+type LeaderboardCache = {
+  leaders: Leader[];
+  hasMore: boolean;
+  source: LeaderboardSource;
+  scope: ScopeMode;
+  weekStart: string | null;
+  currentWeekStart: string | null;
+};
 type LeaderboardResponse = LeaderboardCache & { cachedAt: string; cacheTtlSeconds: number };
 
 export default function LeaderboardPage() {
   const [leaders, setLeaders] = useState<Leader[]>([]);
   const [ready, setReady] = useState(false);
-  const [source, setSource] = useState<"supabase" | "unconfigured">("unconfigured");
+  const [source, setSource] = useState<LeaderboardSource>("unconfigured");
   const [scope, setScope] = useState<ScopeMode>("weekly");
   const [sort, setSort] = useState<SortMode>("xp");
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
+  const [weekStart, setWeekStart] = useState<string | null>(null);
+  const [currentWeekStart, setCurrentWeekStart] = useState<string | null>(null);
+  // The week shown by page 0; later pages are pinned to it so "Load more" never mixes weeks.
+  const pinnedWeekRef = useRef<string | null>(null);
   const ethUsd = useEthUsdPrice();
 
   useEffect(() => {
-    const cacheKey = `baseplay:leaderboard:${scope}:${sort}:page:${page}`;
+    const cacheKey = `baseplay:leaderboard:${CACHE_VERSION}:${scope}:${sort}:page:${page}`;
     const cached = readSessionCache<LeaderboardCache>(cacheKey, getClientCacheTtl(scope));
     if (cached) {
       setLeaders(cached.leaders);
       setHasMore(cached.hasMore);
       setSource(cached.source);
+      setWeekStart(cached.weekStart ?? null);
+      setCurrentWeekStart(cached.currentWeekStart ?? null);
+      pinnedWeekRef.current = scope === "weekly" ? cached.weekStart ?? null : null;
       setReady(true);
       return;
     }
@@ -43,25 +60,43 @@ export default function LeaderboardPage() {
 
     async function load() {
       try {
-        const response = await fetch(`/api/leaderboard?scope=${scope}&sort=${sort}&page=${page}&pageSize=${PAGE_SIZE}`, { cache: "force-cache" });
+        const params = new URLSearchParams({ scope, sort, page: String(page), pageSize: String(PAGE_SIZE) });
+        if (scope === "weekly" && page > 0 && pinnedWeekRef.current) {
+          params.set("weekStart", pinnedWeekRef.current);
+        }
+        const response = await fetch(`/api/leaderboard?${params.toString()}`, { cache: "force-cache" });
         if (!response.ok) throw new Error(`Leaderboard HTTP ${response.status}`);
         const result = (await response.json()) as LeaderboardResponse;
+        const resultWeekStart = result.weekStart ?? null;
+        const resultCurrentWeekStart = result.currentWeekStart ?? null;
         setLeaders((current) => {
-          const next = page === 0 ? result.leaders : [...current, ...result.leaders];
-          writeSessionCache(cacheKey, { leaders: next, hasMore: result.hasMore, source: result.source, scope: result.scope });
+          const next = mergeLeaders(page === 0 ? [] : current, result.leaders);
+          writeSessionCache(cacheKey, {
+            leaders: next,
+            hasMore: result.hasMore,
+            source: result.source,
+            scope: result.scope,
+            weekStart: resultWeekStart,
+            currentWeekStart: resultCurrentWeekStart
+          });
           return next;
         });
         setHasMore(result.hasMore);
         setSource(result.source);
+        setWeekStart(resultWeekStart);
+        setCurrentWeekStart(resultCurrentWeekStart);
+        pinnedWeekRef.current = scope === "weekly" ? resultWeekStart : null;
       } catch (error) {
         console.warn("[BasePlay] Leaderboard API query failed", error);
         setHasMore(false);
         setLeaders((current) => {
           const next = page === 0 ? [] : current;
-          writeSessionCache(cacheKey, { leaders: next, hasMore: false, source: "unconfigured", scope });
+          writeSessionCache(cacheKey, { leaders: next, hasMore: false, source: "unconfigured", scope, weekStart: null, currentWeekStart: null });
           return next;
         });
         setSource("unconfigured");
+        setWeekStart(null);
+        setCurrentWeekStart(null);
       }
       setReady(true);
     }
@@ -73,13 +108,17 @@ export default function LeaderboardPage() {
     setScope(nextScope);
     setPage(0);
     setLeaders([]);
+    pinnedWeekRef.current = null;
   }
 
   function changeSort(nextSort: SortMode) {
     setSort(nextSort);
     setPage(0);
     setLeaders([]);
+    pinnedWeekRef.current = null;
   }
+
+  const showingOlderWeek = scope === "weekly" && Boolean(weekStart) && Boolean(currentWeekStart) && weekStart !== currentWeekStart;
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10">
@@ -118,6 +157,17 @@ export default function LeaderboardPage() {
       </div>
 
       <section className="panel overflow-hidden">
+        {ready && scope === "weekly" && weekStart && (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[var(--border)] px-3 py-2 font-mono sm:px-3.5 md:px-4 text-[11px] text-[var(--text-3)]">
+            <span className="flex items-center gap-1">
+              <CalendarDays size={12} />
+              Week of {formatWeekStart(weekStart)}
+            </span>
+            {showingOlderWeek && (
+              <span className="text-[var(--pending)]">No settled rounds this week yet. Showing the latest active week.</span>
+            )}
+          </div>
+        )}
         <div className="leaderboard-row leaderboard-row-head">
           <span>Rank</span>
           <span>Player</span>
@@ -143,7 +193,7 @@ export default function LeaderboardPage() {
         ))}
         {ready && leaders.map((leader, index) => (
           <div
-            key={`${leader.player}-${leader.week_start}`}
+            key={`${leader.week_start}-${leader.player}`}
             className="leaderboard-row border-b border-[var(--border)] text-sm transition-colors last:border-b-0 hover:bg-[var(--surface-2)]"
           >
             <span className="font-mono text-[var(--text-3)]">
@@ -191,4 +241,28 @@ export default function LeaderboardPage() {
 
 function getClientCacheTtl(scope: ScopeMode) {
   return scope === "allTime" ? ALL_TIME_CACHE_TTL : WEEKLY_CACHE_TTL;
+}
+
+/**
+ * Appends a page of rows while keeping one row per wallet (compared case-insensitively). This guards
+ * against overlapping pages and double-invoked effects producing duplicate rows.
+ */
+function mergeLeaders(current: Leader[], incoming: Leader[]) {
+  const seen = new Set(current.map((row) => row.player.toLowerCase()));
+  const next = [...current];
+
+  for (const row of incoming) {
+    const key = row.player.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    next.push(row);
+  }
+
+  return next;
+}
+
+function formatWeekStart(value: string) {
+  const date = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 }
