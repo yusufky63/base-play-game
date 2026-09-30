@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import miniAppSdk from "@farcaster/miniapp-sdk";
 import { PlugZap } from "lucide-react";
 import { base } from "wagmi/chains";
@@ -41,20 +41,6 @@ export function WalletConnectModal() {
     };
   }, []);
 
-  useEffect(() => {
-    function handleOpenWalletModal() {
-      const nativeConnector = getNativeAppConnector(connectors, isInFarcaster);
-      if (nativeConnector) {
-        void connectWallet(nativeConnector);
-        return;
-      }
-      setOpen(true);
-    }
-
-    window.addEventListener(OPEN_WALLET_MODAL_EVENT, handleOpenWalletModal);
-    return () => window.removeEventListener(OPEN_WALLET_MODAL_EVENT, handleOpenWalletModal);
-  }, [connectors, isInFarcaster]);
-
   async function connectWallet(connector: (typeof connectors)[number]) {
     setOpen(false);
     markWalletConnectAttempt(connector.id);
@@ -70,6 +56,22 @@ export function WalletConnectModal() {
       });
     }
   }
+
+  // Effect Event: the listener is registered once but always reads the latest connectors and Farcaster state.
+  const handleOpenWalletModal = useEffectEvent(() => {
+    const nativeConnector = getNativeAppConnector(connectors, isInFarcaster);
+    if (nativeConnector) {
+      void connectWallet(nativeConnector);
+      return;
+    }
+    setOpen(true);
+  });
+
+  useEffect(() => {
+    const onOpenRequest = () => handleOpenWalletModal();
+    window.addEventListener(OPEN_WALLET_MODAL_EVENT, onOpenRequest);
+    return () => window.removeEventListener(OPEN_WALLET_MODAL_EVENT, onOpenRequest);
+  }, []);
 
   return (
     <Modal open={open} onClose={() => setOpen(false)} title="Connect wallet">
@@ -98,7 +100,6 @@ function WalletConnectorIcon({ connector }: { connector: ReturnType<typeof useCo
   if (connector.icon) {
     return (
       <span className="wallet-modal-option-icon wallet-modal-option-icon-image">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={connector.icon} alt="" aria-hidden="true" />
       </span>
     );

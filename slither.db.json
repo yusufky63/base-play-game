@@ -1,0 +1,38 @@
+[
+  {
+    "check": "arbitrary-send-eth",
+    "impact": "High",
+    "confidence": "Medium",
+    "id": "08c81b18d655f0b5bdee11066cf7c6e4418ec2f0bf3e9b0eaeeb4d33c02de309",
+    "first_markdown_element": "packages/contracts/contracts/games/PvPArena.sol#L240-L272",
+    "description": "PvPArena.fulfillRandomWords(uint256,uint256[]) (contracts/games/PvPArena.sol#240-272) sends eth to arbitrary user\n\tDangerous calls:\n\t- (successRake,None) = address(treasury).call{value: rake}() (contracts/games/PvPArena.sol#266)\n",
+    "triage_note": "Reviewed 2026-10-01: payouts go only to the room winner and the owner-set treasury; failed sends fall back to pendingWithdrawals."
+  },
+  {
+    "check": "encode-packed-collision",
+    "impact": "High",
+    "confidence": "High",
+    "id": "ac9bb8a9617d9edbf8bcfdb130dd5769be805251fa95ae347a1db99522310223",
+    "first_markdown_element": "packages/contracts/contracts/rewards/BasePlayBadges.sol#L141-L146",
+    "description": "BasePlayBadges.uri(uint256) (contracts/rewards/BasePlayBadges.sol#141-146) calls abi.encodePacked() with multiple dynamic arguments:\n\t- string(abi.encodePacked(_baseTokenURI,tokenId.toString(),.json)) (contracts/rewards/BasePlayBadges.sol#145)\n",
+    "triage_note": "Reviewed 2026-10-01: builds a metadata URI string only; a collision has no security impact. Contract is deployed and verified, source left unchanged."
+  },
+  {
+    "check": "reentrancy-eth",
+    "impact": "High",
+    "confidence": "Medium",
+    "id": "00e957e4b2f07d2104dd6b68fcb55ac763c8781a50471cf714b5259c0702d4f4",
+    "first_markdown_element": "packages/contracts/contracts/games/PvPArena.sol#L199-L221",
+    "description": "Reentrancy in PvPArena.claimTimeout(uint256) (contracts/games/PvPArena.sol#199-221):\n\tExternal calls:\n\t- (successA,None) = address(room.playerA).call{value: amount}() (contracts/games/PvPArena.sol#214)\n\t- (successB,None) = address(room.playerB).call{value: amount}() (contracts/games/PvPArena.sol#217)\n\tState variables written after the call(s):\n\t- pendingWithdrawals[room.playerB] += amount (contracts/games/PvPArena.sol#218)\n\tPvPArena.pendingWithdrawals (contracts/games/PvPArena.sol#46) can be used in cross function reentrancies:\n\t- PvPArena.fulfillRandomWords(uint256,uint256[]) (contracts/games/PvPArena.sol#240-272)\n\t- PvPArena.pendingWithdrawals (contracts/games/PvPArena.sol#46)\n",
+    "triage_note": "Reviewed 2026-10-01: room status is finalized before any external call, claimTimeout and withdrawPending are nonReentrant, and pendingWithdrawals is only credited when a send fails."
+  },
+  {
+    "check": "reentrancy-eth",
+    "impact": "High",
+    "confidence": "Medium",
+    "id": "bdb1aefd93b288c5c1fcad23aa1bdd79247744e60b8fe81147bbe3a45bf75d56",
+    "first_markdown_element": "packages/contracts/contracts/games/PvPArena.sol#L240-L272",
+    "description": "Reentrancy in PvPArena.fulfillRandomWords(uint256,uint256[]) (contracts/games/PvPArena.sol#240-272):\n\tExternal calls:\n\t- (successWinner,None) = address(winner).call{value: payout}() (contracts/games/PvPArena.sol#261)\n\t- (successRake,None) = address(treasury).call{value: rake}() (contracts/games/PvPArena.sol#266)\n\tState variables written after the call(s):\n\t- pendingWithdrawals[treasury] += rake (contracts/games/PvPArena.sol#268)\n\tPvPArena.pendingWithdrawals (contracts/games/PvPArena.sol#46) can be used in cross function reentrancies:\n\t- PvPArena.fulfillRandomWords(uint256,uint256[]) (contracts/games/PvPArena.sol#240-272)\n\t- PvPArena.pendingWithdrawals (contracts/games/PvPArena.sol#46)\n",
+    "triage_note": "Reviewed 2026-10-01: room status is finalized before any external call, claimTimeout and withdrawPending are nonReentrant, and pendingWithdrawals is only credited when a send fails."
+  }
+]

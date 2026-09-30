@@ -65,7 +65,10 @@ SUPABASE_SERVICE_KEY=<server-only service role key>
 VRF_SUB_ID_MAINNET=<base mainnet vrf subscription id>
 FRONTEND_URL=https://baseplay.games
 BACKEND_ADMIN_ADDRESSES=<comma-separated admin wallets for Lucky Draw controls>
+BASE_MAINNET_BACKEND_RPC_URL=<archive-capable Base mainnet RPC, e.g. Alchemy; public RPCs reject old log ranges>
 ```
+
+Railway deploys `main` through its GitHub integration with "Wait for CI" enabled, so a push reaches the backend only after both the CI and Slither Analysis workflows pass; a red check leaves the previous deployment running. Keep exactly one active deployment, since the event listener and crash engine must not run twice.
 
 Verify the live Supabase REST schema after migrations:
 

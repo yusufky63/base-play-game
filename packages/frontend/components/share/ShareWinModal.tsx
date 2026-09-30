@@ -41,7 +41,6 @@ export function ShareWinModal({
   }, []);
 
   const formattedPayout = formatEthDisplay(payoutEth);
-  const formattedBet = formatEthDisplay(betAmountEth);
   const formattedMultiplier = multiplier || (betAmountEth && payoutEth ? calculateMultiplier(payoutEth, betAmountEth) : "WIN");
 
   const referralUrl = playerAddress
@@ -54,205 +53,14 @@ export function ShareWinModal({
     if (!isOpen) return;
 
     const timer = setTimeout(() => {
-      drawWinCard();
+      const canvas = canvasRef.current;
+      if (canvas && paintWinCard(canvas, { gameName, formattedMultiplier, formattedPayout, playerAddress, referralUrl })) {
+        setImageGenerated(true);
+      }
     }, 60);
 
     return () => clearTimeout(timer);
-  }, [isOpen, gameName, formattedPayout, formattedBet, formattedMultiplier, playerAddress]);
-
-  function drawWinCard() {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const width = 1200;
-    const height = 630;
-    canvas.width = width;
-    canvas.height = height;
-
-    // 1. BasePlay Clean Dark Aesthetic
-    const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
-    bgGrad.addColorStop(0, "#080B12");
-    bgGrad.addColorStop(1, "#030508");
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, width, height);
-
-    // 2. Base Blue + Win Glows (Subtle, professional)
-    const blueGlow = ctx.createRadialGradient(240, 180, 20, 240, 180, 450);
-    blueGlow.addColorStop(0, "rgba(20, 87, 255, 0.22)");
-    blueGlow.addColorStop(1, "rgba(20, 87, 255, 0)");
-    ctx.fillStyle = blueGlow;
-    ctx.fillRect(0, 0, width, height);
-
-    const greenGlow = ctx.createRadialGradient(960, 380, 20, 960, 380, 400);
-    greenGlow.addColorStop(0, "rgba(24, 183, 123, 0.18)");
-    greenGlow.addColorStop(1, "rgba(24, 183, 123, 0)");
-    ctx.fillStyle = greenGlow;
-    ctx.fillRect(0, 0, width, height);
-
-    // 3. Clean Card Border
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.roundRect(32, 32, width - 64, height - 64, 24);
-    ctx.stroke();
-
-    // 4. Header: Brand + Verified Badges
-    ctx.fillStyle = "#FFFFFF";
-    ctx.font = "800 34px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-    ctx.textAlign = "left";
-    ctx.fillText("BASEPLAY", 72, 92);
-
-    // Base Blue Pill
-    ctx.fillStyle = "#1457FF";
-    ctx.beginPath();
-    ctx.roundRect(265, 66, 110, 32, 6);
-    ctx.fill();
-
-    ctx.fillStyle = "#FFFFFF";
-    ctx.font = "bold 13px -apple-system, sans-serif";
-    ctx.fillText("ON BASE", 288, 87);
-
-    // Chainlink VRF Badge
-    ctx.fillStyle = "rgba(24, 183, 123, 0.12)";
-    ctx.beginPath();
-    ctx.roundRect(width - 325, 66, 250, 34, 17);
-    ctx.fill();
-    ctx.strokeStyle = "rgba(24, 183, 123, 0.5)";
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
-    ctx.fillStyle = "#18B77B";
-    ctx.font = "bold 14px -apple-system, sans-serif";
-    ctx.fillText("✓ CHAINLINK VRF FAIR", width - 305, 88);
-
-    // 5. Game Name
-    ctx.fillStyle = "#8B97A8";
-    ctx.font = "700 20px -apple-system, sans-serif";
-    ctx.fillText(gameName.toUpperCase(), 72, 175);
-
-    // 6. Huge Multiplier (Crisp Emerald Green #18B77B)
-    ctx.fillStyle = "#3AD59D";
-    ctx.font = "900 115px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-    ctx.fillText(formattedMultiplier, 72, 285);
-
-    // 7. Net Payout
-    ctx.fillStyle = "#FFFFFF";
-    ctx.font = "900 44px -apple-system, sans-serif";
-    ctx.fillText(`+${formattedPayout} ETH`, 72, 355);
-
-    // 8. Player Box
-    const shortAddr = playerAddress
-      ? `${playerAddress.slice(0, 6)}...${playerAddress.slice(-4)}`
-      : "Base Player";
-
-    ctx.fillStyle = "rgba(255, 255, 255, 0.04)";
-    ctx.beginPath();
-    ctx.roundRect(72, 455, 340, 68, 12);
-    ctx.fill();
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    ctx.fillStyle = "#748091";
-    ctx.font = "600 12px -apple-system, sans-serif";
-    ctx.fillText("PLAYER ADDRESS", 92, 482);
-
-    ctx.fillStyle = "#F5F7FB";
-    ctx.font = "bold 19px monospace";
-    ctx.fillText(shortAddr, 92, 508);
-
-    // 9. QR Code on Right
-    const qrSize = 180;
-    const qrX = width - 265;
-    const qrY = height - 270;
-
-    drawCrispQrCode(ctx, referralUrl, qrX, qrY, qrSize);
-
-    ctx.fillStyle = "#8B97A8";
-    ctx.font = "700 13px -apple-system, sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("SCAN TO PLAY ON BASE", qrX + qrSize / 2, height - 55);
-
-    // 10. Footer Text
-    ctx.textAlign = "left";
-    ctx.fillStyle = "#4F5B6B";
-    ctx.font = "13px -apple-system, sans-serif";
-    ctx.fillText("baseplay.games • Provably Fair Mini Games on Base L2", 72, height - 55);
-
-    setImageGenerated(true);
-  }
-
-  function drawCrispQrCode(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: number) {
-    // White background card
-    ctx.fillStyle = "#FFFFFF";
-    ctx.beginPath();
-    ctx.roundRect(x - 10, y - 10, size + 20, size + 20, 14);
-    ctx.fill();
-
-    const matrixSize = 25;
-    const cellSize = size / matrixSize;
-    const hash = simpleStringHash(text);
-
-    for (let r = 0; r < matrixSize; r++) {
-      for (let c = 0; c < matrixSize; c++) {
-        const isFinder =
-          (r < 7 && c < 7) ||
-          (r < 7 && c >= matrixSize - 7) ||
-          (r >= matrixSize - 7 && c < 7);
-
-        let fill = false;
-
-        if (isFinder) {
-          const inCorner1 = r < 7 && c < 7;
-          const inCorner2 = r < 7 && c >= matrixSize - 7;
-          const inCorner3 = r >= matrixSize - 7 && c < 7;
-
-          const localR = inCorner3 ? r - (matrixSize - 7) : r;
-          const localC = inCorner2 ? c - (matrixSize - 7) : c;
-
-          if (localR === 0 || localR === 6 || localC === 0 || localC === 6) {
-            fill = true;
-          } else if (localR >= 2 && localR <= 4 && localC >= 2 && localC <= 4) {
-            fill = true;
-          }
-        } else {
-          const pseudoBit = ((hash ^ (r * 31 + c * 17)) >>> (r % 8)) & 1;
-          fill = pseudoBit === 1;
-        }
-
-        if (fill) {
-          ctx.fillStyle = "#07080B";
-          ctx.fillRect(x + c * cellSize, y + r * cellSize, cellSize + 0.3, cellSize + 0.3);
-        }
-      }
-    }
-
-    // Center Blue Emblem
-    const centerSize = cellSize * 5;
-    const centerX = x + (size - centerSize) / 2;
-    const centerY = y + (size - centerSize) / 2;
-
-    ctx.fillStyle = "#1457FF";
-    ctx.beginPath();
-    ctx.roundRect(centerX, centerY, centerSize, centerSize, 5);
-    ctx.fill();
-
-    ctx.fillStyle = "#FFFFFF";
-    ctx.beginPath();
-    ctx.arc(centerX + centerSize / 2, centerY + centerSize / 2, centerSize * 0.28, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  function simpleStringHash(s: string): number {
-    let h = 0x811c9dc5;
-    for (let i = 0; i < s.length; i++) {
-      h ^= s.charCodeAt(i);
-      h = Math.imul(h, 0x01000193);
-    }
-    return h >>> 0;
-  }
+  }, [isOpen, gameName, formattedMultiplier, formattedPayout, playerAddress, referralUrl]);
 
   function handleDownloadImage() {
     const canvas = canvasRef.current;
@@ -405,6 +213,208 @@ export function ShareWinModal({
   );
 
   return createPortal(modalContent, document.body);
+}
+
+interface WinCardContent {
+  gameName: string;
+  formattedMultiplier: string;
+  formattedPayout: string;
+  playerAddress?: string;
+  referralUrl: string;
+}
+
+// Pure canvas painter kept outside the component so effects never reference a function declared later in render.
+function paintWinCard(canvas: HTMLCanvasElement, card: WinCardContent): boolean {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return false;
+  const { gameName, formattedMultiplier, formattedPayout, playerAddress, referralUrl } = card;
+
+  const width = 1200;
+  const height = 630;
+  canvas.width = width;
+  canvas.height = height;
+
+  // 1. BasePlay Clean Dark Aesthetic
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
+  bgGrad.addColorStop(0, "#080B12");
+  bgGrad.addColorStop(1, "#030508");
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, width, height);
+
+  // 2. Base Blue + Win Glows (Subtle, professional)
+  const blueGlow = ctx.createRadialGradient(240, 180, 20, 240, 180, 450);
+  blueGlow.addColorStop(0, "rgba(20, 87, 255, 0.22)");
+  blueGlow.addColorStop(1, "rgba(20, 87, 255, 0)");
+  ctx.fillStyle = blueGlow;
+  ctx.fillRect(0, 0, width, height);
+
+  const greenGlow = ctx.createRadialGradient(960, 380, 20, 960, 380, 400);
+  greenGlow.addColorStop(0, "rgba(24, 183, 123, 0.18)");
+  greenGlow.addColorStop(1, "rgba(24, 183, 123, 0)");
+  ctx.fillStyle = greenGlow;
+  ctx.fillRect(0, 0, width, height);
+
+  // 3. Clean Card Border
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(32, 32, width - 64, height - 64, 24);
+  ctx.stroke();
+
+  // 4. Header: Brand + Verified Badges
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = "800 34px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText("BASEPLAY", 72, 92);
+
+  // Base Blue Pill
+  ctx.fillStyle = "#1457FF";
+  ctx.beginPath();
+  ctx.roundRect(265, 66, 110, 32, 6);
+  ctx.fill();
+
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = "bold 13px -apple-system, sans-serif";
+  ctx.fillText("ON BASE", 288, 87);
+
+  // Chainlink VRF Badge
+  ctx.fillStyle = "rgba(24, 183, 123, 0.12)";
+  ctx.beginPath();
+  ctx.roundRect(width - 325, 66, 250, 34, 17);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(24, 183, 123, 0.5)";
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.fillStyle = "#18B77B";
+  ctx.font = "bold 14px -apple-system, sans-serif";
+  ctx.fillText("✓ CHAINLINK VRF FAIR", width - 305, 88);
+
+  // 5. Game Name
+  ctx.fillStyle = "#8B97A8";
+  ctx.font = "700 20px -apple-system, sans-serif";
+  ctx.fillText(gameName.toUpperCase(), 72, 175);
+
+  // 6. Huge Multiplier (Crisp Emerald Green #18B77B)
+  ctx.fillStyle = "#3AD59D";
+  ctx.font = "900 115px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  ctx.fillText(formattedMultiplier, 72, 285);
+
+  // 7. Net Payout
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = "900 44px -apple-system, sans-serif";
+  ctx.fillText(`+${formattedPayout} ETH`, 72, 355);
+
+  // 8. Player Box
+  const shortAddr = playerAddress
+    ? `${playerAddress.slice(0, 6)}...${playerAddress.slice(-4)}`
+    : "Base Player";
+
+  ctx.fillStyle = "rgba(255, 255, 255, 0.04)";
+  ctx.beginPath();
+  ctx.roundRect(72, 455, 340, 68, 12);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.fillStyle = "#748091";
+  ctx.font = "600 12px -apple-system, sans-serif";
+  ctx.fillText("PLAYER ADDRESS", 92, 482);
+
+  ctx.fillStyle = "#F5F7FB";
+  ctx.font = "bold 19px monospace";
+  ctx.fillText(shortAddr, 92, 508);
+
+  // 9. QR Code on Right
+  const qrSize = 180;
+  const qrX = width - 265;
+  const qrY = height - 270;
+
+  drawCrispQrCode(ctx, referralUrl, qrX, qrY, qrSize);
+
+  ctx.fillStyle = "#8B97A8";
+  ctx.font = "700 13px -apple-system, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("SCAN TO PLAY ON BASE", qrX + qrSize / 2, height - 55);
+
+  // 10. Footer Text
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#4F5B6B";
+  ctx.font = "13px -apple-system, sans-serif";
+  ctx.fillText("baseplay.games • Provably Fair Mini Games on Base L2", 72, height - 55);
+
+  return true;
+}
+
+function drawCrispQrCode(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: number) {
+  // White background card
+  ctx.fillStyle = "#FFFFFF";
+  ctx.beginPath();
+  ctx.roundRect(x - 10, y - 10, size + 20, size + 20, 14);
+  ctx.fill();
+
+  const matrixSize = 25;
+  const cellSize = size / matrixSize;
+  const hash = simpleStringHash(text);
+
+  for (let r = 0; r < matrixSize; r++) {
+    for (let c = 0; c < matrixSize; c++) {
+      const isFinder =
+        (r < 7 && c < 7) ||
+        (r < 7 && c >= matrixSize - 7) ||
+        (r >= matrixSize - 7 && c < 7);
+
+      let fill = false;
+
+      if (isFinder) {
+        const inCorner1 = r < 7 && c < 7;
+        const inCorner2 = r < 7 && c >= matrixSize - 7;
+        const inCorner3 = r >= matrixSize - 7 && c < 7;
+
+        const localR = inCorner3 ? r - (matrixSize - 7) : r;
+        const localC = inCorner2 ? c - (matrixSize - 7) : c;
+
+        if (localR === 0 || localR === 6 || localC === 0 || localC === 6) {
+          fill = true;
+        } else if (localR >= 2 && localR <= 4 && localC >= 2 && localC <= 4) {
+          fill = true;
+        }
+      } else {
+        const pseudoBit = ((hash ^ (r * 31 + c * 17)) >>> (r % 8)) & 1;
+        fill = pseudoBit === 1;
+      }
+
+      if (fill) {
+        ctx.fillStyle = "#07080B";
+        ctx.fillRect(x + c * cellSize, y + r * cellSize, cellSize + 0.3, cellSize + 0.3);
+      }
+    }
+  }
+
+  // Center Blue Emblem
+  const centerSize = cellSize * 5;
+  const centerX = x + (size - centerSize) / 2;
+  const centerY = y + (size - centerSize) / 2;
+
+  ctx.fillStyle = "#1457FF";
+  ctx.beginPath();
+  ctx.roundRect(centerX, centerY, centerSize, centerSize, 5);
+  ctx.fill();
+
+  ctx.fillStyle = "#FFFFFF";
+  ctx.beginPath();
+  ctx.arc(centerX + centerSize / 2, centerY + centerSize / 2, centerSize * 0.28, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function simpleStringHash(s: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
 }
 
 function formatEthDisplay(val?: string | number | bigint): string {
