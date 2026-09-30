@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, Copy, Download, Share2, Sparkles, Trophy, X as CloseIcon } from "lucide-react";
+import { create as createQrCode } from "qrcode";
 import { formatEther } from "viem";
 import { useToast } from "@/components/ui/ToastProvider";
 
@@ -327,16 +328,16 @@ function paintWinCard(canvas: HTMLCanvasElement, card: WinCardContent): boolean 
   ctx.fillText(shortAddr, 92, 508);
 
   // 9. QR Code on Right
-  const qrSize = 180;
-  const qrX = width - 265;
-  const qrY = height - 270;
+  const qrCardSize = 220;
+  const qrCardX = width - 285;
+  const qrCardY = height - 300;
 
-  drawCrispQrCode(ctx, referralUrl, qrX, qrY, qrSize);
+  drawReferralQrCode(ctx, referralUrl, qrCardX, qrCardY, qrCardSize);
 
   ctx.fillStyle = "#8B97A8";
   ctx.font = "700 13px -apple-system, sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("SCAN TO PLAY ON BASE", qrX + qrSize / 2, height - 55);
+  ctx.fillText("SCAN TO PLAY ON BASE", qrCardX + qrCardSize / 2, height - 55);
 
   // 10. Footer Text
   ctx.textAlign = "left";
@@ -347,74 +348,54 @@ function paintWinCard(canvas: HTMLCanvasElement, card: WinCardContent): boolean 
   return true;
 }
 
-function drawCrispQrCode(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: number) {
-  // White background card
+// Scanners want a light margin around the symbol; the white card supplies it, the dark card background would not.
+const QR_QUIET_ZONE_MODULES = 3;
+
+function drawReferralQrCode(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, cardSize: number) {
+  // Level H restores up to 30% of damaged codewords, which is what lets the emblem hide the center modules.
+  const { modules } = createQrCode(text, { errorCorrectionLevel: "H" });
+  const count = modules.size;
+
+  // Whole-pixel modules keep edges sharp; fractional sizes blur into grey seams that scanners misread.
+  const moduleSize = Math.floor(cardSize / (count + QR_QUIET_ZONE_MODULES * 2));
+  const qrSize = count * moduleSize;
+  const originX = x + Math.floor((cardSize - qrSize) / 2);
+  const originY = y + Math.floor((cardSize - qrSize) / 2);
+
   ctx.fillStyle = "#FFFFFF";
   ctx.beginPath();
-  ctx.roundRect(x - 10, y - 10, size + 20, size + 20, 14);
+  ctx.roundRect(x, y, cardSize, cardSize, 14);
   ctx.fill();
 
-  const matrixSize = 25;
-  const cellSize = size / matrixSize;
-  const hash = simpleStringHash(text);
+  // QR sizes are always odd, so an odd emblem width centers on the middle module.
+  // The cleared area adds a one-module white ring so no half-covered module is left beside the emblem.
+  const emblemModules = Math.floor(count * 0.2) | 1;
+  const clearedModules = emblemModules + 2;
+  const clearedStart = (count - clearedModules) / 2;
+  const clearedEnd = clearedStart + clearedModules;
 
-  for (let r = 0; r < matrixSize; r++) {
-    for (let c = 0; c < matrixSize; c++) {
-      const isFinder =
-        (r < 7 && c < 7) ||
-        (r < 7 && c >= matrixSize - 7) ||
-        (r >= matrixSize - 7 && c < 7);
-
-      let fill = false;
-
-      if (isFinder) {
-        const inCorner1 = r < 7 && c < 7;
-        const inCorner2 = r < 7 && c >= matrixSize - 7;
-        const inCorner3 = r >= matrixSize - 7 && c < 7;
-
-        const localR = inCorner3 ? r - (matrixSize - 7) : r;
-        const localC = inCorner2 ? c - (matrixSize - 7) : c;
-
-        if (localR === 0 || localR === 6 || localC === 0 || localC === 6) {
-          fill = true;
-        } else if (localR >= 2 && localR <= 4 && localC >= 2 && localC <= 4) {
-          fill = true;
-        }
-      } else {
-        const pseudoBit = ((hash ^ (r * 31 + c * 17)) >>> (r % 8)) & 1;
-        fill = pseudoBit === 1;
-      }
-
-      if (fill) {
-        ctx.fillStyle = "#07080B";
-        ctx.fillRect(x + c * cellSize, y + r * cellSize, cellSize + 0.3, cellSize + 0.3);
-      }
+  ctx.fillStyle = "#07080B";
+  for (let row = 0; row < count; row++) {
+    for (let col = 0; col < count; col++) {
+      const underEmblem = row >= clearedStart && row < clearedEnd && col >= clearedStart && col < clearedEnd;
+      if (underEmblem || !modules.get(row, col)) continue;
+      ctx.fillRect(originX + col * moduleSize, originY + row * moduleSize, moduleSize, moduleSize);
     }
   }
 
-  // Center Blue Emblem
-  const centerSize = cellSize * 5;
-  const centerX = x + (size - centerSize) / 2;
-  const centerY = y + (size - centerSize) / 2;
+  const emblemSize = emblemModules * moduleSize;
+  const emblemX = originX + (clearedStart + 1) * moduleSize;
+  const emblemY = originY + (clearedStart + 1) * moduleSize;
 
   ctx.fillStyle = "#1457FF";
   ctx.beginPath();
-  ctx.roundRect(centerX, centerY, centerSize, centerSize, 5);
+  ctx.roundRect(emblemX, emblemY, emblemSize, emblemSize, 5);
   ctx.fill();
 
   ctx.fillStyle = "#FFFFFF";
   ctx.beginPath();
-  ctx.arc(centerX + centerSize / 2, centerY + centerSize / 2, centerSize * 0.28, 0, Math.PI * 2);
+  ctx.arc(emblemX + emblemSize / 2, emblemY + emblemSize / 2, emblemSize * 0.28, 0, Math.PI * 2);
   ctx.fill();
-}
-
-function simpleStringHash(s: string): number {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return h >>> 0;
 }
 
 function formatEthDisplay(val?: string | number | bigint): string {

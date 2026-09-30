@@ -157,7 +157,7 @@ const faqs = [
   },
   {
     question: "Can I share my win on Twitter / X?",
-    answer: "Yes! Every victory enables the 'Share Win Card' modal, which generates a high-resolution 1200x630 card with your personal referral QR code, instant image copy for Twitter (Ctrl+V), and download support."
+    answer: "Yes! Every victory enables the 'Share Win Card' modal, which generates a high-resolution 1200x630 card with instant image copy for Twitter (Ctrl+V) and download support. The QR code on the card encodes your referral link (baseplay.games/?ref=your wallet address), so anyone who scans it with a phone camera opens BasePlay with your referral attached."
   },
   {
     question: "What happens if a round is delayed?",

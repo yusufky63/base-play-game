@@ -1,5 +1,10 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
+    date: "October 1, 2026",
+    title: "Share Win card QR code now scans to your referral link",
+    body: "The QR code on the Share Win card was a decorative pattern that phone cameras could not read. It is now a standard QR code for your referral link (baseplay.games/?ref=your wallet address, or baseplay.games when no wallet is connected), drawn with high error correction so the Base emblem in the middle does not stop it from scanning. The QR panel is slightly larger and uses whole-pixel modules so it stays sharp in the downloaded PNG and in pasted images."
+  },
+  {
     date: "September 30, 2026",
     title: "Play inside zkCodex, and framing limited to approved sites",
     body: "BasePlay game pages can now be embedded by zkCodex. In that mode the page drops its own header, footer, and back link, follows zkCodex's light or dark theme, connects to the wallet already connected to zkCodex without a second prompt, and opens links to other BasePlay pages in a new tab. Bets are confirmed in your wallet and go to the same contracts, so rounds, XP, and stats are unchanged. BasePlay also sends a frame-ancestors policy now: only BasePlay itself, Farcaster and Base App clients, and zkCodex may show it in a frame."
