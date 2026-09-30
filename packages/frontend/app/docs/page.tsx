@@ -164,6 +164,10 @@ const faqs = [
     answer: "If Chainlink VRF is delayed beyond the contract window, a refund button appears in your profile and wallet menu to recover your locked wager."
   },
   {
+    question: "Can I play BasePlay games on zkCodex?",
+    answer: "Yes. zkCodex embeds BasePlay's own game pages and hands them the wallet you connected to zkCodex, so there is no second connection. The page hides BasePlay's header and footer there, links to other BasePlay pages open in a new tab, and every bet is confirmed in your wallet and sent to the same contracts as on baseplay.games. Only approved sites can frame BasePlay."
+  },
+  {
     question: "How is the weekly leaderboard calculated?",
     answer: "Weekly rankings cover one UTC week (Monday to Sunday) and list each wallet once. If no rounds have settled in the current week yet, the board shows the latest week with activity and labels the week it is displaying. All-time rankings use lifetime stats. Wallet addresses are stored in lowercase so the same wallet never appears twice."
   }
@@ -428,6 +432,9 @@ export default function DocsPage() {
                     <h3>Wallet and results</h3>
                     <p>
                       Your connected browser wallet or Coinbase Wallet session is your player identity through wagmi. Game pages show the latest results for that game, while the full live feed shows recent activity across games.
+                    </p>
+                    <p>
+                      On zkCodex, game pages open inside zkCodex and use the wallet you connected there. Bets still go from your wallet to the same BasePlay contracts, and your rounds, XP, and stats appear here under the same address.
                     </p>
                     <div className="docs-link-row">
                       <DocLink href="/leaderboard" label="Open leaderboard" />

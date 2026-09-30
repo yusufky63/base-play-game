@@ -1,5 +1,10 @@
 export const SITE_UPDATES: Array<{ date: string; title: string; body: string }> = [
   {
+    date: "September 30, 2026",
+    title: "Play inside zkCodex, and framing limited to approved sites",
+    body: "BasePlay game pages can now be embedded by zkCodex. In that mode the page drops its own header, footer, and back link, follows zkCodex's light or dark theme, connects to the wallet already connected to zkCodex without a second prompt, and opens links to other BasePlay pages in a new tab. Bets are confirmed in your wallet and go to the same contracts, so rounds, XP, and stats are unchanged. BasePlay also sends a frame-ancestors policy now: only BasePlay itself, Farcaster and Base App clients, and zkCodex may show it in a frame."
+  },
+  {
     date: "September 17, 2026",
     title: "Weekly leaderboard shows one week and one row per wallet",
     body: "The weekly leaderboard no longer lists the same wallet several times. When the current UTC week has no settled rounds yet, the leaderboard API now selects the latest week with activity and returns only that week instead of mixing every past week into one list. Weekly and all-time pages sort with a stable wallet tiebreaker, keep one row per wallet compared by lowercase address, pin Load more pages to the week being shown, and label which week is displayed. A new Supabase migration lowercases wallet addresses on every write to rounds, events, stats, and player rows and adds unique lower(address) guards so case-variant duplicates cannot be created."

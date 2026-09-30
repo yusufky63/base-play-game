@@ -42,7 +42,7 @@ export function GameShell({
         <div>
           <Link
             href="/"
-            className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-[var(--text-2)] hover:text-[var(--text-1)]"
+            className="embed-hidden mb-4 inline-flex items-center gap-1 text-sm font-semibold text-[var(--text-2)] hover:text-[var(--text-1)]"
           >
             <ChevronLeft size={15} />
             Games

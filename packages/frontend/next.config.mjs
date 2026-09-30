@@ -29,13 +29,43 @@ const inlineEnv = Object.fromEntries(
   }).filter(([, value]) => typeof value === "string")
 );
 
+// Who may frame BasePlay. Mini app hosts do (the Farcaster and Base App web clients show mini apps in a frame), and
+// zkCodex embeds game pages (lib/embed.ts); every other site is refused, so a betting page cannot be framed for
+// clickjacking. FRAME_ANCESTORS_EXTRA (space separated) adds hosts without a code change.
+const frameAncestors = [
+  "'self'",
+  "https://farcaster.xyz",
+  "https://*.farcaster.xyz",
+  "https://warpcast.com",
+  "https://*.warpcast.com",
+  "https://base.app",
+  "https://*.base.app",
+  "https://base.dev",
+  "https://*.base.dev",
+  "https://*.coinbase.com",
+  "https://zkcodex.com",
+  "https://*.zkcodex.com",
+  "https://zk-codex-git-feat-xp-rewards-yusufky63s-projects.vercel.app",
+  // zkCodex's dev server, so the embed can be tested against this site.
+  "http://localhost:3001",
+  ...String(envSource.FRAME_ANCESTORS_EXTRA || "").split(/\s+/).filter(Boolean)
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   distDir: ".next",
   devIndicators: false,
   transpilePackages: ["@baseplay/shared"],
   reactStrictMode: true,
-  env: inlineEnv
+  env: inlineEnv,
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [{ key: "Content-Security-Policy", value: `frame-ancestors ${frameAncestors.join(" ")}` }]
+      }
+    ];
+  }
 };
 
 export default nextConfig;

@@ -2060,6 +2060,18 @@ select {
   pointer-events: none;
 }
 
+/* Embed mode (lib/embed.ts): a partner site frames one game page and brings its own header, wallet and way back. */
+html[data-embed] .app-header,
+html[data-embed] .app-footer,
+html[data-embed] .embed-hidden {
+  display: none;
+}
+
+/* The toast offset above clears the sticky header, which is gone here. */
+html[data-embed] .toast-viewport {
+  top: 16px;
+}
+
 .toast-card {
   pointer-events: auto;
   animation: toast-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1);

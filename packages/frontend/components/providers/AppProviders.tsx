@@ -2,10 +2,10 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
-import { useEffect, useState } from "react";
-import miniAppSdk from "@farcaster/miniapp-sdk";
+import { useState } from "react";
 import { WagmiProvider } from "wagmi";
 import { wagmiConfig } from "@/lib/wagmi.config";
+import { MiniAppBoot } from "@/components/embed/MiniAppBoot";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { ReferralAttribution } from "@/components/referral/ReferralAttribution";
 import { WalletConnectModal } from "@/components/wallet/WalletConnectModal";
@@ -30,7 +30,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       <WagmiProvider config={wagmiConfig} reconnectOnMount={false}>
         <QueryClientProvider client={queryClient}>
           <ToastProvider>
-            <FarcasterMiniAppReady />
+            <MiniAppBoot />
             <ReferralAttribution />
             <WalletReconnectSync />
             <WalletConnectModal />
@@ -40,22 +40,4 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       </WagmiProvider>
     </ThemeProvider>
   );
-}
-
-function FarcasterMiniAppReady() {
-  useEffect(() => {
-    let active = true;
-    miniAppSdk
-      .isInMiniApp()
-      .then((isInMiniApp) => {
-        if (active && isInMiniApp) return miniAppSdk.actions.ready();
-        return undefined;
-      })
-      .catch(() => undefined);
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  return null;
 }
